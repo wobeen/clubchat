@@ -49,17 +49,21 @@ export function MainScreen() {
         .from('profiles')
         .select('id, display_name, avatar_url, created_at')
         .eq('id', userData.user.id)
-        .single()
+        .maybeSingle()
 
       if (cancelled) return
 
       if (error) {
-        console.error('[MainScreen] profiles fetch error:', error)
+        // error.code === 'PGRST116' 은 .single() 전용 코드라 maybeSingle()에선 나오지 않음.
+        // 여기 도달하면 네트워크·서버 오류.
+        console.error('[MainScreen] profiles fetch error:', error.code, error.message)
         setState({ status: 'error', message: '프로필을 불러오는 중 오류가 발생했습니다.' })
         return
       }
 
       if (!data) {
+        // 행이 없음 = 트리거 미실행 또는 RLS 차단. 콘솔에서 구분 가능.
+        console.warn('[MainScreen] profiles row not found for user:', userData.user.id)
         setState({ status: 'empty' })
         return
       }

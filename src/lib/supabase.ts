@@ -8,11 +8,13 @@ const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? ''
 
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   auth: {
-    storage: AsyncStorage,
+    // 웹에서 AsyncStorage(localStorage 래퍼)를 쓰면 Supabase 세션 초기화와
+    // 첫 REST 요청 사이에 JWT가 누락되는 타이밍 문제가 생길 수 있다.
+    // 웹은 기본 storage(localStorage 직접 접근)를 사용하고,
+    // 네이티브만 AsyncStorage를 사용한다.
+    ...(Platform.OS !== 'web' ? { storage: AsyncStorage } : {}),
     autoRefreshToken: true,
     persistSession: true,
-    // 웹에서는 OAuth 콜백 후 URL hash(#access_token=...)에서 세션을 파싱해야 한다.
-    // 네이티브에서는 딥링크로 처리하므로 false.
     detectSessionInUrl: Platform.OS === 'web',
   },
 })
