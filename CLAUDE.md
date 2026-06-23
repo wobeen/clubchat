@@ -40,8 +40,12 @@
 | `attachments` | id, message_id, storage_path, mime_type, size_bytes, width(nullable), height(nullable) | 파일·이미지 |
 | `channel_reads` | id, channel_id, user_id, last_read_at, **unique(channel_id,user_id)** | 읽음표시(포인터 방식) |
 | `push_tokens` | id, user_id, expo_push_token, device_info, updated_at | 푸시 토큰 |
+| `events` | id(PK), channel_id(↔channels), title, description(nullable), starts_at, ends_at(nullable), location(nullable), created_by(↔profiles), created_at, updated_at | 일정 |
+| `event_responses` | id(PK), event_id(↔events), user_id(↔profiles), status('going'\|'not_going'\|'maybe'), responded_at, **unique(event_id,user_id)** | 참석 응답 |
 
 **읽음표시**는 메시지마다 행을 만들지 않고 `channel_reads.last_read_at` 포인터 1개로 처리한다(소규모 효율).
+
+**일정**: `events(channel_id, starts_at)` 인덱스로 방별 시간순 조회. 일정 삭제 시 `event_responses`는 ON DELETE CASCADE로 함께 삭제.
 
 ## 4. 보안 모델 (계약)
 
@@ -52,11 +56,19 @@
 - **전송/저장**: 모든 통신 TLS. Storage 버킷은 비공개 + 서명 URL. 셀프호스팅 시 디스크 암호화 권장.
 - **금지**: 개인정보를 URL 쿼리스트링에 넣지 않기. 클라이언트 측 권한 판단에 의존하지 않기.
 
+**일정 RLS**
+- `events` SELECT: 요청자가 해당 `channel_id`의 `channel_members`에 속한 경우만.
+- `events` INSERT: 해당 방의 멤버만. `created_by`는 `auth.uid()`로 강제.
+- `events` UPDATE/DELETE: 작성자 본인(`created_by = auth.uid()`) **또는** 그 방의 방장(`channels.owner_id`)만.
+- `event_responses` SELECT: 그 일정이 속한 방의 멤버만.
+- `event_responses` INSERT/UPDATE/DELETE: 본인 응답만(`user_id = auth.uid()`). 타인의 응답 변경 불가.
+
 ## 5. 기능 범위
 
-**MVP (1차)**: 구글 로그인, 동아리 생성/가입, 방 생성(방장), 초대 링크·QR·비밀번호 입장, 1:1·그룹 텍스트 채팅(실시간), 읽음표시, 푸시 알림.
-**2차**: 파일·이미지 공유, 온라인/입력중 표시, 메시지 검색.
-**범위 밖(현재)**: 음성·영상 통화, E2EE.
+**MVP (1차)**: 구글 로그인, 동아리 생성/가입, 방 생성(방장), 초대 링크·QR·비밀번호 입장, 1:1·그룹 텍스트 채팅(실시간), 읽음표시, 푸시 알림, 일정 생성·수정·삭제(방장/작성자), 일정 목록·상세 조회, 참석/불참/미정 응답 및 집계.
+**2차**: 파일·이미지 공유, 온라인/입력중 표시, 메시지 검색, 일정 시작 전 푸시 알림, 반복 일정, 캘린더 뷰(월/주), 외부 캘린더(iCal) 내보내기.
+**범위 밖(현재)**: E2EE, 일정별 첨부파일, 화상회의 링크 자동 생성.
+**음성·영상 통화**: 직접 구현하지 않는다. 추후 Daily.co / Livekit 등 외부 서비스 임베드 방식으로 도입 예정. WebRTC 자체 운영(시그널링·TURN 서버)은 하지 않는다.
 
 ## 6. 코딩 컨벤션
 
