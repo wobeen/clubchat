@@ -1,7 +1,8 @@
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native'
+import { ActivityIndicator, StyleSheet, View } from 'react-native'
 import { StatusBar } from 'expo-status-bar'
 import { useAuth } from './src/features/auth/useAuth'
 import { LoginScreen } from './src/features/auth/LoginScreen'
+import { MainScreen } from './src/features/main/MainScreen'
 
 export default function App() {
   const { session, loading } = useAuth()
@@ -23,12 +24,11 @@ export default function App() {
     )
   }
 
-  // TODO: 인증 완료 후 메인 네비게이터로 교체
   return (
-    <View style={styles.center}>
-      <Text style={styles.welcomeText}>로그인됨: {session.user.email}</Text>
+    <>
+      <MainScreen />
       <StatusBar style="dark" />
-    </View>
+    </>
   )
 }
 
@@ -38,9 +38,5 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  welcomeText: {
-    fontSize: 16,
-    color: '#374151',
   },
 })
