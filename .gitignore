@@ -1,0 +1,16 @@
+# 환경 변수 — 절대 커밋하지 않는다
+.env
+.env.local
+.env.*.local
+
+# Expo
+.expo/
+dist/
+web-build/
+
+# Node
+node_modules/
+
+# OS
+.DS_Store
+Thumbs.db
