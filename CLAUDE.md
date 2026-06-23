@@ -1,0 +1,94 @@
+# CLAUDE.md — ClubChat (동아리 업무용 메신저)
+
+> 이 파일은 모든 작업의 **단일 진실 공급원(single source of truth)**이자 에이전트 간 **계약(contract)**이다.
+> 서브에이전트는 호출 간 기억이 없고 매번 새 컨텍스트로 시작하므로, 위임 프롬프트에는 이 파일에서 필요한 부분을 직접 포함시켜야 한다.
+> 데이터 모델·타입·보안 규칙을 바꿀 때는 반드시 이 파일을 먼저 수정한 뒤 코드를 바꾼다.
+
+---
+
+## 1. 프로젝트 개요
+
+- **무엇**: 학교 동아리·소모임을 위한 업무용 메신저
+- **핵심 원칙**: 보안 우선. "이 사용자가 이 데이터를 볼 수 있는가"는 항상 서버(RLS)에서 강제한다. 클라이언트를 신뢰하지 않는다.
+- **암호화 정책**: 전송구간 TLS + 저장 시 암호화 + 엄격한 RLS. **종단간 암호화(E2EE)는 도입하지 않는다.**
+- **배포**: 내부 배포 (TestFlight / APK 직접 배포 / PWA)
+
+## 2. 기술 스택
+
+- **프런트엔드**: Expo (React Native) + TypeScript — iOS / Android / Web 단일 코드베이스. 데스크톱은 PWA(설치형), 필요 시 추후 Tauri.
+- **백엔드/데이터**: Supabase (Postgres + Realtime + Auth + Storage + RLS)
+  - **개발 단계**: Supabase Cloud 무료 티어 (셋업 즉시, 빠른 반복)
+  - **운영 목표**: Oracle Cloud OCI Always Free(ARM Ampere A1) 위에 Docker Compose로 셀프호스팅. 데이터 주권 확보.
+  - 둘은 동일 소프트웨어 → 마이그레이션 수월. 처음부터 셀프호스팅에 시간 쓰지 말 것.
+- **인증**: Supabase Auth + Google OAuth
+- **푸시 알림**: Expo Push Notifications (내부적으로 FCM/APNs)
+- **타입 안전성**: `supabase gen types typescript` 로 DB → TS 타입 생성. 이 생성 타입이 db-schema 에이전트와 ui-builder 에이전트 사이의 인터페이스다.
+
+## 3. 데이터 모델 (계약)
+
+> db-schema 에이전트가 이 정의를 권위 있는 소스로 사용한다. 변경은 이 파일을 먼저 고친 뒤 마이그레이션에 반영.
+
+| 테이블 | 주요 컬럼 | 비고 |
+|---|---|---|
+| `profiles` | id(PK, ↔auth.users), display_name, avatar_url, created_at | 사용자 프로필 |
+| `clubs` | id(PK), name, owner_id(↔profiles), created_at | 동아리/소모임 |
+| `memberships` | id, club_id, user_id, role('owner'\|'admin'\|'member'), created_at, **unique(club_id,user_id)** | 동아리 멤버십 |
+| `channels` | id(PK), club_id(nullable=DM), name, type('group'\|'dm'), owner_id(방장), join_password_hash(nullable), created_at | 방 |
+| `channel_members` | id, channel_id, user_id, joined_at, **unique(channel_id,user_id)** | 방 참여자 |
+| `invites` | id, channel_id, token(unique), created_by, expires_at(nullable), max_uses(nullable), use_count(default 0), created_at | QR·링크 초대 |
+| `messages` | id(PK), channel_id, sender_id, content, type('text'\|'file'\|'image'\|'system'), created_at, edited_at(nullable), deleted_at(nullable, 소프트삭제) | 메시지 |
+| `attachments` | id, message_id, storage_path, mime_type, size_bytes, width(nullable), height(nullable) | 파일·이미지 |
+| `channel_reads` | id, channel_id, user_id, last_read_at, **unique(channel_id,user_id)** | 읽음표시(포인터 방식) |
+| `push_tokens` | id, user_id, expo_push_token, device_info, updated_at | 푸시 토큰 |
+
+**읽음표시**는 메시지마다 행을 만들지 않고 `channel_reads.last_read_at` 포인터 1개로 처리한다(소규모 효율).
+
+## 4. 보안 모델 (계약)
+
+- **앱 로그인**: Google OAuth만. 로그인 안 한 사용자는 어떤 데이터도 접근 불가.
+- **방 입장 — 초대 링크/QR**: `invites`에 토큰 발급(만료시각·최대 사용횟수 포함). QR은 초대 링크를 인코딩한 것일 뿐. 토큰 검증 통과 시에만 `channel_members`에 등록.
+- **방 입장 — 비밀번호**: `channels.join_password_hash`에 **해시(argon2 또는 bcrypt)** 저장. 원문 저장 금지. 입력값을 해시 비교.
+- **진짜 경계는 RLS**: 입장 UI는 편의일 뿐. 메시지/첨부 SELECT는 반드시 `channel_members`에 속한 사용자만 가능하도록 RLS로 강제. 메시지 UPDATE/DELETE는 작성자 본인만.
+- **전송/저장**: 모든 통신 TLS. Storage 버킷은 비공개 + 서명 URL. 셀프호스팅 시 디스크 암호화 권장.
+- **금지**: 개인정보를 URL 쿼리스트링에 넣지 않기. 클라이언트 측 권한 판단에 의존하지 않기.
+
+## 5. 기능 범위
+
+**MVP (1차)**: 구글 로그인, 동아리 생성/가입, 방 생성(방장), 초대 링크·QR·비밀번호 입장, 1:1·그룹 텍스트 채팅(실시간), 읽음표시, 푸시 알림.
+**2차**: 파일·이미지 공유, 온라인/입력중 표시, 메시지 검색.
+**범위 밖(현재)**: 음성·영상 통화, E2EE.
+
+## 6. 코딩 컨벤션
+
+- 언어: TypeScript (strict). 프런트·백 공유 타입은 생성된 Supabase 타입 사용.
+- 파일/폴더: 기능 단위(feature-based) 구조. `src/features/<도메인>/...`
+- 네이밍: 컴포넌트 PascalCase, 함수/변수 camelCase, DB 컬럼 snake_case.
+- 에러 처리: 모든 Supabase 호출은 에러 분기 처리. 사용자에겐 일반화된 메시지, 로그엔 상세.
+- 비밀값: `.env` (커밋 금지). 키는 코드에 하드코딩 금지.
+
+## 7. 멀티 에이전트 운영 규칙
+
+- **계약 우선**: 작업을 나누기 전에 이 CLAUDE.md(특히 §3 데이터 모델, §4 보안)를 확정한다. 충돌의 90%는 계약 부재에서 온다.
+- **좁은 에이전트만**: 한 에이전트 = 한 가지 일. "모든 걸 하는 developer 에이전트"는 안티패턴. 정의된 서브에이전트는 `.claude/agents/` 참고.
+- **스키마 소유권**: DB 스키마·RLS는 `db-schema` 에이전트만 변경한다. 다른 에이전트는 생성된 타입을 읽기만 한다.
+- **자기 완결 프롬프트**: 서브에이전트는 기억이 없다. 위임 시 파일 경로·결정사항·관련 스펙을 프롬프트에 직접 넣는다.
+- **출력 격리**: 테스트·로그처럼 출력이 많은 작업은 `tester` 에이전트에 맡겨 실패 요약만 받는다.
+- **병렬 기능 작업**: 기능 단위로 동시에 진행할 땐 git worktree 또는 Agent Teams로 세션을 분리한다.
+- **비용 인지**: 서브에이전트 적극 사용 시 단일 세션 대비 토큰을 최대 ~7배까지 쓸 수 있다.
+
+## 8. 빌드 로드맵
+
+0. **셋업**: 레포, Expo 초기화, Supabase Cloud 프로젝트, 이 CLAUDE.md + 에이전트 정의, 구글 OAuth 설정
+1. **인증·조직**: 구글 로그인, 프로필, 동아리 생성/가입/역할
+2. **방·메시징**: 방 생성, 초대 토큰/QR/비밀번호 입장, 실시간 텍스트 채팅
+3. **읽음·푸시**: `channel_reads` 포인터, Expo Push 연동
+4. **파일·이미지**: Storage 버킷, 업로드/미리보기, 서명 URL
+5. **프레즌스·마무리**: 온라인/입력중, 검색, 데스크톱 PWA 패키징
+6. **운영 이전**: OCI A1에 Supabase 셀프호스팅 마이그레이션, TLS·백업·방화벽 하드닝, 내부 배포(EAS/APK/TestFlight)
+
+## 9. OCI 셀프호스팅 메모 (6단계용)
+
+- 인스턴스: Ubuntu(aarch64), Ampere A1, **On-demand capacity** 선택(선점 방지).
+- 무료 한도는 콘솔에서 직접 확인(4 OCPU/24GB ↔ 2 OCPU/12GB 변경 보고 있음). 둘 다 소규모엔 충분.
+- 서울 리전 우선, 용량 없으면 인접 리전. 신용카드 본인확인 필요(한도 내 무과금).
+- 하드닝: OS 방화벽 + OCI 보안목록 포트 최소 개방, 리버스 프록시(SSL), DB 자동 백업, 인스턴스 유휴 회수 방지.
