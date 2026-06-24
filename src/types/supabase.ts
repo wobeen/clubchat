@@ -173,18 +173,21 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          invite_code: string
           name: string
           owner_id: string
         }
         Insert: {
           created_at?: string
           id?: string
+          invite_code?: string | null
           name: string
           owner_id: string
         }
         Update: {
           created_at?: string
           id?: string
+          invite_code?: string | null
           name?: string
           owner_id?: string
         }
@@ -484,7 +487,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      create_club: {
+        Args: { p_name: string }
+        Returns: Json
+      }
+      generate_club_invite_code: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      join_club_by_invite_code: {
+        Args: { p_code: string }
+        Returns: Json
+      }
     }
     Enums: {
       [_ in never]: never

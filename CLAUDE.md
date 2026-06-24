@@ -31,7 +31,7 @@
 | 테이블 | 주요 컬럼 | 비고 |
 |---|---|---|
 | `profiles` | id(PK, ↔auth.users), display_name, avatar_url, created_at | 사용자 프로필 |
-| `clubs` | id(PK), name, owner_id(↔profiles), created_at | 동아리/소모임 |
+| `clubs` | id(PK), name, owner_id(↔profiles), invite_code(unique, 8자 대문자 hex), created_at | 동아리/소모임 |
 | `memberships` | id, club_id, user_id, role('owner'\|'admin'\|'member'), created_at, **unique(club_id,user_id)** | 동아리 멤버십 |
 | `channels` | id(PK), club_id(nullable=DM), name, type('group'\|'dm'), owner_id(방장), join_password_hash(nullable), created_at | 방 |
 | `channel_members` | id, channel_id, user_id, joined_at, **unique(channel_id,user_id)** | 방 참여자 |
