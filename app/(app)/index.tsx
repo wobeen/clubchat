@@ -59,9 +59,23 @@ function RoleBadge({ role }: { role: MemberRole }) {
   )
 }
 
-function ClubListItem({ item }: { item: ClubItem }) {
+function ClubListItem({
+  item,
+  onPress,
+  onManage,
+}: {
+  item: ClubItem
+  onPress: () => void
+  onManage?: () => void
+}) {
   return (
-    <View style={styles.clubCard}>
+    <Pressable
+      style={({ pressed }) => [styles.clubCard, pressed && styles.pressedOpacity]}
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={`${item.clubName} 동아리 열기`}
+      {...(Platform.OS === 'web' ? { style: [styles.clubCard, { cursor: 'pointer' } as object] } : {})}
+    >
       <View style={styles.clubAvatarPlaceholder}>
         <Text style={styles.clubAvatarText}>{item.clubName[0]?.toUpperCase() ?? '?'}</Text>
       </View>
@@ -69,7 +83,22 @@ function ClubListItem({ item }: { item: ClubItem }) {
         <Text style={styles.clubName} numberOfLines={1}>{item.clubName}</Text>
       </View>
       <RoleBadge role={item.role} />
-    </View>
+      {onManage != null && (
+        <Pressable
+          style={({ pressed }) => [styles.manageButton, pressed && styles.pressedOpacity]}
+          onPress={(e) => {
+            e.stopPropagation?.()
+            onManage()
+          }}
+          accessibilityRole="button"
+          accessibilityLabel={`${item.clubName} 동아리 관리`}
+          hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
+          {...(Platform.OS === 'web' ? ({ style: [styles.manageButton, { cursor: 'pointer' }] } as object) : {})}
+        >
+          <Text style={styles.manageButtonText}>관리</Text>
+        </Pressable>
+      )}
+    </Pressable>
   )
 }
 
@@ -215,7 +244,19 @@ export default function ClubListScreen() {
         data={clubs}
         keyExtractor={(item) => item.membershipId}
         contentContainerStyle={clubs.length === 0 ? styles.emptyContainer : styles.listContent}
-        renderItem={({ item }) => <ClubListItem item={item} />}
+        renderItem={({ item }) => (
+            <ClubListItem
+              item={item}
+              onPress={() => router.push({ pathname: '/(app)/clubs/[id]', params: { id: item.clubId } })}
+              onManage={item.role === 'owner'
+                ? () => router.push({
+                    pathname: '/(app)/clubs/manage',
+                    params: { clubId: item.clubId, clubName: item.clubName },
+                  })
+                : undefined
+              }
+            />
+          )}
         ListEmptyComponent={
           <View style={styles.emptyState}>
             <Text style={styles.emptyTitle}>아직 동아리가 없어요</Text>
@@ -444,6 +485,15 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     color: '#4A90D9',
+  },
+  manageButton: {
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    marginLeft: 4,
+  },
+  manageButtonText: {
+    fontSize: 13,
+    color: '#6B7280',
   },
   pressedOpacity: {
     opacity: 0.6,

@@ -33,7 +33,7 @@
 | `profiles` | id(PK, ↔auth.users), display_name, avatar_url, created_at | 사용자 프로필 |
 | `clubs` | id(PK), name, owner_id(↔profiles), invite_code(unique, 8자 대문자 hex), created_at | 동아리/소모임 |
 | `memberships` | id, club_id, user_id, role('owner'\|'admin'\|'member'), created_at, **unique(club_id,user_id)** | 동아리 멤버십 |
-| `channels` | id(PK), club_id(nullable=DM), name, type('group'\|'dm'), owner_id(방장), join_password_hash(nullable), created_at | 방 |
+| `channels` | id(PK), club_id(nullable=DM), name, type('group'\|'dm'), owner_id(방장), join_password_hash(nullable), is_password_protected(generated, boolean), created_at | 방 |
 | `channel_members` | id, channel_id, user_id, joined_at, **unique(channel_id,user_id)** | 방 참여자 |
 | `invites` | id, channel_id, token(unique), created_by, expires_at(nullable), max_uses(nullable), use_count(default 0), created_at | QR·링크 초대 |
 | `messages` | id(PK), channel_id, sender_id, content, type('text'\|'file'\|'image'\|'system'), created_at, edited_at(nullable), deleted_at(nullable, 소프트삭제) | 메시지 |
