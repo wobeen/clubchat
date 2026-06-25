@@ -69,36 +69,43 @@ function ClubListItem({
   onManage?: () => void
 }) {
   return (
-    <Pressable
-      style={({ pressed }) => [styles.clubCard, pressed && styles.pressedOpacity]}
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityLabel={`${item.clubName} 동아리 열기`}
-      {...(Platform.OS === 'web' ? { style: [styles.clubCard, { cursor: 'pointer' } as object] } : {})}
-    >
-      <View style={styles.clubAvatarPlaceholder}>
-        <Text style={styles.clubAvatarText}>{item.clubName[0]?.toUpperCase() ?? '?'}</Text>
-      </View>
-      <View style={styles.clubInfo}>
-        <Text style={styles.clubName} numberOfLines={1}>{item.clubName}</Text>
-      </View>
-      <RoleBadge role={item.role} />
+    <View style={styles.clubCard}>
+      {/* 카드 주요 영역 — 동아리 열기 */}
+      <Pressable
+        style={({ pressed }) => [
+          styles.clubCardMain,
+          pressed && styles.pressedOpacity,
+          Platform.OS === 'web' ? ({ cursor: 'pointer' } as object) : null,
+        ]}
+        onPress={onPress}
+        accessibilityRole="button"
+        accessibilityLabel={`${item.clubName} 동아리 열기`}
+      >
+        <View style={styles.clubAvatarPlaceholder}>
+          <Text style={styles.clubAvatarText}>{item.clubName[0]?.toUpperCase() ?? '?'}</Text>
+        </View>
+        <View style={styles.clubInfo}>
+          <Text style={styles.clubName} numberOfLines={1}>{item.clubName}</Text>
+        </View>
+        <RoleBadge role={item.role} />
+      </Pressable>
+      {/* 관리 버튼 — 카드 Pressable과 형제 관계로 중첩 없음 */}
       {onManage != null && (
         <Pressable
-          style={({ pressed }) => [styles.manageButton, pressed && styles.pressedOpacity]}
-          onPress={(e) => {
-            e.stopPropagation?.()
-            onManage()
-          }}
+          style={({ pressed }) => [
+            styles.manageButton,
+            pressed && styles.pressedOpacity,
+            Platform.OS === 'web' ? ({ cursor: 'pointer' } as object) : null,
+          ]}
+          onPress={onManage}
           accessibilityRole="button"
           accessibilityLabel={`${item.clubName} 동아리 관리`}
           hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
-          {...(Platform.OS === 'web' ? ({ style: [styles.manageButton, { cursor: 'pointer' }] } as object) : {})}
         >
           <Text style={styles.manageButtonText}>관리</Text>
         </Pressable>
       )}
-    </Pressable>
+    </View>
   )
 }
 
@@ -395,12 +402,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 4,
     elevation: 2,
+  },
+  clubCardMain: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
   },
   clubAvatarPlaceholder: {
     width: 44,
