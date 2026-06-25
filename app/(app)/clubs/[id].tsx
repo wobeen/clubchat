@@ -15,7 +15,6 @@ import { Database } from '../../../src/types/supabase'
 
 type MemberRole = 'owner' | 'admin' | 'member'
 
-type ChannelRow = Database['public']['Tables']['channels']['Row']
 
 interface ChannelItem {
   id: string
@@ -45,11 +44,13 @@ function ChannelCard({
   onOpen,
   onJoin,
   onManage,
+  unreadCount,
 }: {
   item: ChannelItem
   onOpen: () => void
   onJoin: () => void
   onManage?: () => void
+  unreadCount: number
 }) {
   return (
     <View style={styles.channelCard}>
@@ -57,6 +58,13 @@ function ChannelCard({
         <View style={styles.channelNameRow}>
           <Text style={styles.channelName} numberOfLines={1}>{item.name}</Text>
           {item.hasPassword && <PasswordBadge />}
+          {unreadCount > 0 && (
+            <View style={styles.unreadBadge}>
+              <Text style={styles.unreadBadgeText}>
+                {unreadCount > 99 ? '99+' : String(unreadCount)}
+              </Text>
+            </View>
+          )}
         </View>
       </View>
       <View style={styles.cardActions}>
@@ -100,6 +108,7 @@ export default function ClubDetailScreen() {
   const router = useRouter()
   const navigation = useNavigation()
   const [state, setState] = useState<PageState>({ status: 'loading' })
+  const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({})
 
   useFocusEffect(
     useCallback(() => {
@@ -159,7 +168,7 @@ export default function ClubDetailScreen() {
           ? (membershipResult.data.role as MemberRole)
           : null
 
-        const channels: ChannelItem[] = (channelsResult.data ?? []).map((ch: ChannelRow) => ({
+        const channels: ChannelItem[] = (channelsResult.data ?? []).map((ch) => ({
           id: ch.id,
           name: ch.name,
           type: ch.type,
@@ -170,12 +179,43 @@ export default function ClubDetailScreen() {
         }))
 
         setState({ status: 'ready', clubName, channels, myRole })
+
+        const channelIdArray = [...joinedIds]
+        if (channelIdArray.length > 0) {
+          const { data: unreadData } = await (supabase as any).rpc('get_unread_counts', {
+            p_channel_ids: channelIdArray,
+          })
+          const counts: Record<string, number> = {}
+          for (const row of (unreadData ?? []) as Array<{ channel_id: string; unread_count: number }>) {
+            counts[row.channel_id] = Number(row.unread_count)
+          }
+          if (!cancelled) setUnreadCounts(counts)
+        } else {
+          setUnreadCounts({})
+        }
       }
 
       load()
 
+      const rt = supabase
+        .channel('unread-badge')
+        .on(
+          'postgres_changes',
+          { event: 'INSERT', schema: 'public', table: 'messages' },
+          (payload) => {
+            const row = payload.new as { channel_id: string; sender_id: string }
+            if (row.sender_id === session?.user?.id) return
+            setUnreadCounts((prev) => ({
+              ...prev,
+              [row.channel_id]: (prev[row.channel_id] ?? 0) + 1,
+            }))
+          }
+        )
+        .subscribe()
+
       return () => {
         cancelled = true
+        supabase.removeChannel(rt)
       }
     }, [id, session?.user?.id])
   )
@@ -247,6 +287,7 @@ export default function ClubDetailScreen() {
                     })
                 : undefined
             }
+            unreadCount={unreadCounts[item.id] ?? 0}
           />
         )}
         ListHeaderComponent={
@@ -360,6 +401,20 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '600',
     color: '#92400E',
+  },
+  unreadBadge: {
+    backgroundColor: '#EF4444',
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    paddingHorizontal: 5,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  unreadBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#FFFFFF',
   },
   cardActions: {
     flexDirection: 'row',

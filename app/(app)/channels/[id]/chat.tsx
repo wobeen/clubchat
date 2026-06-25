@@ -12,7 +12,7 @@ import {
   View,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { useLocalSearchParams, useNavigation } from 'expo-router'
+import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router'
 import { RealtimeChannel } from '@supabase/supabase-js'
 import { supabase } from '../../../../src/lib/supabase'
 import { useAuth } from '../../../../src/features/auth/useAuth'
@@ -101,6 +101,7 @@ export default function ChatScreen() {
   }>()
   const { session } = useAuth()
   const navigation = useNavigation()
+  const router = useRouter()
   const flatListRef = useRef<FlatList<ChatMessage>>(null)
 
   const [pageStatus, setPageStatus] = useState<PageState>({ status: 'loading' })
@@ -116,8 +117,25 @@ export default function ChatScreen() {
   const inputRef = useRef<TextInput>(null)
 
   useEffect(() => {
-    navigation.setOptions({ title: channelName ?? '채팅' })
-  }, [channelName])
+    navigation.setOptions({
+      title: channelName ?? '채팅',
+      headerRight: () => (
+        <Pressable
+          onPress={() =>
+            router.push({
+              pathname: '/(app)/channels/[id]/events/index',
+              params: { id: channelId },
+            })
+          }
+          style={{ paddingHorizontal: 12, paddingVertical: 8 }}
+          accessibilityRole="button"
+          accessibilityLabel="일정 보기"
+        >
+          <Text style={{ color: '#4A90D9', fontSize: 15, fontWeight: '600' }}>일정</Text>
+        </Pressable>
+      ),
+    })
+  }, [channelName, channelId])
 
   // 웹 전용: TextInput의 textarea DOM 요소에 keydown 리스너 직접 부착
   // (React Native Web은 spread prop으로 넘긴 onKeyDown을 DOM에 전달하지 않음)

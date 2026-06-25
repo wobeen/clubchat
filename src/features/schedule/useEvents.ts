@@ -51,7 +51,8 @@ export function useEvents(channelId: string): UseEventsResult {
       if (responsesError) throw responsesError
 
       const myStatusMap = new Map<string, ResponseStatus>(
-        (responsesData ?? []).map((r: { event_id: string; status: ResponseStatus }) => [r.event_id, r.status])
+        ((responsesData ?? []) as Array<{ event_id: string; status: ResponseStatus }>)
+          .map((r) => [r.event_id, r.status])
       )
 
       setEvents(
@@ -112,7 +113,7 @@ export function useEventDetail(eventId: string): UseEventDetailResult {
       if (eventResult.error) throw eventResult.error
       if (responsesResult.error) throw responsesResult.error
 
-      const allResponses: EventResponse[] = responsesResult.data ?? []
+      const allResponses: EventResponse[] = (responsesResult.data ?? []) as EventResponse[]
       const mine = allResponses.find((r) => r.user_id === user.id) ?? null
 
       setEvent(eventResult.data)

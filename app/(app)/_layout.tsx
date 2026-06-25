@@ -12,6 +12,10 @@ export default function AppLayout() {
       <Stack.Screen name="channels/[id]/join" options={{ title: '방 입장', headerBackTitle: '뒤로' }} />
       <Stack.Screen name="channels/[id]/manage" options={{ title: '방 관리', headerBackTitle: '뒤로' }} />
       <Stack.Screen name="channels/[id]/chat" options={{ title: '채팅', headerBackTitle: '뒤로' }} />
+      <Stack.Screen name="channels/[id]/events/index" options={{ title: '일정', headerBackTitle: '뒤로' }} />
+      <Stack.Screen name="channels/[id]/events/create" options={{ title: '새 일정', headerBackTitle: '뒤로' }} />
+      <Stack.Screen name="channels/[id]/events/[eventId]/index" options={{ title: '일정 상세', headerBackTitle: '뒤로' }} />
+      <Stack.Screen name="channels/[id]/events/[eventId]/edit" options={{ title: '일정 수정', headerBackTitle: '뒤로' }} />
       <Stack.Screen name="clubs/manage" options={{ title: '동아리 관리', headerBackTitle: '뒤로' }} />
     </Stack>
   )
