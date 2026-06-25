@@ -17,7 +17,7 @@ export default function EventCreatePage() {
       channelId={channelId}
       onSaved={(eventId) =>
         router.replace({
-          pathname: '/(app)/channels/[id]/events/[eventId]/index',
+          pathname: '/(app)/channels/[id]/events/[eventId]/detail',
           params: { id: channelId, eventId, channelOwnerId },
         })
       }

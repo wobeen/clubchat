@@ -123,7 +123,7 @@ export default function ChatScreen() {
         <Pressable
           onPress={() =>
             router.push({
-              pathname: '/(app)/channels/[id]/events/index',
+              pathname: '/(app)/channels/[id]/events/list',
               params: { id: channelId },
             })
           }
