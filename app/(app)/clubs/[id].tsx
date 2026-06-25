@@ -1,7 +1,6 @@
 import { useCallback, useState } from 'react'
 import {
   ActivityIndicator,
-  Alert,
   FlatList,
   Platform,
   Pressable,
@@ -181,8 +180,11 @@ export default function ClubDetailScreen() {
     }, [id, session?.user?.id])
   )
 
-  function handleOpenChannel() {
-    Alert.alert('준비 중', '채팅 기능은 다음 단계에서 구현됩니다.')
+  function handleOpenChannel(channel: ChannelItem) {
+    router.push({
+      pathname: '/(app)/channels/[id]/chat',
+      params: { id: channel.id, channelName: channel.name },
+    })
   }
 
   function handleJoinChannel(channel: ChannelItem) {
@@ -234,7 +236,7 @@ export default function ClubDetailScreen() {
         renderItem={({ item }) => (
           <ChannelCard
             item={item}
-            onOpen={handleOpenChannel}
+            onOpen={() => handleOpenChannel(item)}
             onJoin={() => handleJoinChannel(item)}
             onManage={
               item.ownerId === session?.user?.id
