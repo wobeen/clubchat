@@ -119,11 +119,6 @@ export default function ChatScreen() {
     navigation.setOptions({ title: channelName ?? '채팅' })
   }, [channelName])
 
-  // handleSend가 재생성될 때마다 ref를 최신으로 유지
-  useEffect(() => {
-    handleSendRef.current = handleSend
-  }, [handleSend])
-
   // 웹 전용: TextInput의 textarea DOM 요소에 keydown 리스너 직접 부착
   // (React Native Web은 spread prop으로 넘긴 onKeyDown을 DOM에 전달하지 않음)
   useEffect(() => {
@@ -360,6 +355,11 @@ export default function ChatScreen() {
 
     setSending(false)
   }, [inputText, channelId, session?.user?.id, sending])
+
+  // handleSend가 재생성될 때마다 ref를 최신으로 유지 (정의 뒤에 위치해야 함)
+  useEffect(() => {
+    handleSendRef.current = handleSend
+  }, [handleSend])
 
   if (pageStatus.status === 'loading') {
     return (
