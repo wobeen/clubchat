@@ -8,15 +8,16 @@ import {
   Text,
   View,
 } from 'react-native'
-import { useEvents } from './useEvents'
 import { colors, formatDatetime, radius, spacing, STATUS_COLOR, STATUS_LABEL } from './scheduleUtils'
 import type { EventWithMyResponse } from './types'
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
 interface Props {
-  channelId: string
-  currentUserId: string
+  events: EventWithMyResponse[]
+  loading: boolean
+  error: string | null
+  onRefresh: () => void
   /** 일정 상세 화면으로 이동 */
   onPressEvent: (eventId: string) => void
   /** 일정 생성 화면으로 이동 */
@@ -103,11 +104,13 @@ function EmptyState({ onPressCreate }: { onPressCreate: () => void }) {
 // ─── 화면 ─────────────────────────────────────────────────────────────────────
 
 export default function EventListScreen({
-  channelId,
+  events,
+  loading,
+  error,
+  onRefresh,
   onPressEvent,
   onPressCreate,
 }: Props) {
-  const { events, loading, error, refresh } = useEvents(channelId)
 
   const renderItem = useCallback(
     ({ item }: { item: EventWithMyResponse }) => (
@@ -149,7 +152,7 @@ export default function EventListScreen({
         <Text style={styles.errorText}>{error}</Text>
         <Pressable
           style={({ pressed }) => [styles.retryButton, pressed && styles.retryButtonPressed]}
-          onPress={refresh}
+          onPress={onRefresh}
           accessibilityRole="button"
         >
           <Text style={styles.retryButtonText}>다시 시도</Text>
@@ -167,7 +170,7 @@ export default function EventListScreen({
         renderItem={renderItem}
         contentContainerStyle={events.length === 0 ? styles.flatListEmpty : styles.flatListContent}
         ListEmptyComponent={<EmptyState onPressCreate={onPressCreate} />}
-        onRefresh={refresh}
+        onRefresh={onRefresh}
         refreshing={loading}
         // Web에서 스크롤 성능 개선
         removeClippedSubviews={Platform.OS !== 'web'}
