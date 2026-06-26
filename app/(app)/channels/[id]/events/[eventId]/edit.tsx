@@ -6,10 +6,9 @@ import { EventFormScreen } from '../../../../../../src/features/schedule'
 import type { Event } from '../../../../../../src/features/schedule'
 
 export default function EventEditPage() {
-  const { id: channelId, eventId, channelOwnerId = '' } = useLocalSearchParams<{
+  const { id: channelId, eventId } = useLocalSearchParams<{
     id: string
     eventId: string
-    channelOwnerId?: string
   }>()
   const router = useRouter()
   const [event, setEvent] = useState<Event | null>(null)

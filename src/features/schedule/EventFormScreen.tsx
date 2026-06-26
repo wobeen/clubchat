@@ -3,6 +3,7 @@ import {
   ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
+  Modal,
   Platform,
   Pressable,
   ScrollView,
@@ -15,41 +16,80 @@ import { useSaveEvent } from './useEvents'
 import { colors, radius, spacing } from './scheduleUtils'
 import type { Event } from './types'
 
+// DateTimePicker는 웹에서 사용 불가 — native에서만 동적 require
+const RNDateTimePicker: React.ComponentType<any> | null =
+  Platform.OS !== 'web'
+    ? require('@react-native-community/datetimepicker').default
+    : null
+
+// ─── 날짜/시간 헬퍼 ──────────────────────────────────────────────────────────
+
+function splitISO(iso: string | null | undefined): { date: Date | null; time: string } {
+  if (!iso) return { date: null, time: '' }
+  const d = new Date(iso)
+  const hh = String(d.getHours()).padStart(2, '0')
+  const mm = String(d.getMinutes()).padStart(2, '0')
+  return { date: d, time: `${hh}:${mm}` }
+}
+
+function parseTime(t: string): { hh: number; mm: number } | null {
+  const match = t.trim().match(/^(\d{1,2}):(\d{2})$/)
+  if (!match) return null
+  const hh = Number(match[1])
+  const mm = Number(match[2])
+  return hh <= 23 && mm <= 59 ? { hh, mm } : null
+}
+
+function combineDateTime(date: Date, timeStr: string): Date {
+  const parsed = parseTime(timeStr)
+  const result = new Date(date)
+  result.setHours(parsed?.hh ?? 0, parsed?.mm ?? 0, 0, 0)
+  return result
+}
+
+function toDateInputStr(d: Date): string {
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
+function formatDateDisplay(d: Date): string {
+  return new Intl.DateTimeFormat('ko-KR', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    weekday: 'short',
+  }).format(d)
+}
+
 // ─── Props ────────────────────────────────────────────────────────────────────
 
 interface Props {
   channelId: string
-  /** 수정 모드일 때만 존재 */
   event?: Event
   onSaved: (eventId: string) => void
   onCancel: () => void
 }
 
-// ─── 폼 상태 타입 ─────────────────────────────────────────────────────────────
+// ─── 폼 상태 ──────────────────────────────────────────────────────────────────
 
 interface FormState {
   title: string
-  startsAt: string
-  endsAt: string
+  startsDate: Date | null
+  startsTime: string
+  endsDate: Date | null
+  endsTime: string
   location: string
   description: string
 }
 
 interface FormErrors {
   title?: string
-  startsAt?: string
-  endsAt?: string
-}
-
-// ─── 날짜 입력 힌트 ───────────────────────────────────────────────────────────
-// 플랫폼별 DatePicker 통합은 추후 단계. 현재는 텍스트 필드.
-// 사용자가 "2026-06-23 15:00" 형식으로 입력하면 ISO 8601로 정규화 후 검증.
-const DATE_PLACEHOLDER = '예: 2026-06-23 15:00'
-
-// "2026-06-23 15:00" → Date 변환.
-// iOS/Safari는 공백 구분자를 NaN으로 파싱하므로 T로 교체해 로컬 시간으로 해석시킨다.
-function parseLocalDate(s: string): Date {
-  return new Date(s.trim().replace(' ', 'T'))
+  startsDate?: string
+  startsTime?: string
+  endsDate?: string
+  endsTime?: string
 }
 
 // ─── 유효성 검사 ──────────────────────────────────────────────────────────────
@@ -61,36 +101,46 @@ function validate(form: FormState): FormErrors {
     errors.title = '제목을 입력해주세요.'
   }
 
-  if (!form.startsAt.trim()) {
-    errors.startsAt = '시작 일시를 입력해주세요.'
-  } else if (isNaN(parseLocalDate(form.startsAt).getTime())) {
-    errors.startsAt = '올바른 날짜 형식이 아닙니다. (예: 2026-06-23 15:00)'
+  if (!form.startsDate) {
+    errors.startsDate = '시작 날짜를 선택해주세요.'
   }
 
-  if (form.endsAt.trim()) {
-    if (isNaN(parseLocalDate(form.endsAt).getTime())) {
-      errors.endsAt = '올바른 날짜 형식이 아닙니다.'
-    } else if (
-      !errors.startsAt &&
-      parseLocalDate(form.endsAt) <= parseLocalDate(form.startsAt)
-    ) {
-      errors.endsAt = '종료 일시는 시작 일시보다 뒤여야 합니다.'
+  if (!form.startsTime.trim()) {
+    errors.startsTime = '시작 시간을 입력해주세요.'
+  } else if (!parseTime(form.startsTime)) {
+    errors.startsTime = '올바른 형식이 아닙니다. (예: 14:30)'
+  }
+
+  if (form.endsDate) {
+    if (!form.endsTime.trim()) {
+      errors.endsTime = '종료 시간을 입력해주세요.'
+    } else if (!parseTime(form.endsTime)) {
+      errors.endsTime = '올바른 형식이 아닙니다. (예: 16:00)'
+    } else if (!errors.startsDate && !errors.startsTime && form.startsDate) {
+      const start = combineDateTime(form.startsDate, form.startsTime)
+      const end = combineDateTime(form.endsDate, form.endsTime)
+      if (end <= start) {
+        errors.endsTime = '종료 일시는 시작 일시보다 뒤여야 합니다.'
+      }
     }
   }
 
   return errors
 }
 
-// ─── 입력 필드 컴포넌트 ──────────────────────────────────────────────────────
+// ─── 필드 컴포넌트 ────────────────────────────────────────────────────────────
 
-interface FieldProps {
+function Field({
+  label,
+  required,
+  error,
+  children,
+}: {
   label: string
   required?: boolean
   error?: string
   children: React.ReactNode
-}
-
-function Field({ label, required, error, children }: FieldProps) {
+}) {
   return (
     <View style={fieldStyles.container}>
       <View style={fieldStyles.labelRow}>
@@ -98,69 +148,184 @@ function Field({ label, required, error, children }: FieldProps) {
         {required && <Text style={fieldStyles.required}>*</Text>}
       </View>
       {children}
-      {error && <Text style={fieldStyles.error}>{error}</Text>}
+      {error ? <Text style={fieldStyles.error}>{error}</Text> : null}
     </View>
   )
 }
 
 const fieldStyles = StyleSheet.create({
-  container: {
-    gap: spacing.xs,
-  },
-  labelRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 2,
-  },
-  label: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: colors.textSecondary,
-  },
-  required: {
-    color: colors.error,
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  error: {
-    fontSize: 12,
-    color: colors.error,
-  },
+  container: { gap: spacing.xs },
+  labelRow: { flexDirection: 'row', alignItems: 'center', gap: 2 },
+  label: { fontSize: 13, fontWeight: '600', color: colors.textSecondary },
+  required: { color: colors.error, fontSize: 13, fontWeight: '600' },
+  error: { fontSize: 12, color: colors.error },
 })
+
+// ─── 날짜 선택 버튼 (크로스플랫폼) ──────────────────────────────────────────
+
+function DatePickerField({
+  value,
+  onChange,
+  placeholder,
+  hasError,
+}: {
+  value: Date | null
+  onChange: (date: Date) => void
+  placeholder: string
+  hasError?: boolean
+}) {
+  const [showPicker, setShowPicker] = useState(false)
+  const displayText = value ? formatDateDisplay(value) : placeholder
+
+  // ── 웹: 투명 HTML date input 오버레이 ──────────────────────────────────
+  if (Platform.OS === 'web') {
+    const dateStr = value ? toDateInputStr(value) : ''
+    return (
+      <View
+        style={[
+          styles.dateButton,
+          hasError && styles.inputError,
+          { position: 'relative', overflow: 'hidden' } as object,
+        ]}
+      >
+        <Text style={[styles.dateButtonText, !value && styles.placeholderText]}>
+          {displayText}
+        </Text>
+        <Text style={styles.calendarIcon}>📅</Text>
+        {(React.createElement as any)('input', {
+          type: 'date',
+          value: dateStr,
+          onChange: (e: any) => {
+            const v: string = e.target.value
+            if (v) {
+              const [y, mo, d] = v.split('-').map(Number)
+              onChange(new Date(y, mo - 1, d))
+            }
+          },
+          style: {
+            position: 'absolute',
+            inset: 0,
+            opacity: 0,
+            cursor: 'pointer',
+            width: '100%',
+            height: '100%',
+          },
+        })}
+      </View>
+    )
+  }
+
+  // ── Android: 네이티브 다이얼로그 ──────────────────────────────────────
+  if (Platform.OS === 'android') {
+    return (
+      <>
+        <Pressable
+          style={({ pressed }) => [
+            styles.dateButton,
+            hasError && styles.inputError,
+            pressed && styles.dateButtonPressed,
+          ]}
+          onPress={() => setShowPicker(true)}
+          accessibilityRole="button"
+          accessibilityLabel={value ? displayText : placeholder}
+        >
+          <Text style={[styles.dateButtonText, !value && styles.placeholderText]}>
+            {displayText}
+          </Text>
+          <Text style={styles.calendarIcon}>📅</Text>
+        </Pressable>
+        {showPicker && RNDateTimePicker ? (
+          <RNDateTimePicker
+            value={value ?? new Date()}
+            mode="date"
+            display="default"
+            onChange={(event: any, selectedDate?: Date) => {
+              setShowPicker(false)
+              if (event.type === 'set' && selectedDate) onChange(selectedDate)
+            }}
+          />
+        ) : null}
+      </>
+    )
+  }
+
+  // ── iOS: 하단 시트 모달 ────────────────────────────────────────────────
+  return (
+    <>
+      <Pressable
+        style={({ pressed }) => [
+          styles.dateButton,
+          hasError && styles.inputError,
+          pressed && styles.dateButtonPressed,
+        ]}
+        onPress={() => setShowPicker(true)}
+        accessibilityRole="button"
+        accessibilityLabel={value ? displayText : placeholder}
+      >
+        <Text style={[styles.dateButtonText, !value && styles.placeholderText]}>
+          {displayText}
+        </Text>
+        <Text style={styles.calendarIcon}>📅</Text>
+      </Pressable>
+
+      <Modal visible={showPicker} transparent animationType="slide">
+        <View style={styles.pickerOverlay}>
+          <View style={styles.pickerCard}>
+            <View style={styles.pickerHeader}>
+              <Pressable onPress={() => setShowPicker(false)} accessibilityRole="button">
+                <Text style={styles.pickerCancel}>취소</Text>
+              </Pressable>
+              <Text style={styles.pickerTitle}>날짜 선택</Text>
+              <Pressable onPress={() => setShowPicker(false)} accessibilityRole="button">
+                <Text style={styles.pickerDone}>완료</Text>
+              </Pressable>
+            </View>
+            {RNDateTimePicker ? (
+              <RNDateTimePicker
+                value={value ?? new Date()}
+                mode="date"
+                display="spinner"
+                onChange={(_: any, selectedDate?: Date) => {
+                  if (selectedDate) onChange(selectedDate)
+                }}
+              />
+            ) : null}
+          </View>
+        </View>
+      </Modal>
+    </>
+  )
+}
 
 // ─── 화면 ─────────────────────────────────────────────────────────────────────
 
 export default function EventFormScreen({ channelId, event, onSaved, onCancel }: Props) {
-  const isEditMode = event !== null && event !== undefined
+  const isEditMode = event != null
 
-  // ISO 문자열에서 로컬 입력용 문자열로 변환 (단순 파싱 — DatePicker 통합 전 임시)
-  const toLocalInput = (iso: string | null | undefined): string => {
-    if (!iso) return ''
-    const d = new Date(iso)
-    // "YYYY-MM-DD HH:mm" 형태
-    const pad = (n: number) => String(n).padStart(2, '0')
-    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
-  }
+  const startsInfo = splitISO(event?.starts_at)
+  const endsInfo = splitISO(event?.ends_at)
 
   const [form, setForm] = useState<FormState>({
     title: event?.title ?? '',
-    startsAt: toLocalInput(event?.starts_at),
-    endsAt: toLocalInput(event?.ends_at),
+    startsDate: startsInfo.date,
+    startsTime: startsInfo.time,
+    endsDate: endsInfo.date,
+    endsTime: endsInfo.time,
     location: event?.location ?? '',
     description: event?.description ?? '',
   })
+
   const [errors, setErrors] = useState<FormErrors>({})
   const [submitError, setSubmitError] = useState<string | null>(null)
-
   const { saving, saveEvent } = useSaveEvent()
 
   const setField = useCallback(<K extends keyof FormState>(key: K, value: FormState[K]) => {
     setForm((prev) => ({ ...prev, [key]: value }))
-    // 타이핑 중 해당 필드 에러 제거
     setErrors((prev) => {
-      if (!prev[key as keyof FormErrors]) return prev
+      const k = key as string
+      if (!(k in prev)) return prev
       const next = { ...prev }
-      delete next[key as keyof FormErrors]
+      delete (next as Record<string, unknown>)[k]
       return next
     })
   }, [])
@@ -171,41 +336,34 @@ export default function EventFormScreen({ channelId, event, onSaved, onCancel }:
       setErrors(validationErrors)
       return
     }
-
     setSubmitError(null)
 
     const payload = {
       channel_id: channelId,
       title: form.title.trim(),
       description: form.description.trim() || null,
-      starts_at: parseLocalDate(form.startsAt).toISOString(),
-      ends_at: form.endsAt.trim() ? parseLocalDate(form.endsAt).toISOString() : null,
+      starts_at: combineDateTime(form.startsDate!, form.startsTime).toISOString(),
+      ends_at: form.endsDate
+        ? combineDateTime(form.endsDate, form.endsTime).toISOString()
+        : null,
       location: form.location.trim() || null,
     }
 
     const result = await saveEvent(payload, isEditMode ? event!.id : undefined)
-
     if (!result.ok) {
       setSubmitError(result.error ?? '저장에 실패했습니다.')
       return
     }
-
     onSaved(result.id!)
   }, [form, channelId, isEditMode, event, saveEvent, onSaved])
 
   const handleCancel = useCallback(() => {
-    // 입력값이 있을 때 확인 다이얼로그
     const hasInput =
-      form.title.trim() ||
-      form.startsAt.trim() ||
-      form.location.trim() ||
-      form.description.trim()
-
+      form.title.trim() || form.startsDate || form.location.trim() || form.description.trim()
     if (!hasInput) {
       onCancel()
       return
     }
-
     if (Platform.OS === 'web') {
       if (window.confirm('작성 중인 내용이 사라집니다. 취소하시겠습니까?')) onCancel()
     } else {
@@ -217,7 +375,6 @@ export default function EventFormScreen({ channelId, event, onSaved, onCancel }:
   }, [form, onCancel])
 
   return (
-    // KeyboardAvoidingView: iOS에서 키보드가 올라올 때 스크롤 영역 보정
     <KeyboardAvoidingView
       style={styles.flex}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -229,19 +386,16 @@ export default function EventFormScreen({ channelId, event, onSaved, onCancel }:
       >
         {/* 헤더 */}
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>
-            {isEditMode ? '일정 수정' : '새 일정'}
-          </Text>
+          <Text style={styles.headerTitle}>{isEditMode ? '일정 수정' : '새 일정'}</Text>
         </View>
 
-        {/* 전체 저장 에러 */}
-        {submitError && (
+        {/* 저장 오류 */}
+        {submitError ? (
           <View style={styles.submitErrorBox}>
             <Text style={styles.submitErrorText}>{submitError}</Text>
           </View>
-        )}
+        ) : null}
 
-        {/* 폼 필드들 */}
         <View style={styles.form}>
           {/* 제목 */}
           <Field label="제목" required error={errors.title}>
@@ -257,33 +411,74 @@ export default function EventFormScreen({ channelId, event, onSaved, onCancel }:
             />
           </Field>
 
-          {/* 시작 일시 */}
-          <Field label="시작 일시" required error={errors.startsAt}>
+          {/* 시작 날짜 + 시간 */}
+          <Field
+            label="시작"
+            required
+            error={errors.startsDate ?? errors.startsTime}
+          >
+            <DatePickerField
+              value={form.startsDate}
+              onChange={(d) => setField('startsDate', d)}
+              placeholder="날짜 선택"
+              hasError={!!errors.startsDate}
+            />
             <TextInput
-              style={[styles.input, errors.startsAt && styles.inputError]}
-              value={form.startsAt}
-              onChangeText={(v) => setField('startsAt', v)}
-              placeholder={DATE_PLACEHOLDER}
+              style={[styles.input, errors.startsTime && styles.inputError]}
+              value={form.startsTime}
+              onChangeText={(v) => setField('startsTime', v)}
+              placeholder="시간 (예: 14:30)"
               placeholderTextColor={colors.textSecondary}
               keyboardType="numbers-and-punctuation"
-              returnKeyType="next"
-              accessibilityLabel="시작 일시"
+              maxLength={5}
+              accessibilityLabel="시작 시간"
             />
           </Field>
 
-          {/* 종료 일시 */}
-          <Field label="종료 일시" error={errors.endsAt}>
-            <TextInput
-              style={[styles.input, errors.endsAt && styles.inputError]}
-              value={form.endsAt}
-              onChangeText={(v) => setField('endsAt', v)}
-              placeholder={DATE_PLACEHOLDER + ' (선택)'}
-              placeholderTextColor={colors.textSecondary}
-              keyboardType="numbers-and-punctuation"
-              returnKeyType="next"
-              accessibilityLabel="종료 일시 (선택)"
-            />
-          </Field>
+          {/* 종료 날짜 + 시간 (선택) */}
+          {form.endsDate ? (
+            <Field label="종료" error={errors.endsDate ?? errors.endsTime}>
+              <View style={styles.endsRow}>
+                <View style={styles.endsDateWrap}>
+                  <DatePickerField
+                    value={form.endsDate}
+                    onChange={(d) => setField('endsDate', d)}
+                    placeholder="날짜 선택"
+                    hasError={!!errors.endsDate}
+                  />
+                </View>
+                <Pressable
+                  style={styles.clearEndButton}
+                  onPress={() => {
+                    setField('endsDate', null)
+                    setField('endsTime', '')
+                  }}
+                  accessibilityRole="button"
+                  accessibilityLabel="종료 일시 제거"
+                >
+                  <Text style={styles.clearEndText}>✕</Text>
+                </Pressable>
+              </View>
+              <TextInput
+                style={[styles.input, errors.endsTime && styles.inputError]}
+                value={form.endsTime}
+                onChangeText={(v) => setField('endsTime', v)}
+                placeholder="시간 (예: 16:00)"
+                placeholderTextColor={colors.textSecondary}
+                keyboardType="numbers-and-punctuation"
+                maxLength={5}
+                accessibilityLabel="종료 시간"
+              />
+            </Field>
+          ) : (
+            <Pressable
+              style={({ pressed }) => [styles.addEndButton, pressed && styles.addEndButtonPressed]}
+              onPress={() => setField('endsDate', form.startsDate ?? new Date())}
+              accessibilityRole="button"
+            >
+              <Text style={styles.addEndButtonText}>+ 종료 일시 추가</Text>
+            </Pressable>
+          )}
 
           {/* 장소 */}
           <Field label="장소">
@@ -324,11 +519,9 @@ export default function EventFormScreen({ channelId, event, onSaved, onCancel }:
             onPress={handleCancel}
             disabled={saving}
             accessibilityRole="button"
-            accessibilityLabel="취소"
           >
             <Text style={styles.cancelButtonText}>취소</Text>
           </Pressable>
-
           <Pressable
             style={({ pressed }) => [
               styles.saveButton,
@@ -338,7 +531,6 @@ export default function EventFormScreen({ channelId, event, onSaved, onCancel }:
             onPress={handleSubmit}
             disabled={saving}
             accessibilityRole="button"
-            accessibilityLabel={isEditMode ? '수정 완료' : '일정 저장'}
           >
             {saving ? (
               <ActivityIndicator size="small" color="#fff" />
@@ -357,34 +549,20 @@ export default function EventFormScreen({ channelId, event, onSaved, onCancel }:
 // ─── 스타일 ───────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
-  flex: {
-    flex: 1,
-  },
-  container: {
-    flex: 1,
-    backgroundColor: colors.surfaceSecondary,
-  },
+  flex: { flex: 1 },
+  container: { flex: 1, backgroundColor: colors.surfaceSecondary },
   content: {
     padding: spacing.md,
     gap: spacing.md,
-    // Web에서 최대 너비 제한 (가독성)
     ...Platform.select({
-      web: { maxWidth: 640, alignSelf: 'center', width: '100%' },
+      web: { maxWidth: 640, alignSelf: 'center', width: '100%' } as object,
       default: {},
     }),
   },
 
-  // 헤더
-  header: {
-    paddingVertical: spacing.sm,
-  },
-  headerTitle: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: colors.textPrimary,
-  },
+  header: { paddingVertical: spacing.sm },
+  headerTitle: { fontSize: 22, fontWeight: '700', color: colors.textPrimary },
 
-  // 에러 배너
   submitErrorBox: {
     backgroundColor: '#fef2f2',
     borderRadius: radius.md,
@@ -392,19 +570,15 @@ const styles = StyleSheet.create({
     borderLeftWidth: 4,
     borderLeftColor: colors.error,
   },
-  submitErrorText: {
-    color: colors.error,
-    fontSize: 14,
-  },
+  submitErrorText: { color: colors.error, fontSize: 14 },
 
-  // 폼
   form: {
     backgroundColor: colors.surface,
     borderRadius: radius.lg,
     padding: spacing.md,
     gap: spacing.md,
     ...Platform.select({
-      web: { boxShadow: '0 1px 4px rgba(0,0,0,0.08)' },
+      web: { boxShadow: '0 1px 4px rgba(0,0,0,0.08)' } as object,
       default: {
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 1 },
@@ -415,7 +589,7 @@ const styles = StyleSheet.create({
     }),
   },
 
-  // 입력 필드
+  // 텍스트 입력
   input: {
     borderWidth: 1,
     borderColor: colors.border,
@@ -425,31 +599,88 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: colors.textPrimary,
     backgroundColor: colors.surfaceSecondary,
-    // Web에서 outline 제거
     ...Platform.select({
       web: { outlineStyle: 'none' } as object,
       default: {},
     }),
   },
-  inputError: {
-    borderColor: colors.error,
-  },
-  textArea: {
-    height: 100,
-    paddingTop: spacing.sm,
-  },
-  charCount: {
-    fontSize: 11,
-    color: colors.textSecondary,
-    textAlign: 'right',
-  },
+  inputError: { borderColor: colors.error },
+  textArea: { height: 100, paddingTop: spacing.sm },
+  charCount: { fontSize: 11, color: colors.textSecondary, textAlign: 'right' },
 
-  // 버튼 행
-  buttonRow: {
+  // 날짜 버튼
+  dateButton: {
     flexDirection: 'row',
-    gap: spacing.sm,
-    marginTop: spacing.sm,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.sm,
+    paddingHorizontal: spacing.md,
+    paddingVertical: Platform.OS === 'ios' ? spacing.sm + 2 : spacing.sm,
+    backgroundColor: colors.surfaceSecondary,
   },
+  dateButtonPressed: { opacity: 0.7 },
+  dateButtonText: { fontSize: 15, color: colors.textPrimary, flex: 1 },
+  placeholderText: { color: colors.textSecondary },
+  calendarIcon: { fontSize: 16, marginLeft: spacing.sm },
+
+  // 종료 일시
+  endsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  endsDateWrap: { flex: 1 },
+  clearEndButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  clearEndText: { fontSize: 13, color: colors.textSecondary, fontWeight: '600' },
+
+  // 종료 일시 추가 버튼
+  addEndButton: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs + 2,
+    borderRadius: radius.full,
+    borderWidth: 1.5,
+    borderColor: colors.primary,
+  },
+  addEndButtonPressed: { opacity: 0.7 },
+  addEndButtonText: { fontSize: 13, color: colors.primary, fontWeight: '600' },
+
+  // iOS 날짜 피커 모달
+  pickerOverlay: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0,0,0,0.4)',
+  },
+  pickerCard: {
+    backgroundColor: colors.surface,
+    borderTopLeftRadius: radius.lg,
+    borderTopRightRadius: radius.lg,
+    paddingBottom: spacing.xl,
+  },
+  pickerHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.border,
+  },
+  pickerTitle: { fontSize: 16, fontWeight: '600', color: colors.textPrimary },
+  pickerCancel: { fontSize: 15, color: colors.textSecondary },
+  pickerDone: { fontSize: 15, fontWeight: '600', color: colors.primary },
+
+  // 하단 버튼
+  buttonRow: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.sm },
   cancelButton: {
     flex: 1,
     paddingVertical: spacing.sm + 2,
@@ -458,14 +689,8 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     alignItems: 'center',
   },
-  cancelButtonPressed: {
-    backgroundColor: colors.border,
-  },
-  cancelButtonText: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: colors.textSecondary,
-  },
+  cancelButtonPressed: { backgroundColor: colors.border },
+  cancelButtonText: { fontSize: 15, fontWeight: '600', color: colors.textSecondary },
   saveButton: {
     flex: 2,
     paddingVertical: spacing.sm + 2,
@@ -474,15 +699,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  saveButtonPressed: {
-    backgroundColor: colors.primaryDark,
-  },
-  saveButtonDisabled: {
-    opacity: 0.6,
-  },
-  saveButtonText: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#fff',
-  },
+  saveButtonPressed: { backgroundColor: colors.primaryDark },
+  saveButtonDisabled: { opacity: 0.6 },
+  saveButtonText: { fontSize: 15, fontWeight: '700', color: '#fff' },
 })

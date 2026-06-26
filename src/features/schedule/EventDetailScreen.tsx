@@ -26,8 +26,6 @@ interface Props {
   eventId: string
   /** 현재 로그인 사용자 ID */
   currentUserId: string
-  /** 현재 방 방장 ID */
-  channelOwnerId: string
   /** 수정 화면으로 이동 */
   onPressEdit: (eventId: string) => void
   /** 삭제 후 목록으로 돌아감 */
@@ -118,7 +116,6 @@ function ResponseButtons({ myStatus, submitting, onSelect }: ResponseButtonsProp
 export default function EventDetailScreen({
   eventId,
   currentUserId,
-  channelOwnerId,
   onPressEdit,
   onDeleted,
   onBack,
@@ -129,9 +126,7 @@ export default function EventDetailScreen({
   const [submitting, setSubmitting] = useState(false)
   const [responseError, setResponseError] = useState<string | null>(null)
 
-  const isOwnerOrAuthor =
-    event !== null &&
-    (event.created_by === currentUserId || channelOwnerId === currentUserId)
+  const isAuthor = event !== null && event.created_by === currentUserId
 
   const handleResponse = useCallback(
     async (status: ResponseStatus) => {
@@ -209,7 +204,7 @@ export default function EventDetailScreen({
       {/* 제목 + 수정/삭제 */}
       <View style={styles.titleRow}>
         <Text style={styles.title}>{event.title}</Text>
-        {isOwnerOrAuthor && (
+        {isAuthor && (
           <View style={styles.actionRow}>
             <Pressable
               style={({ pressed }) => [styles.actionButton, pressed && styles.actionButtonPressed]}

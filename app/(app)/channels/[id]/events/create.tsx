@@ -3,10 +3,7 @@ import { useAuth } from '../../../../../src/features/auth/useAuth'
 import { EventFormScreen } from '../../../../../src/features/schedule'
 
 export default function EventCreatePage() {
-  const { id: channelId, channelOwnerId = '' } = useLocalSearchParams<{
-    id: string
-    channelOwnerId?: string
-  }>()
+  const { id: channelId } = useLocalSearchParams<{ id: string }>()
   const router = useRouter()
   const { session } = useAuth()
 
@@ -18,7 +15,7 @@ export default function EventCreatePage() {
       onSaved={(eventId) =>
         router.replace({
           pathname: '/(app)/channels/[id]/events/[eventId]/detail',
-          params: { id: channelId, eventId, channelOwnerId },
+          params: { id: channelId, eventId },
         })
       }
       onCancel={() => router.back()}
