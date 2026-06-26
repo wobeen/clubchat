@@ -8,7 +8,8 @@
 
 ## 1. 프로젝트 개요
 
-- **무엇**: 학교 동아리·소모임을 위한 업무용 메신저
+- **무엇**: 학교 동아리·소모임을 위한 올인원 협업 공간. 위키(동아리·방 홈페이지) + 채팅 + 일정을 하나의 앱에서.
+- **UX 골격**: 마이 페이지(내 동아리 목록) → 동아리 홈페이지(위키 + 스터디 방 목록) → 스터디 방 홈페이지(위키 + 채팅)
 - **핵심 원칙**: 보안 우선. "이 사용자가 이 데이터를 볼 수 있는가"는 항상 서버(RLS)에서 강제한다. 클라이언트를 신뢰하지 않는다.
 - **암호화 정책**: 전송구간 TLS + 저장 시 암호화 + 엄격한 RLS. **종단간 암호화(E2EE)는 도입하지 않는다.**
 - **배포**: 내부 배포 (TestFlight / APK 직접 배포 / PWA)
@@ -42,10 +43,15 @@
 | `push_tokens` | id, user_id, expo_push_token, device_info, updated_at | 푸시 토큰 |
 | `events` | id(PK), channel_id(↔channels), title, description(nullable), starts_at, ends_at(nullable), location(nullable), created_by(↔profiles), created_at, updated_at | 일정 |
 | `event_responses` | id(PK), event_id(↔events), user_id(↔profiles), status('going'\|'not_going'\|'maybe'), responded_at, **unique(event_id,user_id)** | 참석 응답 |
+| `pages` | id(PK), owner_type('club'\|'channel'), owner_id(uuid), title(nullable), blocks(jsonb, 블록 배열), created_by(↔profiles), created_at, updated_at, **unique(owner_type,owner_id)** | 동아리·방 홈페이지 위키 |
 
 **읽음표시**는 메시지마다 행을 만들지 않고 `channel_reads.last_read_at` 포인터 1개로 처리한다(소규모 효율).
 
 **일정**: `events(channel_id, starts_at)` 인덱스로 방별 시간순 조회. 일정 삭제 시 `event_responses`는 ON DELETE CASCADE로 함께 삭제.
+
+**위키 페이지**: 동아리당·방당 1개 페이지(unique). `blocks` 배열은 `{ type, content, ... }` 형태의 JSON 블록을 순서대로 저장한다.
+블록 타입: `heading1`, `heading2`, `paragraph`, `image`(storage_path·caption), `link`(url·title·description), `divider`.
+페이지가 없으면 빈 상태로 "편집 시작" CTA를 표시하고, 첫 편집 시 INSERT 한다.
 
 ## 4. 보안 모델 (계약)
 
@@ -63,10 +69,44 @@
 - `event_responses` SELECT: 그 일정이 속한 방의 멤버만.
 - `event_responses` INSERT/UPDATE/DELETE: 본인 응답만(`user_id = auth.uid()`). 타인의 응답 변경 불가.
 
+**위키 페이지 RLS**
+- `pages` SELECT:
+  - `owner_type='club'` → 해당 club의 `memberships`에 속한 사용자만.
+  - `owner_type='channel'` → 해당 channel의 `channel_members`에 속한 사용자만.
+- `pages` INSERT: owner_type별 멤버만. `created_by`는 `auth.uid()`로 강제.
+- `pages` UPDATE: 동아리 페이지는 `memberships.role IN ('owner','admin')`만. 방 페이지는 `channels.owner_id = auth.uid()` 또는 방 소속 admin만.
+- `pages` DELETE: UPDATE와 동일 조건.
+
 ## 5. 기능 범위
 
-**MVP (1차)**: 구글 로그인, 동아리 생성/가입, 방 생성(방장), 초대 링크·QR·비밀번호 입장, 1:1·그룹 텍스트 채팅(실시간), 읽음표시, 푸시 알림, 일정 생성·수정·삭제(방장/작성자), 일정 목록·상세 조회, 참석/불참/미정 응답 및 집계.
-**2차**: 파일·이미지 공유, 온라인/입력중 표시, 메시지 검색, 일정 시작 전 푸시 알림, 반복 일정, 캘린더 뷰(월/주), 외부 캘린더(iCal) 내보내기.
+**화면 흐름 (네비게이션 구조)**
+```
+로그인
+  └─ 마이 페이지 (/(app)/index)
+       ├─ 내 동아리 카드 목록
+       ├─ "+" 버튼 → 초대 코드 입력 → 동아리 가입
+       └─ 동아리 카드 탭 → 동아리 홈페이지 (/(app)/clubs/[id]/home)
+            ├─ 동아리 위키 (블록 에디터, admin/owner만 편집)
+            ├─ 스터디 방 목록 (기존 channels)
+            └─ 스터디 방 탭 → 스터디 방 홈페이지 (/(app)/channels/[id]/home)
+                 ├─ 방 위키 (블록 에디터, 방장만 편집)
+                 ├─ "채팅" 버튼 → 채팅 화면 (/(app)/channels/[id]/chat)
+                 └─ "일정" 버튼 → 일정 목록 (/(app)/channels/[id]/events/list)
+```
+
+**완료된 기능**: 구글 로그인, 동아리 생성/가입, 방 생성, 초대 링크·QR·비밀번호 입장, 실시간 텍스트 채팅, 파일·이미지 공유, 읽음표시, 입력중 표시(Presence), 메시지 검색, 일정 CRUD + 참석 응답, PWA 설정.
+
+**구현 예정 (6단계)**:
+- 마이 페이지 UX 개편: 동아리 카드 그리드, "+" 버튼 → 초대 코드 입력 모달(현재 별도 화면 → 인라인)
+- 동아리 홈페이지(`clubs/[id]/home`): 블록 에디터 위키 + 하단 스터디 방 목록
+- 스터디 방 홈페이지(`channels/[id]/home`): 블록 에디터 위키 + 채팅·일정 바로가기 버튼
+- 블록 에디터: H1/H2/본문 텍스트, 이미지(Storage), 링크 카드, 구분선. 인라인 툴바.
+
+**구현 예정 (7단계)**:
+- 메시지 수정·삭제 UI, 프로필 편집(이름·아바타), 방 퇴장·동아리 탈퇴
+- 앱 전반 UX 완성도: 빈 상태, 에러 처리, 로딩 스켈레톤
+
+**2차(이후)**: 일정 시작 전 푸시 알림, 반복 일정, 캘린더 뷰(월/주), 외부 캘린더(iCal) 내보내기, 온라인 표시.
 **범위 밖(현재)**: E2EE, 일정별 첨부파일, 화상회의 링크 자동 생성.
 **음성·영상 통화**: 직접 구현하지 않는다. 추후 Daily.co / Livekit 등 외부 서비스 임베드 방식으로 도입 예정. WebRTC 자체 운영(시그널링·TURN 서버)은 하지 않는다.
 
@@ -90,13 +130,16 @@
 
 ## 8. 빌드 로드맵
 
-0. **셋업**: 레포, Expo 초기화, Supabase Cloud 프로젝트, 이 CLAUDE.md + 에이전트 정의, 구글 OAuth 설정
-1. **인증·조직**: 구글 로그인, 프로필, 동아리 생성/가입/역할
-2. **방·메시징**: 방 생성, 초대 토큰/QR/비밀번호 입장, 실시간 텍스트 채팅
-3. **읽음·푸시**: `channel_reads` 포인터, Expo Push 연동
-4. **파일·이미지**: Storage 버킷, 업로드/미리보기, 서명 URL
-5. **프레즌스·마무리**: 온라인/입력중, 검색, 데스크톱 PWA 패키징
-6. **운영 이전**: OCI A1에 Supabase 셀프호스팅 마이그레이션, TLS·백업·방화벽 하드닝, 내부 배포(EAS/APK/TestFlight)
+0. **셋업** ✅: 레포, Expo 초기화, Supabase Cloud 프로젝트, 이 CLAUDE.md + 에이전트 정의, 구글 OAuth 설정
+1. **인증·조직** ✅: 구글 로그인, 프로필, 동아리 생성/가입/역할
+2. **방·메시징** ✅: 방 생성, 초대 토큰/QR/비밀번호 입장, 실시간 텍스트 채팅
+3. **읽음·파일** ✅: `channel_reads` 포인터, Storage 버킷·업로드·서명 URL
+4. **일정** ✅: 일정 CRUD, 참석 응답 집계, 일정 RLS
+5. **프레즌스·검색·PWA** ✅: 입력중 표시(Realtime Presence), 메시지 전문 검색, 데스크톱 PWA 패키징
+6. **위키 홈페이지**: `pages` 테이블 + RLS, 블록 에디터 컴포넌트(H1/H2/본문/이미지/링크/구분선), 동아리 홈(`clubs/[id]/home`) + 스터디 방 홈(`channels/[id]/home`), 마이 페이지 UX 개편(카드 그리드 + "+" 모달)
+7. **배포 전 필수기능**: 메시지 수정·삭제 UI, 프로필 편집(이름·아바타), 방 퇴장·동아리 탈퇴, 앱 전반 UX 완성도(빈 상태·에러 처리·로딩 스켈레톤)
+8. **운영 이전**: OCI A1에 Supabase 셀프호스팅 마이그레이션, TLS·백업·방화벽 하드닝
+9. **모바일 배포 + 푸시**: EAS Build로 TestFlight(iOS)/APK(Android) 배포, Expo Push 알림 Edge Function 연동, 딥링크 처리
 
 ## 9. OCI 셀프호스팅 메모 (6단계용)
 
