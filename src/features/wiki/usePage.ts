@@ -17,6 +17,12 @@ export function usePage(scope: PageScope): UsePageResult {
   const [error, setError] = useState<string | null>(null)
 
   const fetchPage = useCallback(async () => {
+    const roomId = scope.type === 'room' ? scope.roomId : undefined
+    if (!scope.clubId || (scope.type === 'room' && !roomId)) {
+      setLoading(false)
+      return
+    }
+
     setLoading(true)
     setError(null)
 
