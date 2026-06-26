@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Modal, Platform, Pressable, StyleSheet, Text, View } from 'react-native'
+import { Platform, Pressable, StyleSheet, Text, View } from 'react-native'
 import DateTimePicker from '@react-native-community/datetimepicker'
 import { colors, formatDateDisplay, radius, spacing } from './scheduleUtils'
 
@@ -26,7 +26,7 @@ export function DatePickerField({ value, onChange, placeholder, hasError }: Date
           ]}
           onPress={() => setShowPicker(true)}
           accessibilityRole="button"
-          accessibilityLabel={value ? displayText : placeholder}
+          accessibilityLabel={displayText}
         >
           <Text style={[styles.dateButtonText, !value && styles.placeholderText]}>
             {displayText}
@@ -37,7 +37,7 @@ export function DatePickerField({ value, onChange, placeholder, hasError }: Date
           <DateTimePicker
             value={value ?? new Date()}
             mode="date"
-            display="default"
+            display="calendar"
             onChange={(event, selectedDate) => {
               setShowPicker(false)
               if (event.type === 'set' && selectedDate) onChange(selectedDate)
@@ -48,49 +48,43 @@ export function DatePickerField({ value, onChange, placeholder, hasError }: Date
     )
   }
 
-  // ── iOS: 하단 시트 모달 ────────────────────────────────────────────────
+  // ── iOS: 버튼 아래 인라인 달력 (Modal 없음, 선택 즉시 닫힘) ──────────
   return (
-    <>
+    <View>
       <Pressable
         style={({ pressed }) => [
           styles.dateButton,
           hasError && styles.inputError,
           pressed && styles.dateButtonPressed,
+          showPicker && styles.dateButtonActive,
         ]}
-        onPress={() => setShowPicker(true)}
+        onPress={() => setShowPicker((v) => !v)}
         accessibilityRole="button"
-        accessibilityLabel={value ? displayText : placeholder}
+        accessibilityLabel={displayText}
       >
         <Text style={[styles.dateButtonText, !value && styles.placeholderText]}>
           {displayText}
         </Text>
-        <Text style={styles.calendarIcon}>📅</Text>
+        <Text style={styles.calendarIcon}>{showPicker ? '▲' : '📅'}</Text>
       </Pressable>
 
-      <Modal visible={showPicker} transparent animationType="slide">
-        <View style={styles.pickerOverlay}>
-          <View style={styles.pickerCard}>
-            <View style={styles.pickerHeader}>
-              <Pressable onPress={() => setShowPicker(false)} accessibilityRole="button">
-                <Text style={styles.pickerCancel}>취소</Text>
-              </Pressable>
-              <Text style={styles.pickerTitle}>날짜 선택</Text>
-              <Pressable onPress={() => setShowPicker(false)} accessibilityRole="button">
-                <Text style={styles.pickerDone}>완료</Text>
-              </Pressable>
-            </View>
-            <DateTimePicker
-              value={value ?? new Date()}
-              mode="date"
-              display="spinner"
-              onChange={(_, selectedDate) => {
-                if (selectedDate) onChange(selectedDate)
-              }}
-            />
-          </View>
+      {showPicker && (
+        <View style={styles.inlinePickerWrap}>
+          <DateTimePicker
+            value={value ?? new Date()}
+            mode="date"
+            display="inline"
+            onChange={(_, selectedDate) => {
+              if (selectedDate) {
+                onChange(selectedDate)
+                setShowPicker(false)
+              }
+            }}
+            style={styles.inlinePicker}
+          />
         </View>
-      </Modal>
-    </>
+      )}
+    </View>
   )
 }
 
@@ -107,32 +101,21 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surfaceSecondary,
   },
   dateButtonPressed: { opacity: 0.7 },
+  dateButtonActive: { borderColor: colors.primary },
   inputError: { borderColor: colors.error },
   dateButtonText: { fontSize: 15, color: colors.textPrimary, flex: 1 },
   placeholderText: { color: colors.textSecondary },
   calendarIcon: { fontSize: 16, marginLeft: spacing.sm },
 
-  pickerOverlay: {
-    flex: 1,
-    justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0,0,0,0.4)',
-  },
-  pickerCard: {
+  inlinePickerWrap: {
+    marginTop: spacing.xs,
+    borderRadius: radius.md,
+    overflow: 'hidden',
     backgroundColor: colors.surface,
-    borderTopLeftRadius: radius.lg,
-    borderTopRightRadius: radius.lg,
-    paddingBottom: spacing.xl,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
-  pickerHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.border,
+  inlinePicker: {
+    backgroundColor: colors.surface,
   },
-  pickerTitle: { fontSize: 16, fontWeight: '600', color: colors.textPrimary },
-  pickerCancel: { fontSize: 15, color: colors.textSecondary },
-  pickerDone: { fontSize: 15, fontWeight: '600', color: colors.primary },
 })
