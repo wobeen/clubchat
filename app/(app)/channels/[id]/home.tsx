@@ -9,8 +9,10 @@ import {
 } from 'react-native'
 import { useFocusEffect, useLocalSearchParams, useNavigation, useRouter } from 'expo-router'
 import { supabase } from '../../../../src/lib/supabase'
+import { useAuth } from '../../../../src/features/auth/useAuth'
 import { usePage } from '../../../../src/features/wiki/usePage'
 import { WikiViewer } from '../../../../src/features/wiki/WikiViewer'
+import { WikiEditor } from '../../../../src/features/wiki/WikiEditor'
 
 interface ChannelInfo {
   id: string
@@ -23,11 +25,13 @@ type LoadState = 'loading' | 'error' | 'ready'
 
 export default function ChannelHomeScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
+  const { session } = useAuth()
   const router = useRouter()
   const navigation = useNavigation()
   const [loadState, setLoadState] = useState<LoadState>('loading')
   const [channel, setChannel] = useState<ChannelInfo | null>(null)
   const [errorMsg, setErrorMsg] = useState('')
+  const [wikiEditorOpen, setWikiEditorOpen] = useState(false)
 
   useFocusEffect(
     useCallback(() => {
@@ -60,11 +64,12 @@ export default function ChannelHomeScreen() {
     }, [id])
   )
 
-  const { page: wikiPage, refresh: refreshWiki } = usePage(
-    channel
-      ? { type: 'room', clubId: channel.club_id, roomId: channel.id }
-      : { type: 'room', clubId: '', roomId: '' }
-  )
+  const wikiScope = channel
+    ? { type: 'room' as const, clubId: channel.club_id, roomId: channel.id }
+    : { type: 'room' as const, clubId: '', roomId: '' }
+  const { page: wikiPage, refresh: refreshWiki } = usePage(wikiScope)
+
+  const isChannelOwner = !!session?.user && channel?.owner_id === session.user.id
 
   if (loadState === 'loading') {
     return (
@@ -84,9 +89,29 @@ export default function ChannelHomeScreen() {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      <WikiEditor
+        visible={wikiEditorOpen}
+        scope={wikiScope}
+        existingPage={wikiPage}
+        onClose={() => setWikiEditorOpen(false)}
+        onSaved={refreshWiki}
+      />
+
       {/* 위키 */}
       <View style={styles.wikiCard}>
         <WikiViewer content={wikiPage?.content ?? ''} />
+        {isChannelOwner && (
+          <Pressable
+            onPress={() => setWikiEditorOpen(true)}
+            style={({ pressed }) => [styles.editWikiBtn, pressed && styles.pressed]}
+            accessibilityRole="button"
+            accessibilityLabel="위키 편집"
+          >
+            <Text style={styles.editWikiBtnText}>
+              {wikiPage ? '편집' : '위키 작성 시작'}
+            </Text>
+          </Pressable>
+        )}
       </View>
 
       {/* 채팅 / 일정 진입 버튼 */}
@@ -172,6 +197,21 @@ const styles = StyleSheet.create({
   },
   pressed: {
     opacity: 0.7,
+  },
+  editWikiBtn: {
+    alignSelf: 'flex-end',
+    marginTop: 10,
+    paddingVertical: 6,
+    paddingHorizontal: 14,
+    borderRadius: 8,
+    backgroundColor: '#F3F4F6',
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
+  },
+  editWikiBtnText: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: '#374151',
   },
   errorText: {
     fontSize: 15,

@@ -14,6 +14,7 @@ import { useAuth } from '../../../src/features/auth/useAuth'
 import { Database } from '../../../src/types/supabase'
 import { usePage } from '../../../src/features/wiki/usePage'
 import { WikiViewer } from '../../../src/features/wiki/WikiViewer'
+import { WikiEditor } from '../../../src/features/wiki/WikiEditor'
 
 type MemberRole = 'owner' | 'admin' | 'member'
 
@@ -112,9 +113,9 @@ export default function ClubDetailScreen() {
   const [state, setState] = useState<PageState>({ status: 'loading' })
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({})
 
-  const { page: wikiPage, refresh: refreshWiki } = usePage(
-    id ? { type: 'club', clubId: id } : { type: 'club', clubId: '' }
-  )
+  const [wikiEditorOpen, setWikiEditorOpen] = useState(false)
+  const wikiScope = id ? { type: 'club' as const, clubId: id } : { type: 'club' as const, clubId: '' }
+  const { page: wikiPage, refresh: refreshWiki } = usePage(wikiScope)
 
   useFocusEffect(
     useCallback(() => {
@@ -273,6 +274,13 @@ export default function ClubDetailScreen() {
 
   return (
     <View style={styles.container}>
+      <WikiEditor
+        visible={wikiEditorOpen}
+        scope={wikiScope}
+        existingPage={wikiPage}
+        onClose={() => setWikiEditorOpen(false)}
+        onSaved={refreshWiki}
+      />
       <FlatList
         data={channels}
         keyExtractor={(item) => item.id}
@@ -303,6 +311,18 @@ export default function ClubDetailScreen() {
             {/* 동아리 위키 */}
             <View style={styles.wikiSection}>
               <WikiViewer content={wikiPage?.content ?? ''} />
+              {(myRole === 'owner' || myRole === 'admin') && (
+                <Pressable
+                  onPress={() => setWikiEditorOpen(true)}
+                  style={({ pressed }) => [styles.editWikiBtn, pressed && styles.pressedOpacity]}
+                  accessibilityRole="button"
+                  accessibilityLabel="위키 편집"
+                >
+                  <Text style={styles.editWikiBtnText}>
+                    {wikiPage ? '편집' : '위키 작성 시작'}
+                  </Text>
+                </Pressable>
+              )}
             </View>
 
             <Text style={styles.listHeaderSubtitle}>방 목록</Text>
@@ -387,6 +407,21 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     marginTop: 2,
     marginBottom: 4,
+  },
+  editWikiBtn: {
+    alignSelf: 'flex-end',
+    marginTop: 10,
+    paddingVertical: 6,
+    paddingHorizontal: 14,
+    borderRadius: 8,
+    backgroundColor: '#F3F4F6',
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
+  },
+  editWikiBtnText: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: '#374151',
   },
   channelCard: {
     backgroundColor: '#FFFFFF',
