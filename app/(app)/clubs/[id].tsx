@@ -12,6 +12,8 @@ import { useFocusEffect, useLocalSearchParams, useNavigation, useRouter } from '
 import { supabase } from '../../../src/lib/supabase'
 import { useAuth } from '../../../src/features/auth/useAuth'
 import { Database } from '../../../src/types/supabase'
+import { usePage } from '../../../src/features/wiki/usePage'
+import { WikiViewer } from '../../../src/features/wiki/WikiViewer'
 
 type MemberRole = 'owner' | 'admin' | 'member'
 
@@ -109,6 +111,10 @@ export default function ClubDetailScreen() {
   const navigation = useNavigation()
   const [state, setState] = useState<PageState>({ status: 'loading' })
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({})
+
+  const { page: wikiPage, refresh: refreshWiki } = usePage(
+    id ? { type: 'club', clubId: id } : { type: 'club', clubId: '' }
+  )
 
   useFocusEffect(
     useCallback(() => {
@@ -293,6 +299,12 @@ export default function ClubDetailScreen() {
         ListHeaderComponent={
           <View style={styles.listHeader}>
             <Text style={styles.listHeaderTitle}>{clubName}</Text>
+
+            {/* 동아리 위키 */}
+            <View style={styles.wikiSection}>
+              <WikiViewer content={wikiPage?.content ?? ''} />
+            </View>
+
             <Text style={styles.listHeaderSubtitle}>방 목록</Text>
           </View>
         }
@@ -357,11 +369,24 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: '700',
     color: '#1A1A1A',
+    marginBottom: 12,
+  },
+  wikiSection: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
+    padding: 16,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   listHeaderSubtitle: {
     fontSize: 14,
     color: '#6B7280',
     marginTop: 2,
+    marginBottom: 4,
   },
   channelCard: {
     backgroundColor: '#FFFFFF',
