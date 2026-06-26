@@ -229,8 +229,8 @@ export default function ClubDetailScreen() {
 
   function handleOpenChannel(channel: ChannelItem) {
     router.push({
-      pathname: '/(app)/channels/[id]/chat',
-      params: { id: channel.id, channelName: channel.name },
+      pathname: '/(app)/channels/[id]/home',
+      params: { id: channel.id, channelName: channel.name, clubId: id },
     })
   }
 
