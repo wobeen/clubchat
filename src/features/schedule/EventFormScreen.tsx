@@ -3,7 +3,6 @@ import {
   ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
-  Modal,
   Platform,
   Pressable,
   ScrollView,
@@ -14,13 +13,8 @@ import {
 } from 'react-native'
 import { useSaveEvent } from './useEvents'
 import { colors, radius, spacing } from './scheduleUtils'
+import { DatePickerField } from './DatePickerField'
 import type { Event } from './types'
-
-// DateTimePicker는 웹에서 사용 불가 — native에서만 동적 require
-const RNDateTimePicker: React.ComponentType<any> | null =
-  Platform.OS !== 'web'
-    ? require('@react-native-community/datetimepicker').default
-    : null
 
 // ─── 날짜/시간 헬퍼 ──────────────────────────────────────────────────────────
 
@@ -45,22 +39,6 @@ function combineDateTime(date: Date, timeStr: string): Date {
   const result = new Date(date)
   result.setHours(parsed?.hh ?? 0, parsed?.mm ?? 0, 0, 0)
   return result
-}
-
-function toDateInputStr(d: Date): string {
-  const y = d.getFullYear()
-  const m = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  return `${y}-${m}-${day}`
-}
-
-function formatDateDisplay(d: Date): string {
-  return new Intl.DateTimeFormat('ko-KR', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    weekday: 'short',
-  }).format(d)
 }
 
 // ─── Props ────────────────────────────────────────────────────────────────────
@@ -160,142 +138,6 @@ const fieldStyles = StyleSheet.create({
   required: { color: colors.error, fontSize: 13, fontWeight: '600' },
   error: { fontSize: 12, color: colors.error },
 })
-
-// ─── 날짜 선택 버튼 (크로스플랫폼) ──────────────────────────────────────────
-
-function DatePickerField({
-  value,
-  onChange,
-  placeholder,
-  hasError,
-}: {
-  value: Date | null
-  onChange: (date: Date) => void
-  placeholder: string
-  hasError?: boolean
-}) {
-  const [showPicker, setShowPicker] = useState(false)
-  const displayText = value ? formatDateDisplay(value) : placeholder
-
-  // ── 웹: 투명 HTML date input 오버레이 ──────────────────────────────────
-  if (Platform.OS === 'web') {
-    const dateStr = value ? toDateInputStr(value) : ''
-    return (
-      <View
-        style={[
-          styles.dateButton,
-          hasError && styles.inputError,
-          { position: 'relative', overflow: 'hidden' } as object,
-        ]}
-      >
-        <Text style={[styles.dateButtonText, !value && styles.placeholderText]}>
-          {displayText}
-        </Text>
-        <Text style={styles.calendarIcon}>📅</Text>
-        {(React.createElement as any)('input', {
-          type: 'date',
-          value: dateStr,
-          onChange: (e: any) => {
-            const v: string = e.target.value
-            if (v) {
-              const [y, mo, d] = v.split('-').map(Number)
-              onChange(new Date(y, mo - 1, d))
-            }
-          },
-          style: {
-            position: 'absolute',
-            inset: 0,
-            opacity: 0,
-            cursor: 'pointer',
-            width: '100%',
-            height: '100%',
-          },
-        })}
-      </View>
-    )
-  }
-
-  // ── Android: 네이티브 다이얼로그 ──────────────────────────────────────
-  if (Platform.OS === 'android') {
-    return (
-      <>
-        <Pressable
-          style={({ pressed }) => [
-            styles.dateButton,
-            hasError && styles.inputError,
-            pressed && styles.dateButtonPressed,
-          ]}
-          onPress={() => setShowPicker(true)}
-          accessibilityRole="button"
-          accessibilityLabel={value ? displayText : placeholder}
-        >
-          <Text style={[styles.dateButtonText, !value && styles.placeholderText]}>
-            {displayText}
-          </Text>
-          <Text style={styles.calendarIcon}>📅</Text>
-        </Pressable>
-        {showPicker && RNDateTimePicker ? (
-          <RNDateTimePicker
-            value={value ?? new Date()}
-            mode="date"
-            display="default"
-            onChange={(event: any, selectedDate?: Date) => {
-              setShowPicker(false)
-              if (event.type === 'set' && selectedDate) onChange(selectedDate)
-            }}
-          />
-        ) : null}
-      </>
-    )
-  }
-
-  // ── iOS: 하단 시트 모달 ────────────────────────────────────────────────
-  return (
-    <>
-      <Pressable
-        style={({ pressed }) => [
-          styles.dateButton,
-          hasError && styles.inputError,
-          pressed && styles.dateButtonPressed,
-        ]}
-        onPress={() => setShowPicker(true)}
-        accessibilityRole="button"
-        accessibilityLabel={value ? displayText : placeholder}
-      >
-        <Text style={[styles.dateButtonText, !value && styles.placeholderText]}>
-          {displayText}
-        </Text>
-        <Text style={styles.calendarIcon}>📅</Text>
-      </Pressable>
-
-      <Modal visible={showPicker} transparent animationType="slide">
-        <View style={styles.pickerOverlay}>
-          <View style={styles.pickerCard}>
-            <View style={styles.pickerHeader}>
-              <Pressable onPress={() => setShowPicker(false)} accessibilityRole="button">
-                <Text style={styles.pickerCancel}>취소</Text>
-              </Pressable>
-              <Text style={styles.pickerTitle}>날짜 선택</Text>
-              <Pressable onPress={() => setShowPicker(false)} accessibilityRole="button">
-                <Text style={styles.pickerDone}>완료</Text>
-              </Pressable>
-            </View>
-            {RNDateTimePicker ? (
-              <RNDateTimePicker
-                value={value ?? new Date()}
-                mode="date"
-                display="spinner"
-                onChange={(_: any, selectedDate?: Date) => {
-                  if (selectedDate) onChange(selectedDate)
-                }}
-              />
-            ) : null}
-          </View>
-        </View>
-      </Modal>
-    </>
-  )
-}
 
 // ─── 화면 ─────────────────────────────────────────────────────────────────────
 
@@ -412,14 +254,10 @@ export default function EventFormScreen({ channelId, event, onSaved, onCancel }:
           </Field>
 
           {/* 시작 날짜 + 시간 */}
-          <Field
-            label="시작"
-            required
-            error={errors.startsDate ?? errors.startsTime}
-          >
+          <Field label="시작" required error={errors.startsDate ?? errors.startsTime}>
             <DatePickerField
               value={form.startsDate}
-              onChange={(d) => setField('startsDate', d)}
+              onChange={(d: Date) => setField('startsDate', d)}
               placeholder="날짜 선택"
               hasError={!!errors.startsDate}
             />
@@ -442,7 +280,7 @@ export default function EventFormScreen({ channelId, event, onSaved, onCancel }:
                 <View style={styles.endsDateWrap}>
                   <DatePickerField
                     value={form.endsDate}
-                    onChange={(d) => setField('endsDate', d)}
+                    onChange={(d: Date) => setField('endsDate', d)}
                     placeholder="날짜 선택"
                     hasError={!!errors.endsDate}
                   />
@@ -589,7 +427,6 @@ const styles = StyleSheet.create({
     }),
   },
 
-  // 텍스트 입력
   input: {
     borderWidth: 1,
     borderColor: colors.border,
@@ -608,29 +445,7 @@ const styles = StyleSheet.create({
   textArea: { height: 100, paddingTop: spacing.sm },
   charCount: { fontSize: 11, color: colors.textSecondary, textAlign: 'right' },
 
-  // 날짜 버튼
-  dateButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.sm,
-    paddingHorizontal: spacing.md,
-    paddingVertical: Platform.OS === 'ios' ? spacing.sm + 2 : spacing.sm,
-    backgroundColor: colors.surfaceSecondary,
-  },
-  dateButtonPressed: { opacity: 0.7 },
-  dateButtonText: { fontSize: 15, color: colors.textPrimary, flex: 1 },
-  placeholderText: { color: colors.textSecondary },
-  calendarIcon: { fontSize: 16, marginLeft: spacing.sm },
-
-  // 종료 일시
-  endsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
+  endsRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   endsDateWrap: { flex: 1 },
   clearEndButton: {
     width: 32,
@@ -642,7 +457,6 @@ const styles = StyleSheet.create({
   },
   clearEndText: { fontSize: 13, color: colors.textSecondary, fontWeight: '600' },
 
-  // 종료 일시 추가 버튼
   addEndButton: {
     alignSelf: 'flex-start',
     paddingHorizontal: spacing.md,
@@ -654,32 +468,6 @@ const styles = StyleSheet.create({
   addEndButtonPressed: { opacity: 0.7 },
   addEndButtonText: { fontSize: 13, color: colors.primary, fontWeight: '600' },
 
-  // iOS 날짜 피커 모달
-  pickerOverlay: {
-    flex: 1,
-    justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0,0,0,0.4)',
-  },
-  pickerCard: {
-    backgroundColor: colors.surface,
-    borderTopLeftRadius: radius.lg,
-    borderTopRightRadius: radius.lg,
-    paddingBottom: spacing.xl,
-  },
-  pickerHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.border,
-  },
-  pickerTitle: { fontSize: 16, fontWeight: '600', color: colors.textPrimary },
-  pickerCancel: { fontSize: 15, color: colors.textSecondary },
-  pickerDone: { fontSize: 15, fontWeight: '600', color: colors.primary },
-
-  // 하단 버튼
   buttonRow: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.sm },
   cancelButton: {
     flex: 1,

@@ -6,6 +6,15 @@ import type { ResponseStatus } from './types'
  * ISO 문자열을 "6월 23일 (월) 오후 3:00" 형태로 변환.
  * Intl.DateTimeFormat은 React Native(Hermes)와 Web 모두에서 동작한다.
  */
+export function formatDateDisplay(d: Date): string {
+  return new Intl.DateTimeFormat('ko-KR', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    weekday: 'short',
+  }).format(d)
+}
+
 export function formatDatetime(iso: string): string {
   const date = new Date(iso)
   const datePart = new Intl.DateTimeFormat('ko-KR', {
