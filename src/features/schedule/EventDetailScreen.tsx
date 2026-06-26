@@ -12,7 +12,6 @@ import {
 import { useEventDetail } from './useEvents'
 import {
   colors,
-  formatDate,
   formatDatetime,
   radius,
   spacing,

@@ -43,8 +43,14 @@ interface FormErrors {
 
 // ─── 날짜 입력 힌트 ───────────────────────────────────────────────────────────
 // 플랫폼별 DatePicker 통합은 추후 단계. 현재는 텍스트 필드.
-// 사용자가 ISO 8601 형식(예: "2026-06-23 15:00")으로 입력하면 Date.parse로 검증.
+// 사용자가 "2026-06-23 15:00" 형식으로 입력하면 ISO 8601로 정규화 후 검증.
 const DATE_PLACEHOLDER = '예: 2026-06-23 15:00'
+
+// "2026-06-23 15:00" → Date 변환.
+// iOS/Safari는 공백 구분자를 NaN으로 파싱하므로 T로 교체해 로컬 시간으로 해석시킨다.
+function parseLocalDate(s: string): Date {
+  return new Date(s.trim().replace(' ', 'T'))
+}
 
 // ─── 유효성 검사 ──────────────────────────────────────────────────────────────
 
@@ -57,16 +63,16 @@ function validate(form: FormState): FormErrors {
 
   if (!form.startsAt.trim()) {
     errors.startsAt = '시작 일시를 입력해주세요.'
-  } else if (isNaN(Date.parse(form.startsAt.trim()))) {
+  } else if (isNaN(parseLocalDate(form.startsAt).getTime())) {
     errors.startsAt = '올바른 날짜 형식이 아닙니다. (예: 2026-06-23 15:00)'
   }
 
   if (form.endsAt.trim()) {
-    if (isNaN(Date.parse(form.endsAt.trim()))) {
+    if (isNaN(parseLocalDate(form.endsAt).getTime())) {
       errors.endsAt = '올바른 날짜 형식이 아닙니다.'
     } else if (
       !errors.startsAt &&
-      new Date(form.endsAt.trim()) <= new Date(form.startsAt.trim())
+      parseLocalDate(form.endsAt) <= parseLocalDate(form.startsAt)
     ) {
       errors.endsAt = '종료 일시는 시작 일시보다 뒤여야 합니다.'
     }
@@ -172,8 +178,8 @@ export default function EventFormScreen({ channelId, event, onSaved, onCancel }:
       channel_id: channelId,
       title: form.title.trim(),
       description: form.description.trim() || null,
-      starts_at: new Date(form.startsAt.trim()).toISOString(),
-      ends_at: form.endsAt.trim() ? new Date(form.endsAt.trim()).toISOString() : null,
+      starts_at: parseLocalDate(form.startsAt).toISOString(),
+      ends_at: form.endsAt.trim() ? parseLocalDate(form.endsAt).toISOString() : null,
       location: form.location.trim() || null,
     }
 
