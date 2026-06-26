@@ -54,7 +54,7 @@ export default function ChannelHomeScreen() {
           return
         }
 
-        navigation.setOptions({ title: data.name })
+        navigation.setOptions({ title: data.name, headerBackTitle: '뒤로' })
         setChannel(data as ChannelInfo)
         setLoadState('ready')
       }
