@@ -1,6 +1,7 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import {
   ActivityIndicator,
+  Alert,
   FlatList,
   Platform,
   Pressable,
@@ -116,6 +117,44 @@ export default function ClubDetailScreen() {
   const [wikiEditorOpen, setWikiEditorOpen] = useState(false)
   const wikiScope = id ? { type: 'club' as const, clubId: id } : { type: 'club' as const, clubId: '' }
   const { page: wikiPage, refresh: refreshWiki } = usePage(wikiScope)
+
+  const handleLeave = useCallback(async () => {
+    if (!id || !session?.user) return
+    Alert.alert('동아리 탈퇴', '이 동아리에서 탈퇴할까요?', [
+      { text: '취소', style: 'cancel' },
+      {
+        text: '탈퇴', style: 'destructive', onPress: async () => {
+          const { error } = await supabase
+            .from('memberships')
+            .delete()
+            .eq('club_id', id)
+            .eq('user_id', session.user.id)
+          if (error) {
+            Alert.alert('오류', '탈퇴할 수 없습니다.')
+          } else {
+            router.replace('/(app)')
+          }
+        },
+      },
+    ])
+  }, [id, session?.user?.id, router])
+
+  useEffect(() => {
+    if (state.status !== 'ready') return
+    if (state.myRole === 'owner' || state.myRole === null) return
+    navigation.setOptions({
+      headerRight: () => (
+        <Pressable
+          onPress={handleLeave}
+          style={{ paddingHorizontal: 16, paddingVertical: 8 }}
+          accessibilityRole="button"
+          accessibilityLabel="동아리 탈퇴"
+        >
+          <Text style={{ color: '#EF4444', fontSize: 14, fontWeight: '500' }}>탈퇴</Text>
+        </Pressable>
+      ),
+    })
+  }, [state, handleLeave])
 
   useFocusEffect(
     useCallback(() => {

@@ -1,6 +1,7 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import {
   ActivityIndicator,
+  Alert,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -70,6 +71,47 @@ export default function ChannelHomeScreen() {
   const { page: wikiPage, refresh: refreshWiki } = usePage(wikiScope)
 
   const isChannelOwner = !!session?.user && channel?.owner_id === session.user.id
+
+  const handleLeave = useCallback(async () => {
+    if (!channel || !session?.user) return
+    if (isChannelOwner) {
+      Alert.alert('방장은 나갈 수 없습니다', '방장은 이 방에서 나갈 수 없습니다. 방 관리에서 삭제하거나 다른 멤버에게 이관하세요.')
+      return
+    }
+    Alert.alert('방 나가기', '이 방에서 나갈까요?', [
+      { text: '취소', style: 'cancel' },
+      {
+        text: '나가기', style: 'destructive', onPress: async () => {
+          const { error } = await supabase
+            .from('channel_members')
+            .delete()
+            .eq('channel_id', channel.id)
+            .eq('user_id', session.user.id)
+          if (error) {
+            Alert.alert('오류', '방을 나갈 수 없습니다.')
+          } else {
+            router.back()
+          }
+        },
+      },
+    ])
+  }, [channel, session?.user?.id, isChannelOwner, router])
+
+  useEffect(() => {
+    if (!channel) return
+    navigation.setOptions({
+      headerRight: () => (
+        <Pressable
+          onPress={handleLeave}
+          style={{ paddingHorizontal: 16, paddingVertical: 8 }}
+          accessibilityRole="button"
+          accessibilityLabel="방 나가기"
+        >
+          <Text style={{ color: '#EF4444', fontSize: 14, fontWeight: '500' }}>나가기</Text>
+        </Pressable>
+      ),
+    })
+  }, [channel, handleLeave])
 
   if (loadState === 'loading') {
     return (

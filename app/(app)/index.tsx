@@ -1,12 +1,15 @@
 import { useCallback, useState } from 'react'
 import {
   ActivityIndicator,
+  Alert,
   FlatList,
   Image,
+  Modal,
   Platform,
   Pressable,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from 'react-native'
 import { useFocusEffect, useRouter } from 'expo-router'
@@ -114,6 +117,9 @@ export default function ClubListScreen() {
   const router = useRouter()
   const [state, setState] = useState<PageState>({ status: 'loading' })
   const [signingOut, setSigningOut] = useState(false)
+  const [profileEditVisible, setProfileEditVisible] = useState(false)
+  const [editName, setEditName] = useState('')
+  const [profileSaving, setProfileSaving] = useState(false)
 
   useFocusEffect(
     useCallback(() => {
@@ -182,6 +188,31 @@ export default function ClubListScreen() {
     setSigningOut(false)
   }
 
+  function openProfileEdit() {
+    if (state.status !== 'ready') return
+    setEditName(state.profile?.display_name ?? '')
+    setProfileEditVisible(true)
+  }
+
+  async function handleSaveProfile() {
+    if (!session?.user || !editName.trim()) return
+    setProfileSaving(true)
+    const { error } = await supabase
+      .from('profiles')
+      .update({ display_name: editName.trim() })
+      .eq('id', session.user.id)
+    setProfileSaving(false)
+    if (error) {
+      Alert.alert('오류', '이름을 변경할 수 없습니다.')
+      return
+    }
+    setState((prev) => {
+      if (prev.status !== 'ready' || !prev.profile) return prev
+      return { ...prev, profile: { ...prev.profile, display_name: editName.trim() } }
+    })
+    setProfileEditVisible(false)
+  }
+
   if (state.status === 'loading') {
     return (
       <View style={styles.centered}>
@@ -212,9 +243,60 @@ export default function ClubListScreen() {
 
   return (
     <View style={styles.container}>
+      {/* 프로필 편집 모달 */}
+      <Modal
+        visible={profileEditVisible}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setProfileEditVisible(false)}
+      >
+        <Pressable style={styles.modalBackdrop} onPress={() => setProfileEditVisible(false)}>
+          <Pressable style={styles.modalCard} onPress={() => {}}>
+            <Text style={styles.modalTitle}>이름 변경</Text>
+            <TextInput
+              style={styles.modalInput}
+              value={editName}
+              onChangeText={setEditName}
+              placeholder="표시 이름"
+              placeholderTextColor="#9CA3AF"
+              maxLength={30}
+              autoFocus
+              returnKeyType="done"
+              onSubmitEditing={handleSaveProfile}
+            />
+            <View style={styles.modalActions}>
+              <Pressable
+                style={({ pressed }) => [styles.modalCancelBtn, pressed && styles.pressedOpacity]}
+                onPress={() => setProfileEditVisible(false)}
+              >
+                <Text style={styles.modalCancelText}>취소</Text>
+              </Pressable>
+              <Pressable
+                style={({ pressed }) => [
+                  styles.modalSaveBtn,
+                  (!editName.trim() || profileSaving) && styles.modalSaveBtnDisabled,
+                  pressed && styles.pressedOpacity,
+                ]}
+                onPress={handleSaveProfile}
+                disabled={!editName.trim() || profileSaving}
+              >
+                {profileSaving
+                  ? <ActivityIndicator size="small" color="#FFFFFF" />
+                  : <Text style={styles.modalSaveText}>저장</Text>}
+              </Pressable>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
       {/* 헤더 */}
       <View style={styles.header}>
-        <View style={styles.headerLeft}>
+        <Pressable
+          style={({ pressed }) => [styles.headerLeft, pressed && styles.pressedOpacity]}
+          onPress={openProfileEdit}
+          accessibilityRole="button"
+          accessibilityLabel="프로필 편집"
+        >
           {profile?.avatar_url ? (
             <Image
               source={{ uri: profile.avatar_url }}
@@ -227,7 +309,7 @@ export default function ClubListScreen() {
             </View>
           )}
           <Text style={styles.headerName} numberOfLines={1}>{displayName}</Text>
-        </View>
+        </Pressable>
         <Pressable
           style={({ pressed }) => [
             styles.signOutButton,
@@ -562,6 +644,72 @@ const styles = StyleSheet.create({
     color: '#DC2626',
     textAlign: 'center',
     marginBottom: 20,
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  modalCard: {
+    width: '100%',
+    maxWidth: 360,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 24,
+    gap: 16,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#1A1A1A',
+    textAlign: 'center',
+  },
+  modalInput: {
+    height: 48,
+    backgroundColor: '#F3F4F6',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    fontSize: 16,
+    color: '#1A1A1A',
+    borderWidth: 1.5,
+    borderColor: '#E5E7EB',
+    ...(Platform.OS === 'web' ? ({ outlineStyle: 'none' } as object) : {}),
+  },
+  modalActions: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  modalCancelBtn: {
+    flex: 1,
+    height: 48,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: '#E5E7EB',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalCancelText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#6B7280',
+  },
+  modalSaveBtn: {
+    flex: 1,
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: '#4A90D9',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalSaveBtnDisabled: {
+    backgroundColor: '#93C5FD',
+  },
+  modalSaveText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#FFFFFF',
   },
   retryButton: {
     paddingVertical: 10,

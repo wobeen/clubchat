@@ -42,6 +42,8 @@ interface ChatMessage {
   content: string
   type: 'text' | 'file' | 'image' | 'system'
   createdAt: string
+  editedAt: string | null
+  deletedAt: string | null
   sender: SenderInfo
   attachment?: Attachment
 }
@@ -72,28 +74,57 @@ function AvatarPlaceholder({ name, size }: { name: string; size: number }) {
   )
 }
 
-function MyMessageBubble({ msg }: { msg: ChatMessage }) {
+function MyMessageBubble({ msg, onLongPress }: { msg: ChatMessage; onLongPress?: () => void }) {
   const hasAttachment = !!msg.attachment && msg.type !== 'text'
+
+  if (msg.deletedAt) {
+    return (
+      <View style={styles.myRow}>
+        <View style={[styles.myBubble, styles.deletedBubble]}>
+          <Text style={styles.deletedText}>삭제된 메시지입니다</Text>
+        </View>
+      </View>
+    )
+  }
+
   return (
     <View style={styles.myRow}>
       <Text style={styles.myTime}>{formatTime(msg.createdAt)}</Text>
-      <View style={[styles.myBubble, hasAttachment && styles.mediaBubble]}>
+      <Pressable
+        onLongPress={onLongPress}
+        delayLongPress={300}
+        style={[styles.myBubble, hasAttachment && styles.mediaBubble]}
+      >
         {hasAttachment ? (
-          <AttachmentMessage
-            fileName={msg.content}
-            attachment={msg.attachment!}
-            tint="blue"
-          />
+          <AttachmentMessage fileName={msg.content} attachment={msg.attachment!} tint="blue" />
         ) : (
-          <Text style={styles.myText}>{msg.content}</Text>
+          <>
+            <Text style={styles.myText}>{msg.content}</Text>
+            {msg.editedAt && <Text style={styles.editedMark}>(수정됨)</Text>}
+          </>
         )}
-      </View>
+      </Pressable>
     </View>
   )
 }
 
 function OtherMessageBubble({ msg }: { msg: ChatMessage }) {
   const hasAttachment = !!msg.attachment && msg.type !== 'text'
+
+  if (msg.deletedAt) {
+    return (
+      <View style={styles.otherRow}>
+        <AvatarPlaceholder name={msg.sender.display_name} size={32} />
+        <View style={styles.otherContent}>
+          <Text style={styles.senderName}>{msg.sender.display_name}</Text>
+          <View style={[styles.otherBubble, styles.deletedBubble]}>
+            <Text style={styles.deletedText}>삭제된 메시지입니다</Text>
+          </View>
+        </View>
+      </View>
+    )
+  }
+
   return (
     <View style={styles.otherRow}>
       <AvatarPlaceholder name={msg.sender.display_name} size={32} />
@@ -104,13 +135,12 @@ function OtherMessageBubble({ msg }: { msg: ChatMessage }) {
         </Text>
         <View style={[styles.otherBubble, hasAttachment && styles.mediaBubble]}>
           {hasAttachment ? (
-            <AttachmentMessage
-              fileName={msg.content}
-              attachment={msg.attachment!}
-              tint="white"
-            />
+            <AttachmentMessage fileName={msg.content} attachment={msg.attachment!} tint="white" />
           ) : (
-            <Text style={styles.otherText}>{msg.content}</Text>
+            <>
+              <Text style={styles.otherText}>{msg.content}</Text>
+              {msg.editedAt && <Text style={styles.editedMarkOther}>(수정됨)</Text>}
+            </>
           )}
         </View>
       </View>
@@ -135,6 +165,8 @@ export default function ChatScreen() {
   const [inputText, setInputText] = useState('')
   const [sending, setSending] = useState(false)
   const [showAttachMenu, setShowAttachMenu] = useState(false)
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null)
+  const [editingContent, setEditingContent] = useState('')
 
   const profileCacheRef = useRef<Record<string, SenderInfo>>({})
   const handleSendRef = useRef<() => void>(() => {})
@@ -198,9 +230,7 @@ export default function ChatScreen() {
     let realtimeChannel: RealtimeChannel | null = null
     let cancelled = false
 
-    async function fetchAttachmentForMsg(
-      messageId: string,
-    ): Promise<Attachment | undefined> {
+    async function fetchAttachmentForMsg(messageId: string): Promise<Attachment | undefined> {
       const { data } = await supabase
         .from('attachments')
         .select('id, storage_path, mime_type, size_bytes, width, height')
@@ -223,7 +253,7 @@ export default function ChatScreen() {
       const { data, error } = await supabase
         .from('messages')
         .select(
-          `id, channel_id, sender_id, content, type, created_at,
+          `id, channel_id, sender_id, content, type, created_at, edited_at,
            sender:profiles!messages_sender_id_fkey(id, display_name, avatar_url),
            attachments(id, storage_path, mime_type, size_bytes, width, height)`
         )
@@ -259,6 +289,8 @@ export default function ChatScreen() {
           content: row.content,
           type: row.type as ChatMessage['type'],
           createdAt: row.created_at,
+          editedAt: row.edited_at ?? null,
+          deletedAt: null,
           sender,
           attachment,
         }
@@ -282,8 +314,6 @@ export default function ChatScreen() {
       const myId = session.user.id
       const myName = profileCacheRef.current[myId]?.display_name ?? '나'
 
-      // Supabase 클라이언트는 같은 이름의 채널을 재사용하므로
-      // 구독 전에 기존 stale 채널을 먼저 제거한다
       const msgsTopicName = `realtime:chat:msgs:${channelId}`
       const presenceTopicName = `realtime:chat:presence:${channelId}`
       const stale = supabase.getChannels().filter(
@@ -293,7 +323,7 @@ export default function ChatScreen() {
 
       if (cancelled) return
 
-      // ── 메시지 채널: postgres_changes 전용 ─────────────────────────────
+      // ── 메시지 채널: INSERT + UPDATE 구독 ─────────────────────────────────
       realtimeChannel = supabase
         .channel(`chat:msgs:${channelId}`)
         .on(
@@ -322,7 +352,8 @@ export default function ChatScreen() {
 
             const newMsg: ChatMessage = {
               id: row.id, channelId: row.channel_id, senderId: row.sender_id,
-              content: row.content, type: msgType, createdAt: row.created_at, sender, attachment,
+              content: row.content, type: msgType, createdAt: row.created_at,
+              editedAt: null, deletedAt: null, sender, attachment,
             }
 
             setMessages((prev) => {
@@ -340,11 +371,28 @@ export default function ChatScreen() {
             setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 50)
           }
         )
+        .on(
+          'postgres_changes',
+          { event: 'UPDATE', schema: 'public', table: 'messages', filter: `channel_id=eq.${channelId}` },
+          (payload) => {
+            if (cancelled) return
+            const row = payload.new as {
+              id: string; content: string; edited_at: string | null; deleted_at: string | null
+            }
+            setMessages((prev) =>
+              prev.map((m) =>
+                m.id === row.id
+                  ? { ...m, content: row.content, editedAt: row.edited_at, deletedAt: row.deleted_at }
+                  : m
+              )
+            )
+          }
+        )
         .subscribe()
 
       realtimeChannelRef.current = realtimeChannel
 
-      // ── 프레즌스 채널: 입력중 표시 전용 ────────────────────────────────
+      // ── 프레즌스 채널 ────────────────────────────────────────────────────────
       const presenceChannel = supabase
         .channel(`chat:presence:${channelId}`)
         .on('presence', { event: 'sync' }, () => {
@@ -404,25 +452,105 @@ export default function ChatScreen() {
     typingTimerRef.current = setTimeout(() => trackTyping(false), 3000)
   }, [trackTyping])
 
-  // ── 텍스트 전송 ────────────────────────────────────────────────────────────
+  // ── 메시지 삭제 (소프트) ─────────────────────────────────────────────────
+  const deleteMessage = useCallback(async (messageId: string) => {
+    const { error } = await supabase
+      .from('messages')
+      .update({ deleted_at: new Date().toISOString() })
+      .eq('id', messageId)
+    if (error) {
+      Alert.alert('오류', '메시지를 삭제할 수 없습니다.')
+      return
+    }
+    setMessages((prev) =>
+      prev.map((m) => m.id === messageId ? { ...m, deletedAt: new Date().toISOString() } : m)
+    )
+  }, [])
+
+  // ── 수정 시작/취소 ────────────────────────────────────────────────────────
+  const startEdit = useCallback((msg: ChatMessage) => {
+    setEditingMessageId(msg.id)
+    setEditingContent(msg.content)
+    setInputText(msg.content)
+    setTimeout(() => inputRef.current?.focus(), 100)
+  }, [])
+
+  const cancelEdit = useCallback(() => {
+    setEditingMessageId(null)
+    setEditingContent('')
+    setInputText('')
+  }, [])
+
+  // ── 메시지 액션 시트 ─────────────────────────────────────────────────────
+  const openMessageActions = useCallback((msg: ChatMessage) => {
+    const confirmDelete = () =>
+      Alert.alert('메시지 삭제', '이 메시지를 삭제할까요?', [
+        { text: '취소', style: 'cancel' },
+        { text: '삭제', style: 'destructive', onPress: () => deleteMessage(msg.id) },
+      ])
+
+    if (Platform.OS === 'ios') {
+      ActionSheetIOS.showActionSheetWithOptions(
+        { options: ['취소', '수정', '삭제'], cancelButtonIndex: 0, destructiveButtonIndex: 2 },
+        (idx) => {
+          if (idx === 1) startEdit(msg)
+          if (idx === 2) confirmDelete()
+        }
+      )
+    } else {
+      Alert.alert('메시지', undefined, [
+        { text: '수정', onPress: () => startEdit(msg) },
+        { text: '삭제', style: 'destructive', onPress: confirmDelete },
+        { text: '취소', style: 'cancel' },
+      ])
+    }
+  }, [startEdit, deleteMessage])
+
+  // ── 텍스트 전송 / 수정 저장 ──────────────────────────────────────────────
   const handleSend = useCallback(async () => {
     const text = inputText.trim()
     if (!text || !session?.user || !channelId || sending) return
 
+    // 수정 모드
+    if (editingMessageId) {
+      setSending(true)
+      const { error } = await supabase
+        .from('messages')
+        .update({ content: text, edited_at: new Date().toISOString() })
+        .eq('id', editingMessageId)
+      if (error) {
+        Alert.alert('오류', '메시지를 수정할 수 없습니다.')
+      } else {
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === editingMessageId
+              ? { ...m, content: text, editedAt: new Date().toISOString() }
+              : m
+          )
+        )
+        setEditingMessageId(null)
+        setEditingContent('')
+        setInputText('')
+      }
+      setSending(false)
+      return
+    }
+
+    // 일반 전송
     const tempId = `optimistic-${Date.now()}`
     const myProfile: SenderInfo = profileCacheRef.current[session.user.id] ?? {
       id: session.user.id, display_name: '나', avatar_url: null,
     }
     const optimisticMsg: ChatMessage = {
       id: tempId, channelId, senderId: session.user.id,
-      content: text, type: 'text', createdAt: new Date().toISOString(), sender: myProfile,
+      content: text, type: 'text', createdAt: new Date().toISOString(),
+      editedAt: null, deletedAt: null, sender: myProfile,
     }
 
     setMessages((prev) => [...prev, optimisticMsg])
     setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 50)
     setInputText('')
     setSending(true)
-    // 전송 즉시 입력중 표시 해제
     if (typingTimerRef.current) clearTimeout(typingTimerRef.current)
     trackTyping(false)
 
@@ -440,7 +568,7 @@ export default function ChatScreen() {
     }
 
     setSending(false)
-  }, [inputText, channelId, session?.user?.id, sending])
+  }, [inputText, channelId, session?.user?.id, sending, editingMessageId, trackTyping])
 
   useEffect(() => { handleSendRef.current = handleSend }, [handleSend])
 
@@ -489,7 +617,6 @@ export default function ChatScreen() {
         }
       )
     } else {
-      // Android / Web: 직접 메뉴 토글
       setShowAttachMenu((v) => !v)
     }
   }, [channelId, pickImage, pickFile, handleAttachSend])
@@ -520,7 +647,7 @@ export default function ChatScreen() {
         }
         renderItem={({ item }) =>
           item.senderId === myId
-            ? <MyMessageBubble msg={item} />
+            ? <MyMessageBubble msg={item} onLongPress={() => openMessageActions(item)} />
             : <OtherMessageBubble msg={item} />
         }
       />
@@ -555,9 +682,25 @@ export default function ChatScreen() {
       {typingUsers.length > 0 && (
         <View style={styles.typingBar}>
           <Text style={styles.typingText}>
-            {typingUsers.map((u) => u.name).join(', ')}
-            {typingUsers.length === 1 ? '님이 입력 중...' : '님이 입력 중...'}
+            {typingUsers.map((u) => u.name).join(', ')}님이 입력 중...
           </Text>
+        </View>
+      )}
+
+      {/* 수정 모드 배너 */}
+      {editingMessageId && (
+        <View style={styles.editBanner}>
+          <Text style={styles.editBannerLabel} numberOfLines={1}>
+            수정 중: {editingContent}
+          </Text>
+          <Pressable
+            onPress={cancelEdit}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            accessibilityRole="button"
+            accessibilityLabel="수정 취소"
+          >
+            <Text style={styles.editBannerCancel}>✕</Text>
+          </Pressable>
         </View>
       )}
 
@@ -566,18 +709,20 @@ export default function ChatScreen() {
         keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       >
         <View style={styles.inputBar}>
-          {/* 첨부 버튼 */}
-          <Pressable
-            style={({ pressed }) => [styles.attachButton, pressed && { opacity: 0.7 }]}
-            onPress={openAttachMenu}
-            disabled={isBusy}
-            accessibilityRole="button"
-            accessibilityLabel="파일 첨부"
-          >
-            {uploading
-              ? <ActivityIndicator size="small" color="#4A90D9" />
-              : <Text style={styles.attachButtonText}>📎</Text>}
-          </Pressable>
+          {/* 첨부 버튼 — 수정 모드에서 숨김 */}
+          {!editingMessageId && (
+            <Pressable
+              style={({ pressed }) => [styles.attachButton, pressed && { opacity: 0.7 }]}
+              onPress={openAttachMenu}
+              disabled={isBusy}
+              accessibilityRole="button"
+              accessibilityLabel="파일 첨부"
+            >
+              {uploading
+                ? <ActivityIndicator size="small" color="#4A90D9" />
+                : <Text style={styles.attachButtonText}>📎</Text>}
+            </Pressable>
+          )}
 
           <TextInput
             ref={inputRef}
@@ -600,11 +745,11 @@ export default function ChatScreen() {
             onPress={handleSend}
             disabled={!inputText.trim() || isBusy}
             accessibilityRole="button"
-            accessibilityLabel="메시지 보내기"
+            accessibilityLabel={editingMessageId ? '수정 저장' : '메시지 보내기'}
           >
             {sending
               ? <ActivityIndicator size="small" color="#FFFFFF" />
-              : <Text style={styles.sendButtonText}>보내기</Text>}
+              : <Text style={styles.sendButtonText}>{editingMessageId ? '저장' : '보내기'}</Text>}
           </Pressable>
         </View>
       </KeyboardAvoidingView>
@@ -632,6 +777,11 @@ const styles = StyleSheet.create({
     maxWidth: '75%',
   },
   myText: { fontSize: 15, color: '#FFFFFF', lineHeight: 20 },
+  editedMark: { fontSize: 11, color: 'rgba(255,255,255,0.65)', marginTop: 2, textAlign: 'right' },
+  editedMarkOther: { fontSize: 11, color: '#9CA3AF', marginTop: 2 },
+
+  deletedBubble: { backgroundColor: '#F3F4F6', borderWidth: 1, borderColor: '#E5E7EB' },
+  deletedText: { fontSize: 14, color: '#9CA3AF', fontStyle: 'italic' },
 
   otherRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
   avatarPlaceholder: {
@@ -680,6 +830,20 @@ const styles = StyleSheet.create({
   },
   attachMenuIcon: { fontSize: 24 },
   attachMenuText: { fontSize: 11, color: '#374151', fontWeight: '600' },
+
+  editBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: '#EFF6FF',
+    borderTopWidth: 1,
+    borderTopColor: '#BFDBFE',
+    gap: 8,
+  },
+  editBannerLabel: { flex: 1, fontSize: 13, color: '#1D4ED8' },
+  editBannerCancel: { fontSize: 16, color: '#6B7280', fontWeight: '600' },
 
   inputBar: {
     flexDirection: 'row',
