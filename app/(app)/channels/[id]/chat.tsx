@@ -636,7 +636,19 @@ export default function ChatScreen() {
     return <View style={styles.centered}><ActivityIndicator size="large" color="#4A90D9" /></View>
   }
   if (pageStatus.status === 'error') {
-    return <View style={styles.centered}><Text style={styles.errorText}>{pageStatus.message}</Text></View>
+    return (
+      <View style={styles.centered}>
+        <Text style={styles.errorText}>{pageStatus.message}</Text>
+        <Pressable
+          style={styles.retryButton}
+          onPress={() => setPageStatus({ status: 'loading' })}
+          accessibilityRole="button"
+          accessibilityLabel="다시 시도"
+        >
+          <Text style={styles.retryButtonText}>다시 시도</Text>
+        </Pressable>
+      </View>
+    )
   }
 
   const myId = session?.user?.id ?? ''
@@ -898,7 +910,9 @@ const styles = StyleSheet.create({
   sendButtonDisabled: { backgroundColor: '#93C5FD' },
   sendButtonPressed: { opacity: 0.8 },
   sendButtonText: { fontSize: 14, fontWeight: '700', color: '#FFFFFF' },
-  errorText: { fontSize: 15, color: '#DC2626', textAlign: 'center', paddingHorizontal: 24 },
+  errorText: { fontSize: 15, color: '#DC2626', textAlign: 'center', paddingHorizontal: 24, marginBottom: 20 },
+  retryButton: { paddingVertical: 10, paddingHorizontal: 24, borderRadius: 10, backgroundColor: '#4A90D9' },
+  retryButtonText: { fontSize: 14, fontWeight: '600', color: '#FFFFFF' },
 
   typingBar: {
     paddingHorizontal: 16,

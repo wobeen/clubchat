@@ -17,6 +17,8 @@ import { WikiEditor } from '../../../../src/features/wiki/WikiEditor'
 import { useEvents } from '../../../../src/features/schedule'
 import { formatDatetime, STATUS_COLOR, STATUS_LABEL } from '../../../../src/features/schedule/scheduleUtils'
 import type { EventWithMyResponse } from '../../../../src/features/schedule'
+import { ChannelHomeSkeleton } from '../../../../src/features/ui/Skeleton'
+import { useToast } from '../../../../src/features/ui/Toast'
 
 interface ChannelInfo {
   id: string
@@ -71,6 +73,7 @@ export default function ChannelHomeScreen() {
   const [channel, setChannel] = useState<ChannelInfo | null>(null)
   const [errorMsg, setErrorMsg] = useState('')
   const [wikiEditorOpen, setWikiEditorOpen] = useState(false)
+  const { show: showToast, ToastComponent } = useToast()
 
   // ── 채널 정보 로드 ────────────────────────────────────────────────────────
   useFocusEffect(
@@ -165,17 +168,21 @@ export default function ChannelHomeScreen() {
 
   // ── 로딩 / 에러 ──────────────────────────────────────────────────────────
   if (loadState === 'loading') {
-    return (
-      <View style={styles.centered}>
-        <ActivityIndicator size="large" color="#4A90D9" />
-      </View>
-    )
+    return <ChannelHomeSkeleton />
   }
 
   if (loadState === 'error') {
     return (
       <View style={styles.centered}>
         <Text style={styles.errorText}>{errorMsg}</Text>
+        <Pressable
+          style={styles.retryBtn}
+          onPress={() => setLoadState('loading')}
+          accessibilityRole="button"
+          accessibilityLabel="다시 시도"
+        >
+          <Text style={styles.retryBtnText}>다시 시도</Text>
+        </Pressable>
       </View>
     )
   }
@@ -185,12 +192,13 @@ export default function ChannelHomeScreen() {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      <ToastComponent />
       <WikiEditor
         visible={wikiEditorOpen}
         scope={wikiScope}
         existingPage={wikiPage}
         onClose={() => setWikiEditorOpen(false)}
-        onSaved={refreshWiki}
+        onSaved={() => { refreshWiki(); showToast('위키가 저장됐어요 ✓') }}
       />
 
       {/* 위키 */}
@@ -308,8 +316,10 @@ export default function ChannelHomeScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F3F4F6' },
   content: { padding: 16, gap: 16, paddingBottom: 40 },
-  centered: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  errorText: { fontSize: 15, color: '#DC2626', textAlign: 'center' },
+  centered: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24 },
+  errorText: { fontSize: 15, color: '#DC2626', textAlign: 'center', marginBottom: 20 },
+  retryBtn: { paddingVertical: 10, paddingHorizontal: 24, borderRadius: 10, backgroundColor: '#4A90D9' },
+  retryBtnText: { fontSize: 14, fontWeight: '600', color: '#FFFFFF' },
 
   card: {
     backgroundColor: '#FFFFFF',

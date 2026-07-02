@@ -1,6 +1,5 @@
 import { useCallback, useState } from 'react'
 import {
-  ActivityIndicator,
   Alert,
   FlatList,
   Image,
@@ -16,6 +15,8 @@ import {
 import { useFocusEffect, useRouter } from 'expo-router'
 import { supabase } from '../../src/lib/supabase'
 import { useAuth } from '../../src/features/auth/useAuth'
+import { ClubListSkeleton } from '../../src/features/ui/Skeleton'
+import { useToast } from '../../src/features/ui/Toast'
 
 // avatar_emoji 는 생성 타입에 아직 없을 수 있으므로 로컬 인터페이스로 정의
 interface ProfileData {
@@ -171,8 +172,9 @@ export default function ClubListScreen() {
   const [signingOut, setSigningOut] = useState(false)
   const [profileEditVisible, setProfileEditVisible] = useState(false)
   const [editName, setEditName] = useState('')
-  const [editEmoji, setEditEmoji] = useState('')   // '' = 이니셜 사용
+  const [editEmoji, setEditEmoji] = useState('')
   const [profileSaving, setProfileSaving] = useState(false)
+  const { show: showToast, ToastComponent } = useToast()
 
   useFocusEffect(
     useCallback(() => {
@@ -271,15 +273,12 @@ export default function ClubListScreen() {
       }
     })
     setProfileEditVisible(false)
+    showToast('프로필이 저장됐어요 ✓')
   }
 
   // ── 로딩 / 에러 ──────────────────────────────────────────────────────────────
   if (state.status === 'loading') {
-    return (
-      <View style={styles.centered}>
-        <ActivityIndicator size="large" color="#4A90D9" />
-      </View>
-    )
+    return <ClubListSkeleton />
   }
 
   if (state.status === 'error') {
@@ -308,6 +307,7 @@ export default function ClubListScreen() {
 
   return (
     <View style={styles.container}>
+      <ToastComponent />
       {/* ── 프로필 편집 모달 ─────────────────────────────────────────────── */}
       <Modal
         visible={profileEditVisible}

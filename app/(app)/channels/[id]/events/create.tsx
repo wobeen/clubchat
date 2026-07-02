@@ -1,3 +1,4 @@
+import { ActivityIndicator, View } from 'react-native'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { useAuth } from '../../../../../src/features/auth/useAuth'
 import { EventFormScreen } from '../../../../../src/features/schedule'
@@ -7,7 +8,9 @@ export default function EventCreatePage() {
   const router = useRouter()
   const { session } = useAuth()
 
-  if (!channelId || !session?.user) return null
+  if (!channelId || !session?.user) {
+    return <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}><ActivityIndicator size="large" color="#4A90D9" /></View>
+  }
 
   return (
     <EventFormScreen

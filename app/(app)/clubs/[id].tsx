@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
 import {
-  ActivityIndicator,
   Alert,
   FlatList,
   Platform,
@@ -16,6 +15,8 @@ import { Database } from '../../../src/types/supabase'
 import { usePage } from '../../../src/features/wiki/usePage'
 import { WikiViewer } from '../../../src/features/wiki/WikiViewer'
 import { WikiEditor } from '../../../src/features/wiki/WikiEditor'
+import { ClubDetailSkeleton } from '../../../src/features/ui/Skeleton'
+import { useToast } from '../../../src/features/ui/Toast'
 
 type MemberRole = 'owner' | 'admin' | 'member'
 
@@ -117,6 +118,7 @@ export default function ClubDetailScreen() {
   const [wikiEditorOpen, setWikiEditorOpen] = useState(false)
   const wikiScope = id ? { type: 'club' as const, clubId: id } : { type: 'club' as const, clubId: '' }
   const { page: wikiPage, refresh: refreshWiki } = usePage(wikiScope)
+  const { show: showToast, ToastComponent } = useToast()
 
   const handleLeave = useCallback(async () => {
     if (!id || !session?.user) return
@@ -285,11 +287,7 @@ export default function ClubDetailScreen() {
   }
 
   if (state.status === 'loading') {
-    return (
-      <View style={styles.centered}>
-        <ActivityIndicator size="large" color="#4A90D9" />
-      </View>
-    )
+    return <ClubDetailSkeleton />
   }
 
   if (state.status === 'error') {
@@ -313,12 +311,13 @@ export default function ClubDetailScreen() {
 
   return (
     <View style={styles.container}>
+      <ToastComponent />
       <WikiEditor
         visible={wikiEditorOpen}
         scope={wikiScope}
         existingPage={wikiPage}
         onClose={() => setWikiEditorOpen(false)}
-        onSaved={refreshWiki}
+        onSaved={() => { refreshWiki(); showToast('위키가 저장됐어요 ✓') }}
       />
       <FlatList
         data={channels}

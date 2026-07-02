@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { ActivityIndicator, View } from 'react-native'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { useAuth } from '../../../../../../src/features/auth/useAuth'
 import { EventDetailScreen } from '../../../../../../src/features/schedule'
@@ -19,7 +20,9 @@ export default function EventDetailPage() {
     }
   }, [eventId])
 
-  if (!eventId || !UUID_RE.test(eventId) || !session?.user) return null
+  if (!eventId || !UUID_RE.test(eventId) || !session?.user) {
+    return <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}><ActivityIndicator size="large" color="#4A90D9" /></View>
+  }
 
   return (
     <EventDetailScreen
