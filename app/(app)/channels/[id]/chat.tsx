@@ -24,7 +24,9 @@ import { Database } from '../../../../src/types/supabase'
 // ─── 타입 ────────────────────────────────────────────────────────────────────
 
 type ProfileRow = Database['public']['Tables']['profiles']['Row']
-type SenderInfo = Pick<ProfileRow, 'id' | 'display_name' | 'avatar_url'>
+type SenderInfo = Pick<ProfileRow, 'id' | 'display_name' | 'avatar_url'> & {
+  avatar_emoji?: string | null
+}
 
 interface Attachment {
   id: string
@@ -66,9 +68,17 @@ function getInitials(name: string): string {
 
 // ─── 서브 컴포넌트 ────────────────────────────────────────────────────────────
 
-function AvatarPlaceholder({ name, size }: { name: string; size: number }) {
+function AvatarPlaceholder({ name, emoji, size }: { name: string; emoji?: string | null; size: number }) {
+  const circleStyle = { width: size, height: size, borderRadius: size / 2 }
+  if (emoji) {
+    return (
+      <View style={[styles.avatarPlaceholder, circleStyle, { backgroundColor: '#E5E7EB' }]}>
+        <Text style={{ fontSize: size * 0.55 }}>{emoji}</Text>
+      </View>
+    )
+  }
   return (
-    <View style={[styles.avatarPlaceholder, { width: size, height: size, borderRadius: size / 2 }]}>
+    <View style={[styles.avatarPlaceholder, circleStyle]}>
       <Text style={[styles.avatarInitials, { fontSize: size * 0.4 }]}>{getInitials(name)}</Text>
     </View>
   )
@@ -114,7 +124,7 @@ function OtherMessageBubble({ msg }: { msg: ChatMessage }) {
   if (msg.deletedAt) {
     return (
       <View style={styles.otherRow}>
-        <AvatarPlaceholder name={msg.sender.display_name} size={32} />
+        <AvatarPlaceholder name={msg.sender.display_name} emoji={msg.sender.avatar_emoji} size={32} />
         <View style={styles.otherContent}>
           <Text style={styles.senderName}>{msg.sender.display_name}</Text>
           <View style={[styles.otherBubble, styles.deletedBubble]}>
@@ -127,7 +137,7 @@ function OtherMessageBubble({ msg }: { msg: ChatMessage }) {
 
   return (
     <View style={styles.otherRow}>
-      <AvatarPlaceholder name={msg.sender.display_name} size={32} />
+      <AvatarPlaceholder name={msg.sender.display_name} emoji={msg.sender.avatar_emoji} size={32} />
       <View style={styles.otherContent}>
         <Text style={styles.senderName}>
           {msg.sender.display_name}
@@ -254,7 +264,7 @@ export default function ChatScreen() {
         .from('messages')
         .select(
           `id, channel_id, sender_id, content, type, created_at, edited_at,
-           sender:profiles!messages_sender_id_fkey(id, display_name, avatar_url),
+           sender:profiles!messages_sender_id_fkey(id, display_name, avatar_url, avatar_emoji),
            attachments(id, storage_path, mime_type, size_bytes, width, height)`
         )
         .eq('channel_id', channelId)
@@ -302,7 +312,7 @@ export default function ChatScreen() {
       if (!profileCacheRef.current[session.user.id]) {
         const { data: ownProfile } = await supabase
           .from('profiles')
-          .select('id, display_name, avatar_url')
+          .select('id, display_name, avatar_url, avatar_emoji')
           .eq('id', session.user.id)
           .maybeSingle()
         if (ownProfile) profileCacheRef.current[ownProfile.id] = ownProfile
@@ -339,8 +349,8 @@ export default function ChatScreen() {
             let sender = profileCacheRef.current[row.sender_id]
             if (!sender) {
               const { data: pData } = await supabase
-                .from('profiles').select('id, display_name, avatar_url').eq('id', row.sender_id).maybeSingle()
-              sender = pData ?? { id: row.sender_id, display_name: '알 수 없음', avatar_url: null }
+                .from('profiles').select('id, display_name, avatar_url, avatar_emoji').eq('id', row.sender_id).maybeSingle()
+              sender = pData ?? { id: row.sender_id, display_name: '알 수 없음', avatar_url: null, avatar_emoji: null }
               if (pData) profileCacheRef.current[pData.id] = pData
             }
 
@@ -539,7 +549,7 @@ export default function ChatScreen() {
     // 일반 전송
     const tempId = `optimistic-${Date.now()}`
     const myProfile: SenderInfo = profileCacheRef.current[session.user.id] ?? {
-      id: session.user.id, display_name: '나', avatar_url: null,
+      id: session.user.id, display_name: '나', avatar_url: null, avatar_emoji: null,
     }
     const optimisticMsg: ChatMessage = {
       id: tempId, channelId, senderId: session.user.id,
