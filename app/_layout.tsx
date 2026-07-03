@@ -2,11 +2,15 @@ import { ActivityIndicator, View, StyleSheet } from 'react-native'
 import { Stack, useRouter, useSegments } from 'expo-router'
 import { useEffect } from 'react'
 import { useAuth } from '../src/features/auth/useAuth'
+import { usePushToken } from '../src/features/notifications/usePushToken'
 
 export default function RootLayout() {
   const { session, loading } = useAuth()
   const segments = useSegments()
   const router = useRouter()
+
+  // 로그인 후 푸시 토큰 등록 (실기기에서만 동작, 웹/시뮬레이터 자동 스킵)
+  usePushToken(session?.user?.id)
 
   useEffect(() => {
     if (loading) return
