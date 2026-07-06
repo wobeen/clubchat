@@ -20,12 +20,16 @@ import { useAuth } from '../../../../src/features/auth/useAuth'
 import { useAttachmentUpload } from '../../../../src/features/chat/useAttachmentUpload'
 import { AttachmentMessage } from '../../../../src/features/chat/AttachmentMessage'
 import { Database } from '../../../../src/types/supabase'
+import { MemberProfileCard, MemberProfile } from '../../../../src/features/club/MemberProfileCard'
 
 // ─── 타입 ────────────────────────────────────────────────────────────────────
 
 type ProfileRow = Database['public']['Tables']['profiles']['Row']
 type SenderInfo = Pick<ProfileRow, 'id' | 'display_name' | 'avatar_url'> & {
   avatar_emoji?: string | null
+  grade?: string | null
+  birth_year?: number | null
+  gender?: string | null
 }
 
 interface Attachment {
@@ -68,18 +72,34 @@ function getInitials(name: string): string {
 
 // ─── 서브 컴포넌트 ────────────────────────────────────────────────────────────
 
+const AVATAR_COLORS = [
+  { bg: '#E8F7EE', text: '#1FA65A' },
+  { bg: '#FDF0E7', text: '#E07A2E' },
+  { bg: '#F0EAFB', text: '#7B5CD6' },
+  { bg: '#E7F5FB', text: '#2493C6' },
+  { bg: '#FBEFF3', text: '#D6588A' },
+  { bg: '#EDEFF2', text: '#6B7684' },
+]
+
+function getAvatarColor(name: string) {
+  let hash = 0
+  for (const c of name) hash = (hash * 31 + c.charCodeAt(0)) & 0xffff
+  return AVATAR_COLORS[hash % AVATAR_COLORS.length]
+}
+
 function AvatarPlaceholder({ name, emoji, size }: { name: string; emoji?: string | null; size: number }) {
   const circleStyle = { width: size, height: size, borderRadius: size / 2 }
   if (emoji) {
     return (
-      <View style={[styles.avatarPlaceholder, circleStyle, { backgroundColor: '#E5E7EB' }]}>
+      <View style={[styles.avatarPlaceholder, circleStyle, { backgroundColor: '#FFF3E0' }]}>
         <Text style={{ fontSize: size * 0.55 }}>{emoji}</Text>
       </View>
     )
   }
+  const color = getAvatarColor(name)
   return (
-    <View style={[styles.avatarPlaceholder, circleStyle]}>
-      <Text style={[styles.avatarInitials, { fontSize: size * 0.4 }]}>{getInitials(name)}</Text>
+    <View style={[styles.avatarPlaceholder, circleStyle, { backgroundColor: color.bg }]}>
+      <Text style={[styles.avatarInitials, { fontSize: size * 0.38, color: color.text }]}>{getInitials(name)}</Text>
     </View>
   )
 }
@@ -118,13 +138,15 @@ function MyMessageBubble({ msg, onLongPress }: { msg: ChatMessage; onLongPress?:
   )
 }
 
-function OtherMessageBubble({ msg }: { msg: ChatMessage }) {
+function OtherMessageBubble({ msg, onAvatarPress }: { msg: ChatMessage; onAvatarPress?: () => void }) {
   const hasAttachment = !!msg.attachment && msg.type !== 'text'
 
   if (msg.deletedAt) {
     return (
       <View style={styles.otherRow}>
-        <AvatarPlaceholder name={msg.sender.display_name} emoji={msg.sender.avatar_emoji} size={32} />
+        <Pressable onPress={onAvatarPress} hitSlop={4}>
+          <AvatarPlaceholder name={msg.sender.display_name} emoji={msg.sender.avatar_emoji} size={32} />
+        </Pressable>
         <View style={styles.otherContent}>
           <Text style={styles.senderName}>{msg.sender.display_name}</Text>
           <View style={[styles.otherBubble, styles.deletedBubble]}>
@@ -137,7 +159,9 @@ function OtherMessageBubble({ msg }: { msg: ChatMessage }) {
 
   return (
     <View style={styles.otherRow}>
-      <AvatarPlaceholder name={msg.sender.display_name} emoji={msg.sender.avatar_emoji} size={32} />
+      <Pressable onPress={onAvatarPress} style={styles.avatarPressable} hitSlop={4}>
+        <AvatarPlaceholder name={msg.sender.display_name} emoji={msg.sender.avatar_emoji} size={32} />
+      </Pressable>
       <View style={styles.otherContent}>
         <Text style={styles.senderName}>
           {msg.sender.display_name}
@@ -186,6 +210,25 @@ export default function ChatScreen() {
   const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const [typingUsers, setTypingUsers] = useState<{ userId: string; name: string }[]>([])
+  const [profileCard, setProfileCard] = useState<MemberProfile | null>(null)
+
+  async function handleAvatarPress(sender: SenderInfo) {
+    const { data: cm } = await supabase
+      .from('channel_members')
+      .select('joined_at')
+      .eq('channel_id', channelId)
+      .eq('user_id', sender.id)
+      .maybeSingle()
+    setProfileCard({
+      id: sender.id,
+      display_name: sender.display_name,
+      avatar_emoji: sender.avatar_emoji ?? null,
+      grade: sender.grade ?? null,
+      birth_year: sender.birth_year ?? null,
+      gender: sender.gender ?? null,
+      joined_at: cm?.joined_at ?? new Date().toISOString(),
+    })
+  }
 
   const { uploading, pickImage, pickFile } = useAttachmentUpload()
 
@@ -213,7 +256,7 @@ export default function ChatScreen() {
             accessibilityRole="button"
             accessibilityLabel="일정 보기"
           >
-            <Text style={{ color: '#4A90D9', fontSize: 15, fontWeight: '600' }}>일정</Text>
+            <Text style={{ color: '#3B7DD8', fontSize: 15, fontWeight: '600' }}>일정</Text>
           </Pressable>
         </View>
       ),
@@ -264,7 +307,7 @@ export default function ChatScreen() {
         .from('messages')
         .select(
           `id, channel_id, sender_id, content, type, created_at, edited_at,
-           sender:profiles!messages_sender_id_fkey(id, display_name, avatar_url, avatar_emoji),
+           sender:profiles!messages_sender_id_fkey(id, display_name, avatar_url, avatar_emoji, grade, birth_year, gender),
            attachments(id, storage_path, mime_type, size_bytes, width, height)`
         )
         .eq('channel_id', channelId)
@@ -633,7 +676,7 @@ export default function ChatScreen() {
 
   // ── 로딩 / 에러 ────────────────────────────────────────────────────────────
   if (pageStatus.status === 'loading') {
-    return <View style={styles.centered}><ActivityIndicator size="large" color="#4A90D9" /></View>
+    return <View style={styles.centered}><ActivityIndicator size="large" color="#3B7DD8" /></View>
   }
   if (pageStatus.status === 'error') {
     return (
@@ -656,6 +699,7 @@ export default function ChatScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
+      <MemberProfileCard profile={profileCard} onClose={() => setProfileCard(null)} />
       <FlatList
         ref={flatListRef}
         data={messages}
@@ -670,7 +714,7 @@ export default function ChatScreen() {
         renderItem={({ item }) =>
           item.senderId === myId
             ? <MyMessageBubble msg={item} onLongPress={() => openMessageActions(item)} />
-            : <OtherMessageBubble msg={item} />
+            : <OtherMessageBubble msg={item} onAvatarPress={() => handleAvatarPress(item.sender)} />
         }
       />
 
@@ -771,7 +815,7 @@ export default function ChatScreen() {
           >
             {sending
               ? <ActivityIndicator size="small" color="#FFFFFF" />
-              : <Text style={styles.sendButtonText}>{editingMessageId ? '저장' : '보내기'}</Text>}
+              : <Text style={styles.sendButtonText}>{editingMessageId ? '✓' : '↑'}</Text>}
           </Pressable>
         </View>
       </KeyboardAvoidingView>
@@ -782,32 +826,33 @@ export default function ChatScreen() {
 // ─── 스타일 ───────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F3F4F6' },
-  centered: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#F3F4F6' },
-  listContent: { padding: 16, paddingBottom: 8, gap: 12, flexGrow: 1 },
+  container: { flex: 1, backgroundColor: '#F7F8FA' },
+  centered: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#F7F8FA' },
+  listContent: { padding: 16, paddingBottom: 8, gap: 14, flexGrow: 1 },
   emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: 80 },
-  emptyText: { fontSize: 14, color: '#9CA3AF', textAlign: 'center' },
+  emptyText: { fontSize: 14, color: '#8B95A1', textAlign: 'center' },
 
   myRow: { flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'flex-end', gap: 6 },
-  myTime: { fontSize: 11, color: '#9CA3AF', marginBottom: 2 },
+  myTime: { fontSize: 11, color: '#A9B1BA', marginBottom: 2 },
   myBubble: {
-    backgroundColor: '#4A90D9',
-    borderRadius: 16,
-    borderBottomRightRadius: 4,
-    paddingVertical: 10,
-    paddingHorizontal: 14,
+    backgroundColor: '#3B7DD8',
+    borderRadius: 18,
+    borderTopRightRadius: 4,
+    paddingVertical: 11,
+    paddingHorizontal: 15,
     maxWidth: '75%',
   },
-  myText: { fontSize: 15, color: '#FFFFFF', lineHeight: 20 },
+  myText: { fontSize: 15, color: '#FFFFFF', lineHeight: 22 },
   editedMark: { fontSize: 11, color: 'rgba(255,255,255,0.65)', marginTop: 2, textAlign: 'right' },
-  editedMarkOther: { fontSize: 11, color: '#9CA3AF', marginTop: 2 },
+  editedMarkOther: { fontSize: 11, color: '#A9B1BA', marginTop: 2 },
 
-  deletedBubble: { backgroundColor: '#F3F4F6', borderWidth: 1, borderColor: '#E5E7EB' },
-  deletedText: { fontSize: 14, color: '#9CA3AF', fontStyle: 'italic' },
+  deletedBubble: { backgroundColor: '#F2F4F6', borderWidth: StyleSheet.hairlineWidth, borderColor: '#EDEFF2' },
+  deletedText: { fontSize: 14, color: '#A9B1BA', fontStyle: 'italic' },
 
-  otherRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
+  otherRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 9 },
+  avatarPressable: { alignSelf: 'flex-start' },
   avatarPlaceholder: {
-    backgroundColor: '#6B7280',
+    backgroundColor: '#6B7684',
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,
@@ -815,29 +860,29 @@ const styles = StyleSheet.create({
   },
   avatarInitials: { color: '#FFFFFF', fontWeight: '700' },
   otherContent: { maxWidth: '75%', gap: 4 },
-  senderName: { fontSize: 12, fontWeight: '600', color: '#374151' },
-  otherTime: { fontSize: 11, fontWeight: '400', color: '#9CA3AF' },
+  senderName: { fontSize: 12, fontWeight: '600', color: '#4E5968' },
+  otherTime: { fontSize: 11, fontWeight: '400', color: '#A9B1BA' },
   otherBubble: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    borderBottomLeftRadius: 4,
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    shadowColor: '#000',
+    borderRadius: 18,
+    borderTopLeftRadius: 4,
+    paddingVertical: 11,
+    paddingHorizontal: 15,
+    shadowColor: 'rgba(25,31,40,1)',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
-    shadowRadius: 2,
+    shadowRadius: 4,
     elevation: 1,
   },
-  otherText: { fontSize: 15, color: '#1A1A1A', lineHeight: 20 },
+  otherText: { fontSize: 15, color: '#191F28', lineHeight: 22 },
 
-  mediaBubble: { padding: 6 },
+  mediaBubble: { padding: 8 },
 
   attachMenu: {
     flexDirection: 'row',
     backgroundColor: '#FFFFFF',
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: '#E5E7EB',
+    borderTopColor: '#F2F4F6',
     paddingHorizontal: 16,
     paddingVertical: 10,
     gap: 16,
@@ -848,10 +893,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 12,
-    backgroundColor: '#F3F4F6',
+    backgroundColor: '#F2F4F6',
   },
   attachMenuIcon: { fontSize: 24 },
-  attachMenuText: { fontSize: 11, color: '#374151', fontWeight: '600' },
+  attachMenuText: { fontSize: 11, color: '#4E5968', fontWeight: '600' },
 
   editBanner: {
     flexDirection: 'row',
@@ -859,67 +904,66 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 8,
-    backgroundColor: '#EFF6FF',
+    backgroundColor: '#E7EFFF',
     borderTopWidth: 1,
-    borderTopColor: '#BFDBFE',
+    borderTopColor: '#B3CEED',
     gap: 8,
   },
-  editBannerLabel: { flex: 1, fontSize: 13, color: '#1D4ED8' },
-  editBannerCancel: { fontSize: 16, color: '#6B7280', fontWeight: '600' },
+  editBannerLabel: { flex: 1, fontSize: 13, color: '#3B7DD8' },
+  editBannerCancel: { fontSize: 16, color: '#8B95A1', fontWeight: '600' },
 
   inputBar: {
     flexDirection: 'row',
     alignItems: 'flex-end',
     gap: 8,
-    paddingHorizontal: 12,
+    paddingHorizontal: 14,
     paddingVertical: 10,
     backgroundColor: '#FFFFFF',
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: '#E5E7EB',
+    borderTopColor: '#F2F4F6',
   },
   attachButton: {
-    width: 40,
-    height: 40,
+    width: 38,
+    height: 38,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 20,
-    backgroundColor: '#F3F4F6',
+    borderRadius: 19,
+    backgroundColor: '#F2F4F6',
   },
-  attachButtonText: { fontSize: 20 },
+  attachButtonText: { fontSize: 18 },
   input: {
     flex: 1,
     minHeight: 40,
     maxHeight: 120,
-    backgroundColor: '#F3F4F6',
+    backgroundColor: '#F2F4F6',
     borderRadius: 20,
     paddingHorizontal: 16,
     paddingVertical: Platform.OS === 'ios' ? 10 : 8,
     fontSize: 15,
-    color: '#1A1A1A',
+    color: '#191F28',
     ...(Platform.OS === 'web' ? ({ outlineStyle: 'none' } as object) : {}),
   },
   sendButton: {
-    height: 40,
-    paddingHorizontal: 16,
-    borderRadius: 20,
-    backgroundColor: '#4A90D9',
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: '#3B7DD8',
     alignItems: 'center',
     justifyContent: 'center',
-    minWidth: 72,
   },
-  sendButtonDisabled: { backgroundColor: '#93C5FD' },
+  sendButtonDisabled: { backgroundColor: '#A8C4ED' },
   sendButtonPressed: { opacity: 0.8 },
-  sendButtonText: { fontSize: 14, fontWeight: '700', color: '#FFFFFF' },
-  errorText: { fontSize: 15, color: '#DC2626', textAlign: 'center', paddingHorizontal: 24, marginBottom: 20 },
-  retryButton: { paddingVertical: 10, paddingHorizontal: 24, borderRadius: 10, backgroundColor: '#4A90D9' },
+  sendButtonText: { fontSize: 16, fontWeight: '700', color: '#FFFFFF' },
+  errorText: { fontSize: 15, color: '#E5484D', textAlign: 'center', paddingHorizontal: 24, marginBottom: 20 },
+  retryButton: { paddingVertical: 10, paddingHorizontal: 24, borderRadius: 10, backgroundColor: '#3B7DD8' },
   retryButtonText: { fontSize: 14, fontWeight: '600', color: '#FFFFFF' },
 
   typingBar: {
     paddingHorizontal: 16,
     paddingVertical: 4,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: '#FFFFFF',
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: '#E5E7EB',
+    borderTopColor: '#F2F4F6',
   },
-  typingText: { fontSize: 12, color: '#9CA3AF', fontStyle: 'italic' },
+  typingText: { fontSize: 12, color: '#A9B1BA', fontStyle: 'italic' },
 })

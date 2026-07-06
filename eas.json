@@ -24,16 +24,7 @@
         "resourceClass": "m-medium"
       },
       "android": {
-        "buildType": "aab"
-      }
-    }
-  },
-  "submit": {
-    "production": {
-      "ios": {
-        "appleId": "sinubin98@gmail.com",
-        "ascAppId": "",
-        "appleTeamId": ""
+        "buildType": "app-bundle"
       }
     }
   }

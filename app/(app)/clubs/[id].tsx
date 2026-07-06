@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from 'react'
 import {
   Alert,
-  FlatList,
   Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -11,7 +11,6 @@ import {
 import { useFocusEffect, useLocalSearchParams, useNavigation, useRouter } from 'expo-router'
 import { supabase } from '../../../src/lib/supabase'
 import { useAuth } from '../../../src/features/auth/useAuth'
-import { Database } from '../../../src/types/supabase'
 import { usePage } from '../../../src/features/wiki/usePage'
 import { WikiViewer } from '../../../src/features/wiki/WikiViewer'
 import { WikiEditor } from '../../../src/features/wiki/WikiEditor'
@@ -20,90 +19,79 @@ import { useToast } from '../../../src/features/ui/Toast'
 
 type MemberRole = 'owner' | 'admin' | 'member'
 
-
 interface ChannelItem {
   id: string
   name: string
-  type: string
   hasPassword: boolean
   ownerId: string
-  createdAt: string
   joined: boolean
+  unreadCount: number
 }
 
 type PageState =
   | { status: 'loading' }
   | { status: 'error'; message: string }
-  | { status: 'ready'; clubName: string; channels: ChannelItem[]; myRole: MemberRole | null }
+  | { status: 'ready'; clubName: string; inviteCode: string | null; memberCount: number; channels: ChannelItem[]; myRole: MemberRole | null }
 
-function PasswordBadge() {
-  return (
-    <View style={styles.passwordBadge}>
-      <Text style={styles.passwordBadgeText}>비밀</Text>
-    </View>
-  )
+const CLUB_COLORS = [
+  { bg: '#E7EFFF', text: '#3B7DD8' },
+  { bg: '#E8F7EE', text: '#1FA65A' },
+  { bg: '#FDF0E7', text: '#E07A2E' },
+  { bg: '#F0EAFB', text: '#7B5CD6' },
+  { bg: '#E7F5FB', text: '#2493C6' },
+  { bg: '#FBEFF3', text: '#D6588A' },
+]
+
+function getClubColor(id: string) {
+  let hash = 0
+  for (const c of id) hash = (hash * 31 + c.charCodeAt(0)) & 0xffff
+  return CLUB_COLORS[hash % CLUB_COLORS.length]
 }
 
-function ChannelCard({
+function ChannelRow({
   item,
+  isLast,
   onOpen,
   onJoin,
-  onManage,
-  unreadCount,
 }: {
   item: ChannelItem
+  isLast: boolean
   onOpen: () => void
   onJoin: () => void
-  onManage?: () => void
-  unreadCount: number
 }) {
   return (
-    <View style={styles.channelCard}>
-      <View style={styles.channelInfo}>
-        <View style={styles.channelNameRow}>
-          <Text style={styles.channelName} numberOfLines={1}>{item.name}</Text>
-          {item.hasPassword && <PasswordBadge />}
-          {unreadCount > 0 && (
-            <View style={styles.unreadBadge}>
-              <Text style={styles.unreadBadgeText}>
-                {unreadCount > 99 ? '99+' : String(unreadCount)}
-              </Text>
-            </View>
-          )}
-        </View>
-      </View>
-      <View style={styles.cardActions}>
-        {onManage != null && (
-          <Pressable
-            onPress={onManage}
-            accessibilityRole="button"
-            accessibilityLabel={`${item.name} 방 관리`}
-            style={({ pressed }) => [styles.manageButton, pressed && styles.pressedOpacity]}
-          >
-            <Text style={styles.manageButtonText}>관리</Text>
-          </Pressable>
-        )}
-        {item.joined ? (
-          <Pressable
-            style={({ pressed }) => [styles.openButton, pressed && styles.pressedOpacity]}
-            onPress={onOpen}
-            accessibilityRole="button"
-            accessibilityLabel={`${item.name} 채팅 열기`}
-          >
-            <Text style={styles.openButtonText}>열기</Text>
-          </Pressable>
+    <Pressable
+      style={({ pressed }) => [styles.channelRow, !isLast && styles.channelRowBorder, pressed && styles.pressed]}
+      onPress={item.joined ? onOpen : onJoin}
+      accessibilityRole="button"
+      accessibilityLabel={`${item.name} ${item.joined ? '열기' : '입장'}`}
+    >
+      <View style={[styles.channelIcon, item.hasPassword && styles.channelIconLock]}>
+        {item.hasPassword ? (
+          <Text style={styles.channelIconLockText}>🔒</Text>
         ) : (
-          <Pressable
-            style={({ pressed }) => [styles.joinButton, pressed && styles.pressedOpacity]}
-            onPress={onJoin}
-            accessibilityRole="button"
-            accessibilityLabel={`${item.name} 방 입장`}
-          >
-            <Text style={styles.joinButtonText}>입장</Text>
-          </Pressable>
+          <Text style={styles.channelIconHash}>#</Text>
         )}
       </View>
-    </View>
+      <View style={styles.channelRowInfo}>
+        <Text style={styles.channelRowName} numberOfLines={1}>{item.name}</Text>
+        {!item.joined && (
+          <Text style={styles.channelRowSub}>아직 입장하지 않은 방</Text>
+        )}
+      </View>
+      {item.joined && item.unreadCount > 0 && (
+        <View style={styles.unreadBadge}>
+          <Text style={styles.unreadBadgeText}>
+            {item.unreadCount > 99 ? '99+' : String(item.unreadCount)}
+          </Text>
+        </View>
+      )}
+      {!item.joined && (
+        <View style={styles.joinBtn}>
+          <Text style={styles.joinBtnText}>입장</Text>
+        </View>
+      )}
+    </Pressable>
   )
 }
 
@@ -113,9 +101,8 @@ export default function ClubDetailScreen() {
   const router = useRouter()
   const navigation = useNavigation()
   const [state, setState] = useState<PageState>({ status: 'loading' })
-  const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({})
-
   const [wikiEditorOpen, setWikiEditorOpen] = useState(false)
+
   const wikiScope = id ? { type: 'club' as const, clubId: id } : { type: 'club' as const, clubId: '' }
   const { page: wikiPage, refresh: refreshWiki } = usePage(wikiScope)
   const { show: showToast, ToastComponent } = useToast()
@@ -126,16 +113,10 @@ export default function ClubDetailScreen() {
       { text: '취소', style: 'cancel' },
       {
         text: '탈퇴', style: 'destructive', onPress: async () => {
-          const { error } = await supabase
-            .from('memberships')
-            .delete()
-            .eq('club_id', id)
-            .eq('user_id', session.user.id)
-          if (error) {
-            Alert.alert('오류', '탈퇴할 수 없습니다.')
-          } else {
-            router.replace('/(app)')
-          }
+          const { error } = await supabase.from('memberships').delete()
+            .eq('club_id', id).eq('user_id', session.user.id)
+          if (error) Alert.alert('오류', '탈퇴할 수 없습니다.')
+          else router.replace('/(app)')
         },
       },
     ])
@@ -143,127 +124,118 @@ export default function ClubDetailScreen() {
 
   useEffect(() => {
     if (state.status !== 'ready') return
-    if (state.myRole === 'owner' || state.myRole === null) return
+    const { myRole, clubName } = state
+
     navigation.setOptions({
-      headerRight: () => (
-        <Pressable
-          onPress={handleLeave}
-          style={{ paddingHorizontal: 16, paddingVertical: 8 }}
-          accessibilityRole="button"
-          accessibilityLabel="동아리 탈퇴"
-        >
-          <Text style={{ color: '#EF4444', fontSize: 14, fontWeight: '500' }}>탈퇴</Text>
-        </Pressable>
-      ),
+      title: clubName,
+      headerRight: myRole === 'owner' || myRole === 'admin'
+        ? () => (
+            <Pressable
+              onPress={() => router.push({
+                pathname: '/(app)/clubs/manage' as any,
+                params: { clubId: id, clubName },
+              })}
+              style={{ paddingHorizontal: 16, paddingVertical: 8 }}
+              accessibilityRole="button"
+              accessibilityLabel="동아리 관리"
+            >
+              <Text style={{ color: '#8B95A1', fontSize: 15, fontWeight: '700' }}>관리</Text>
+            </Pressable>
+          )
+        : myRole === 'member'
+          ? () => (
+              <Pressable
+                onPress={handleLeave}
+                style={{ paddingHorizontal: 16, paddingVertical: 8 }}
+                accessibilityRole="button"
+                accessibilityLabel="동아리 탈퇴"
+              >
+                <Text style={{ color: '#E5484D', fontSize: 14, fontWeight: '500' }}>탈퇴</Text>
+              </Pressable>
+            )
+          : undefined,
     })
   }, [state, handleLeave])
 
   useFocusEffect(
     useCallback(() => {
       if (!session?.user || !id) return
-
       let cancelled = false
 
       async function load() {
         if (!session?.user || !id) return
         setState({ status: 'loading' })
 
-        const [membershipResult, clubResult, channelsResult, myChannelsResult] = await Promise.all([
-          supabase
-            .from('memberships')
-            .select('role')
-            .eq('club_id', id)
-            .eq('user_id', session.user.id)
-            .maybeSingle(),
-          supabase
-            .from('clubs')
-            .select('id, name')
-            .eq('id', id)
-            .single(),
-          supabase
-            .from('channels')
-            .select('id, name, type, is_password_protected, owner_id, created_at')
-            .eq('club_id', id)
-            .order('created_at', { ascending: true }),
-          supabase
-            .from('channel_members')
-            .select('channel_id')
-            .eq('user_id', session.user.id),
+        const [membershipResult, clubResult, channelsResult, myChannelsResult, memberCountResult] = await Promise.all([
+          supabase.from('memberships').select('role').eq('club_id', id).eq('user_id', session.user.id).maybeSingle(),
+          supabase.from('clubs').select('id, name, invite_code').eq('id', id).single(),
+          supabase.from('channels').select('id, name, type, is_password_protected, owner_id, created_at')
+            .eq('club_id', id).order('created_at', { ascending: true }),
+          supabase.from('channel_members').select('channel_id').eq('user_id', session.user.id),
+          supabase.from('memberships').select('id', { count: 'exact', head: true }).eq('club_id', id),
         ])
 
         if (cancelled) return
 
-        if (clubResult.error) {
-          console.error('[ClubDetail] club error:', clubResult.error)
-          setState({ status: 'error', message: '동아리 정보를 불러오는 중 오류가 발생했습니다.' })
+        if (clubResult.error || channelsResult.error) {
+          setState({ status: 'error', message: '정보를 불러오는 중 오류가 발생했습니다.' })
           return
         }
 
-        if (channelsResult.error) {
-          console.error('[ClubDetail] channels error:', channelsResult.error)
-          setState({ status: 'error', message: '방 목록을 불러오는 중 오류가 발생했습니다.' })
-          return
+        const clubData = clubResult.data as { id: string; name: string; invite_code?: string | null }
+        const clubName = clubData.name
+        const inviteCode = (clubData as any).invite_code ?? null
+        const memberCount = memberCountResult.count ?? 0
+
+        const joinedIds = new Set((myChannelsResult.data ?? []).map((cm) => cm.channel_id))
+        const myRole = membershipResult.data ? (membershipResult.data.role as MemberRole) : null
+
+        const channelIds = (channelsResult.data ?? []).filter((ch) => joinedIds.has(ch.id)).map((ch) => ch.id)
+        let unreadMap: Record<string, number> = {}
+        if (channelIds.length > 0) {
+          const { data: unreadData } = await (supabase as any).rpc('get_unread_counts', { p_channel_ids: channelIds })
+          for (const row of (unreadData ?? []) as Array<{ channel_id: string; unread_count: number }>) {
+            unreadMap[row.channel_id] = Number(row.unread_count)
+          }
         }
 
-        const clubName = clubResult.data.name
-        navigation.setOptions({ title: clubName })
-
-        const joinedIds = new Set(
-          (myChannelsResult.data ?? []).map((cm) => cm.channel_id)
-        )
-
-        const myRole = membershipResult.data
-          ? (membershipResult.data.role as MemberRole)
-          : null
+        if (cancelled) return
 
         const channels: ChannelItem[] = (channelsResult.data ?? []).map((ch) => ({
           id: ch.id,
           name: ch.name,
-          type: ch.type,
           hasPassword: ch.is_password_protected ?? false,
           ownerId: ch.owner_id,
-          createdAt: ch.created_at,
           joined: joinedIds.has(ch.id),
+          unreadCount: unreadMap[ch.id] ?? 0,
         }))
 
-        setState({ status: 'ready', clubName, channels, myRole })
+        setState({ status: 'ready', clubName, inviteCode, memberCount, channels, myRole })
 
-        const channelIdArray = [...joinedIds]
-        if (channelIdArray.length > 0) {
-          const { data: unreadData } = await (supabase as any).rpc('get_unread_counts', {
-            p_channel_ids: channelIdArray,
-          })
-          const counts: Record<string, number> = {}
-          for (const row of (unreadData ?? []) as Array<{ channel_id: string; unread_count: number }>) {
-            counts[row.channel_id] = Number(row.unread_count)
-          }
-          if (!cancelled) setUnreadCounts(counts)
-        } else {
-          setUnreadCounts({})
-        }
-      }
-
-      load()
-
-      const rt = supabase
-        .channel('unread-badge')
-        .on(
-          'postgres_changes',
-          { event: 'INSERT', schema: 'public', table: 'messages' },
-          (payload) => {
+        // Realtime unread badge update
+        const rt = supabase.channel('club-unread-' + id)
+          .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
             const row = payload.new as { channel_id: string; sender_id: string }
             if (row.sender_id === session?.user?.id) return
-            setUnreadCounts((prev) => ({
-              ...prev,
-              [row.channel_id]: (prev[row.channel_id] ?? 0) + 1,
-            }))
-          }
-        )
-        .subscribe()
+            setState((prev) => {
+              if (prev.status !== 'ready') return prev
+              return {
+                ...prev,
+                channels: prev.channels.map((ch) =>
+                  ch.id === row.channel_id ? { ...ch, unreadCount: ch.unreadCount + 1 } : ch
+                ),
+              }
+            })
+          })
+          .subscribe()
 
+        return () => { supabase.removeChannel(rt) }
+      }
+
+      const cleanup = load()
       return () => {
         cancelled = true
-        supabase.removeChannel(rt)
+        cleanup?.then((fn) => fn?.())
       }
     }, [id, session?.user?.id])
   )
@@ -278,36 +250,28 @@ export default function ClubDetailScreen() {
   function handleJoinChannel(channel: ChannelItem) {
     router.push({
       pathname: '/(app)/channels/[id]/join',
-      params: {
-        id: channel.id,
-        hasPassword: channel.hasPassword ? '1' : '0',
-        channelName: channel.name,
-      },
+      params: { id: channel.id, hasPassword: channel.hasPassword ? '1' : '0', channelName: channel.name },
     })
   }
 
-  if (state.status === 'loading') {
-    return <ClubDetailSkeleton />
-  }
+  if (state.status === 'loading') return <ClubDetailSkeleton />
 
   if (state.status === 'error') {
     return (
       <View style={styles.centered}>
         <Text style={styles.errorText}>{state.message}</Text>
-        <Pressable
-          style={styles.retryButton}
-          onPress={() => setState({ status: 'loading' })}
-          accessibilityRole="button"
-          accessibilityLabel="다시 시도"
-        >
-          <Text style={styles.retryButtonText}>다시 시도</Text>
+        <Pressable style={styles.retryBtn} onPress={() => setState({ status: 'loading' })}>
+          <Text style={styles.retryBtnText}>다시 시도</Text>
         </Pressable>
       </View>
     )
   }
 
-  const { clubName, channels, myRole } = state
+  const { clubName, inviteCode, memberCount, channels, myRole } = state
   const isOwner = myRole === 'owner'
+  const canEdit = myRole === 'owner' || myRole === 'admin'
+  const color = getClubColor(id ?? '')
+  const firstChar = clubName[0]?.toUpperCase() ?? '?'
 
   return (
     <View style={styles.container}>
@@ -319,310 +283,190 @@ export default function ClubDetailScreen() {
         onClose={() => setWikiEditorOpen(false)}
         onSaved={() => { refreshWiki(); showToast('위키가 저장됐어요 ✓') }}
       />
-      <FlatList
-        data={channels}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={
-          channels.length === 0 ? styles.emptyContainer : styles.listContent
-        }
-        renderItem={({ item }) => (
-          <ChannelCard
-            item={item}
-            onOpen={() => handleOpenChannel(item)}
-            onJoin={() => handleJoinChannel(item)}
-            onManage={
-              item.ownerId === session?.user?.id
-                ? () =>
-                    router.push({
-                      pathname: '/(app)/channels/[id]/manage',
-                      params: { id: item.id, channelName: item.name, clubId: id },
-                    })
-                : undefined
-            }
-            unreadCount={unreadCounts[item.id] ?? 0}
-          />
-        )}
-        ListHeaderComponent={
-          <View style={styles.listHeader}>
-            <Text style={styles.listHeaderTitle}>{clubName}</Text>
 
-            {/* 동아리 위키 */}
-            <View style={styles.wikiSection}>
-              <WikiViewer content={wikiPage?.content ?? ''} />
-              {(myRole === 'owner' || myRole === 'admin') && (
-                <Pressable
-                  onPress={() => setWikiEditorOpen(true)}
-                  style={({ pressed }) => [styles.editWikiBtn, pressed && styles.pressedOpacity]}
-                  accessibilityRole="button"
-                  accessibilityLabel="위키 편집"
-                >
-                  <Text style={styles.editWikiBtnText}>
-                    {wikiPage ? '편집' : '위키 작성 시작'}
-                  </Text>
-                </Pressable>
-              )}
-            </View>
-
-            <Text style={styles.listHeaderSubtitle}>방 목록</Text>
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        {/* ── 동아리 정보 카드 ─────────────────────────────────────────────── */}
+        <View style={[styles.card, styles.rowCard]}>
+          <View style={[styles.clubBadge, { backgroundColor: color.bg }]}>
+            <Text style={[styles.clubBadgeText, { color: color.text }]}>{firstChar}</Text>
           </View>
-        }
-        ListEmptyComponent={
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyTitle}>아직 방이 없어요</Text>
-            <Text style={styles.emptySubtitle}>
-              {isOwner
-                ? '아래 버튼을 눌러 첫 번째 방을 만들어보세요.'
-                : '방장이 방을 만들면 여기에 표시됩니다.'}
+          <View style={styles.clubInfoBlock}>
+            <Text style={styles.clubNameLarge}>{clubName}</Text>
+            <Pressable
+              onPress={() => router.push({
+                pathname: '/(app)/clubs/members' as any,
+                params: { clubId: id, clubName, myRole: myRole ?? 'member' },
+              })}
+              hitSlop={4}
+            >
+              <Text style={[styles.clubMeta, styles.clubMetaLink]}>멤버 {memberCount}명</Text>
+            </Pressable>
+            <Text style={styles.clubMeta}>내 역할 {ROLE_LABEL[myRole ?? 'member']}</Text>
+          </View>
+          {inviteCode && (
+            <Pressable
+              style={({ pressed }) => [styles.inviteCodeBtn, pressed && styles.pressed]}
+              onPress={() => {
+                if (Platform.OS === 'web' && typeof navigator !== 'undefined') {
+                  navigator.clipboard?.writeText(inviteCode).catch(() => {})
+                }
+                showToast('초대 코드가 복사됐어요 ✓')
+              }}
+              accessibilityRole="button"
+              accessibilityLabel="초대 코드 복사"
+            >
+              <Text style={styles.inviteCodeBtnText}>초대 코드</Text>
+            </Pressable>
+          )}
+        </View>
+
+        {/* ── 동아리 위키 ─────────────────────────────────────────────────── */}
+        <View style={[styles.card, styles.colCard]}>
+          <View style={styles.cardHeader}>
+            <Text style={styles.cardTitle}>📌 동아리 위키</Text>
+            {canEdit && (
+              <Pressable
+                onPress={() => setWikiEditorOpen(true)}
+                hitSlop={8}
+                accessibilityRole="button"
+                accessibilityLabel="위키 편집"
+              >
+                <Text style={styles.editLink}>{wikiPage ? '편집' : '작성 시작'}</Text>
+              </Pressable>
+            )}
+          </View>
+          {wikiPage?.content
+            ? <WikiViewer content={wikiPage.content} />
+            : <Text style={styles.wikiEmpty}>동아리 소개를 작성해보세요.</Text>}
+        </View>
+
+        {/* ── 방 목록 ─────────────────────────────────────────────────────── */}
+        <View style={styles.sectionRow}>
+          <Text style={styles.sectionLabel}>방 {channels.length}개</Text>
+          {isOwner && (
+            <Pressable
+              onPress={() => router.push({ pathname: '/(app)/channels/create', params: { clubId: id, clubName } })}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel="방 만들기"
+            >
+              <Text style={styles.sectionAction}>+ 방 만들기</Text>
+            </Pressable>
+          )}
+        </View>
+
+        {channels.length === 0 ? (
+          <View style={styles.emptyRooms}>
+            <Text style={styles.emptyRoomsText}>
+              {isOwner ? '아래에서 첫 번째 방을 만들어보세요.' : '방장이 방을 만들면 여기에 표시됩니다.'}
             </Text>
           </View>
-        }
-      />
-
-      {isOwner && (
-        <View style={styles.fab}>
-          <Pressable
-            style={({ pressed }) => [styles.fabButton, pressed && styles.pressedOpacity]}
-            onPress={() =>
-              router.push({
-                pathname: '/(app)/channels/create',
-                params: { clubId: id, clubName },
-              })
-            }
-            accessibilityRole="button"
-            accessibilityLabel="방 만들기"
-          >
-            <Text style={styles.fabText}>+ 방 만들기</Text>
-          </Pressable>
-        </View>
-      )}
+        ) : (
+          <View style={styles.channelContainer}>
+            {channels.map((ch, index) => (
+              <ChannelRow
+                key={ch.id}
+                item={ch}
+                isLast={index === channels.length - 1}
+                onOpen={() => handleOpenChannel(ch)}
+                onJoin={() => handleJoinChannel(ch)}
+              />
+            ))}
+          </View>
+        )}
+      </ScrollView>
     </View>
   )
 }
 
+const ROLE_LABEL: Record<MemberRole, string> = { owner: '방장', admin: '관리자', member: '멤버' }
+
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F3F4F6',
-  },
-  centered: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#F3F4F6',
-    paddingHorizontal: 24,
-  },
-  listContent: {
-    padding: 16,
-    gap: 10,
-    paddingBottom: 100,
-  },
-  emptyContainer: {
-    flex: 1,
-  },
-  listHeader: {
-    paddingVertical: 16,
-    paddingHorizontal: 4,
-  },
-  listHeaderTitle: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: '#1A1A1A',
-    marginBottom: 12,
-  },
-  wikiSection: {
+  container: { flex: 1, backgroundColor: '#F7F8FA' },
+  centered: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#F7F8FA', paddingHorizontal: 24 },
+  scrollContent: { padding: 20, gap: 12, paddingBottom: 48 },
+
+  // 카드 공통
+  card: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 14,
-    padding: 16,
-    marginBottom: 16,
-    shadowColor: '#000',
+    borderRadius: 20,
+    padding: 18,
+    shadowColor: 'rgba(25,31,40,1)',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
-    shadowRadius: 4,
+    shadowRadius: 6,
     elevation: 2,
   },
-  listHeaderSubtitle: {
-    fontSize: 14,
-    color: '#6B7280',
-    marginTop: 2,
-    marginBottom: 4,
+  rowCard: { flexDirection: 'row', alignItems: 'center', gap: 14 },
+  colCard: { flexDirection: 'column', gap: 0 },
+
+  // 동아리 정보 카드
+  clubBadge: { width: 54, height: 54, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
+  clubBadgeText: { fontSize: 24, fontWeight: '800' },
+  clubInfoBlock: { gap: 3 },
+  clubNameLarge: { fontSize: 17, fontWeight: '800', color: '#191F28' },
+  clubMeta: { fontSize: 13, color: '#8B95A1' },
+  clubMetaLink: { color: '#3B7DD8', fontWeight: '600', textDecorationLine: 'underline' },
+  inviteCodeBtn: {
+    height: 34, paddingHorizontal: 14, borderRadius: 12,
+    backgroundColor: '#F2F4F6', alignItems: 'center', justifyContent: 'center',
+    flexDirection: 'row', gap: 5,
   },
-  editWikiBtn: {
-    alignSelf: 'flex-end',
-    marginTop: 10,
-    paddingVertical: 6,
-    paddingHorizontal: 14,
-    borderRadius: 8,
-    backgroundColor: '#F3F4F6',
-    borderWidth: 1,
-    borderColor: '#D1D5DB',
-  },
-  editWikiBtnText: {
-    fontSize: 13,
-    fontWeight: '500',
-    color: '#374151',
-  },
-  channelCard: {
+  inviteCodeBtnText: { fontSize: 13, fontWeight: '700', color: '#4E5968' },
+
+  // 위키 카드
+  cardHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 },
+  cardTitle: { fontSize: 15, fontWeight: '800', color: '#191F28' },
+  editLink: { fontSize: 13, fontWeight: '600', color: '#3B7DD8' },
+  wikiEmpty: { fontSize: 13, color: '#A9B1BA', lineHeight: 20 },
+
+  // 섹션 헤더
+  sectionRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 4 },
+  sectionLabel: { fontSize: 13, fontWeight: '600', color: '#8B95A1' },
+  sectionAction: { fontSize: 13, fontWeight: '700', color: '#3B7DD8' },
+
+  // 방 컨테이너
+  channelContainer: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 14,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    shadowColor: '#000',
+    borderRadius: 20,
+    shadowColor: 'rgba(25,31,40,1)',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
-    shadowRadius: 4,
+    shadowRadius: 6,
     elevation: 2,
+    overflow: 'hidden',
   },
-  channelInfo: {
-    flex: 1,
+  channelRow: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 15, paddingHorizontal: 16 },
+  channelRowBorder: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#F2F4F6' },
+  channelIcon: {
+    width: 38, height: 38, borderRadius: 12,
+    backgroundColor: '#E7EFFF', alignItems: 'center', justifyContent: 'center',
   },
-  channelNameRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    flexWrap: 'wrap',
-  },
-  channelName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1A1A1A',
-  },
-  passwordBadge: {
-    backgroundColor: '#FEF3C7',
-    borderRadius: 6,
-    paddingHorizontal: 7,
-    paddingVertical: 2,
-  },
-  passwordBadgeText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#92400E',
-  },
+  channelIconLock: { backgroundColor: '#F2F4F6' },
+  channelIconHash: { fontSize: 16, fontWeight: '800', color: '#3B7DD8' },
+  channelIconLockText: { fontSize: 14 },
+  channelRowInfo: { flex: 1, gap: 2 },
+  channelRowName: { fontSize: 15, fontWeight: '700', color: '#191F28' },
+  channelRowSub: { fontSize: 12, color: '#8B95A1' },
   unreadBadge: {
-    backgroundColor: '#EF4444',
-    borderRadius: 10,
-    minWidth: 20,
-    height: 20,
-    paddingHorizontal: 5,
-    alignItems: 'center',
-    justifyContent: 'center',
+    minWidth: 20, height: 20, borderRadius: 10, backgroundColor: '#3B7DD8',
+    paddingHorizontal: 6, alignItems: 'center', justifyContent: 'center',
   },
-  unreadBadgeText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#FFFFFF',
+  unreadBadgeText: { fontSize: 11, fontWeight: '700', color: '#FFFFFF' },
+  joinBtn: {
+    height: 32, paddingHorizontal: 16, borderRadius: 12,
+    backgroundColor: '#E7EFFF', alignItems: 'center', justifyContent: 'center',
   },
-  cardActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  manageButton: {
-    height: 36,
-    paddingHorizontal: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...(Platform.OS === 'web' ? ({ cursor: 'pointer' } as object) : {}),
-  },
-  manageButtonText: {
-    fontSize: 13,
-    fontWeight: '500',
-    color: '#6B7280',
-  },
-  openButton: {
-    height: 36,
-    paddingHorizontal: 16,
-    borderRadius: 10,
-    backgroundColor: '#4A90D9',
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...(Platform.OS === 'web' ? ({ cursor: 'pointer' } as object) : {}),
-  },
-  openButtonText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#FFFFFF',
-  },
-  joinButton: {
-    height: 36,
-    paddingHorizontal: 16,
-    borderRadius: 10,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1.5,
-    borderColor: '#4A90D9',
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...(Platform.OS === 'web' ? ({ cursor: 'pointer' } as object) : {}),
-  },
-  joinButtonText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#4A90D9',
-  },
-  emptyState: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 32,
-    paddingTop: 60,
-  },
-  emptyTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#1A1A1A',
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  emptySubtitle: {
-    fontSize: 15,
-    color: '#6B7280',
-    textAlign: 'center',
-    lineHeight: 22,
-  },
-  fab: {
-    position: 'absolute',
-    bottom: 32,
-    right: 20,
-  },
-  fabButton: {
-    height: 48,
-    paddingHorizontal: 20,
-    borderRadius: 24,
-    backgroundColor: '#4A90D9',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#4A90D9',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
-    ...(Platform.OS === 'web' ? ({ cursor: 'pointer' } as object) : {}),
-  },
-  fabText: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#FFFFFF',
-  },
-  errorText: {
-    fontSize: 15,
-    color: '#DC2626',
-    textAlign: 'center',
-    marginBottom: 20,
-  },
-  retryButton: {
-    paddingVertical: 10,
-    paddingHorizontal: 24,
-    borderRadius: 10,
-    backgroundColor: '#4A90D9',
-  },
-  retryButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#FFFFFF',
-  },
-  pressedOpacity: {
-    opacity: 0.6,
-  },
+  joinBtnText: { fontSize: 13, fontWeight: '700', color: '#3B7DD8' },
+
+  // 빈 방 상태
+  emptyRooms: { paddingVertical: 20, paddingHorizontal: 4 },
+  emptyRoomsText: { fontSize: 14, color: '#8B95A1', textAlign: 'center' },
+
+  // 에러
+  errorText: { fontSize: 15, color: '#E5484D', textAlign: 'center', marginBottom: 20 },
+  retryBtn: { paddingVertical: 10, paddingHorizontal: 24, borderRadius: 10, backgroundColor: '#3B7DD8' },
+  retryBtnText: { fontSize: 14, fontWeight: '600', color: '#FFFFFF' },
+
+  pressed: { opacity: 0.65 },
 })

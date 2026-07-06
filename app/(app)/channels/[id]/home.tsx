@@ -15,7 +15,6 @@ import { usePage } from '../../../../src/features/wiki/usePage'
 import { WikiViewer } from '../../../../src/features/wiki/WikiViewer'
 import { WikiEditor } from '../../../../src/features/wiki/WikiEditor'
 import { useEvents } from '../../../../src/features/schedule'
-import { formatDatetime, STATUS_COLOR, STATUS_LABEL } from '../../../../src/features/schedule/scheduleUtils'
 import type { EventWithMyResponse } from '../../../../src/features/schedule'
 import { ChannelHomeSkeleton } from '../../../../src/features/ui/Skeleton'
 import { useToast } from '../../../../src/features/ui/Toast'
@@ -29,9 +28,34 @@ interface ChannelInfo {
 
 type LoadState = 'loading' | 'error' | 'ready'
 
-// ─── 인라인 일정 카드 ─────────────────────────────────────────────────────────
+// ─── 날짜 타일 일정 행 ────────────────────────────────────────────────────────
 
-function EventRow({ event, onPress }: { event: EventWithMyResponse; onPress: () => void }) {
+const STATUS_COLOR = { going: '#1FA65A', not_going: '#E5484D', maybe: '#8B95A1' } as const
+const STATUS_LABEL = { going: '참석', not_going: '불참', maybe: '미정' } as const
+
+function getMonthDay(iso: string) {
+  const d = new Date(iso)
+  return { month: `${d.getMonth() + 1}월`, day: String(d.getDate()), weekday: ['일', '월', '화', '수', '목', '금', '토'][d.getDay()] }
+}
+
+function formatTime(iso: string) {
+  const d = new Date(iso)
+  const h = d.getHours()
+  const m = String(d.getMinutes()).padStart(2, '0')
+  const ampm = h < 12 ? '오전' : '오후'
+  return `${['일', '월', '화', '수', '목', '금', '토'][d.getDay()]} ${ampm} ${h % 12 || 12}:${m}`
+}
+
+function isUpcoming(iso: string) {
+  const diff = new Date(iso).getTime() - Date.now()
+  return diff > 0 && diff < 7 * 24 * 60 * 60 * 1000
+}
+
+function EventTileRow({ event, onPress }: { event: EventWithMyResponse; onPress: () => void }) {
+  const { month, day } = getMonthDay(event.starts_at)
+  const upcoming = isUpcoming(event.starts_at)
+  const status = event.myStatus
+
   return (
     <Pressable
       style={({ pressed }) => [styles.eventRow, pressed && styles.pressed]}
@@ -39,25 +63,23 @@ function EventRow({ event, onPress }: { event: EventWithMyResponse; onPress: () 
       accessibilityRole="button"
       accessibilityLabel={`일정: ${event.title}`}
     >
-      <View style={styles.eventAccent} />
-      <View style={styles.eventRowContent}>
-        <View style={styles.eventRowHeader}>
-          <Text style={styles.eventTitle} numberOfLines={1}>{event.title}</Text>
-          {event.myStatus ? (
-            <View style={[styles.statusPill, { backgroundColor: STATUS_COLOR[event.myStatus] }]}>
-              <Text style={styles.statusPillText}>{STATUS_LABEL[event.myStatus]}</Text>
-            </View>
-          ) : (
-            <View style={[styles.statusPill, styles.statusPillNone]}>
-              <Text style={[styles.statusPillText, styles.statusPillTextNone]}>미응답</Text>
-            </View>
-          )}
-        </View>
-        <Text style={styles.eventDate}>{formatDatetime(event.starts_at)}</Text>
-        {event.location ? (
-          <Text style={styles.eventLocation} numberOfLines={1}>{event.location}</Text>
-        ) : null}
+      <View style={[styles.dateTile, upcoming ? styles.dateTilePrimary : styles.dateTileGray]}>
+        <Text style={[styles.dateTileMonth, upcoming ? styles.dateTileMonthPrimary : styles.dateTileMonthGray]}>{month}</Text>
+        <Text style={[styles.dateTileDay, upcoming ? styles.dateTileDayPrimary : styles.dateTileDayGray]}>{day}</Text>
       </View>
+      <View style={styles.eventInfo}>
+        <Text style={styles.eventTitle} numberOfLines={1}>{event.title}</Text>
+        <Text style={styles.eventTime}>{formatTime(event.starts_at)}{event.location ? ` · ${event.location}` : ''}</Text>
+      </View>
+      {status ? (
+        <View style={[styles.statusPill, { backgroundColor: STATUS_COLOR[status] + '22' }]}>
+          <Text style={[styles.statusPillText, { color: STATUS_COLOR[status] }]}>{STATUS_LABEL[status]}</Text>
+        </View>
+      ) : (
+        <View style={[styles.statusPill, { backgroundColor: '#F2F4F6' }]}>
+          <Text style={[styles.statusPillText, { color: '#8B95A1' }]}>미응답</Text>
+        </View>
+      )}
     </Pressable>
   )
 }
@@ -73,6 +95,7 @@ export default function ChannelHomeScreen() {
   const [channel, setChannel] = useState<ChannelInfo | null>(null)
   const [errorMsg, setErrorMsg] = useState('')
   const [wikiEditorOpen, setWikiEditorOpen] = useState(false)
+  const [chatUnread, setChatUnread] = useState(0)
   const { show: showToast, ToastComponent } = useToast()
 
   // ── 채널 정보 로드 ────────────────────────────────────────────────────────
@@ -82,22 +105,26 @@ export default function ChannelHomeScreen() {
       let cancelled = false
 
       async function load() {
-        const { data, error } = await supabase
-          .from('channels')
-          .select('id, name, club_id, owner_id')
-          .eq('id', id)
-          .single()
+        const [channelResult, unreadResult] = await Promise.all([
+          supabase.from('channels').select('id, name, club_id, owner_id').eq('id', id).single(),
+          (supabase as any).rpc('get_unread_counts', { p_channel_ids: [id] }),
+        ])
 
         if (cancelled) return
 
-        if (error || !data) {
+        if (channelResult.error || !channelResult.data) {
           setErrorMsg('방 정보를 불러오는 데 실패했습니다.')
           setLoadState('error')
           return
         }
 
+        const data = channelResult.data as ChannelInfo
         navigation.setOptions({ title: data.name, headerBackTitle: '뒤로' })
-        setChannel(data as ChannelInfo)
+        setChannel(data)
+
+        const unreadRows = (unreadResult.data ?? []) as Array<{ channel_id: string; unread_count: number }>
+        setChatUnread(Number(unreadRows[0]?.unread_count ?? 0))
+
         setLoadState('ready')
       }
 
@@ -115,7 +142,6 @@ export default function ChannelHomeScreen() {
   // ── 일정 ─────────────────────────────────────────────────────────────────
   const { events: upcomingEvents, loading: eventsLoading, refresh: refreshEvents } = useEvents(id ?? '')
 
-  // 화면 포커스 시 일정 새로고침 (일정 생성/수정 후 돌아올 때 반영)
   useFocusEffect(
     useCallback(() => {
       if (id) refreshEvents()
@@ -128,23 +154,17 @@ export default function ChannelHomeScreen() {
   const handleLeave = useCallback(async () => {
     if (!channel || !session?.user) return
     if (isChannelOwner) {
-      Alert.alert('방장은 나갈 수 없습니다', '방장은 이 방에서 나갈 수 없습니다. 방 관리에서 삭제하거나 다른 멤버에게 이관하세요.')
+      Alert.alert('방장은 나갈 수 없습니다', '방장 권한을 이전하거나 방을 삭제하세요.')
       return
     }
     Alert.alert('방 나가기', '이 방에서 나갈까요?', [
       { text: '취소', style: 'cancel' },
       {
         text: '나가기', style: 'destructive', onPress: async () => {
-          const { error } = await supabase
-            .from('channel_members')
-            .delete()
-            .eq('channel_id', channel.id)
-            .eq('user_id', session.user.id)
-          if (error) {
-            Alert.alert('오류', '방을 나갈 수 없습니다.')
-          } else {
-            router.back()
-          }
+          const { error } = await supabase.from('channel_members').delete()
+            .eq('channel_id', channel.id).eq('user_id', session.user.id)
+          if (error) Alert.alert('오류', '방을 나갈 수 없습니다.')
+          else router.back()
         },
       },
     ])
@@ -160,27 +180,20 @@ export default function ChannelHomeScreen() {
           accessibilityRole="button"
           accessibilityLabel="방 나가기"
         >
-          <Text style={{ color: '#EF4444', fontSize: 14, fontWeight: '500' }}>나가기</Text>
+          <Text style={{ color: '#E5484D', fontSize: 13, fontWeight: '600' }}>나가기</Text>
         </Pressable>
       ),
     })
   }, [channel, handleLeave])
 
   // ── 로딩 / 에러 ──────────────────────────────────────────────────────────
-  if (loadState === 'loading') {
-    return <ChannelHomeSkeleton />
-  }
+  if (loadState === 'loading') return <ChannelHomeSkeleton />
 
   if (loadState === 'error') {
     return (
       <View style={styles.centered}>
         <Text style={styles.errorText}>{errorMsg}</Text>
-        <Pressable
-          style={styles.retryBtn}
-          onPress={() => setLoadState('loading')}
-          accessibilityRole="button"
-          accessibilityLabel="다시 시도"
-        >
+        <Pressable style={styles.retryBtn} onPress={() => setLoadState('loading')}>
           <Text style={styles.retryBtnText}>다시 시도</Text>
         </Pressable>
       </View>
@@ -191,7 +204,7 @@ export default function ChannelHomeScreen() {
   const extraCount = upcomingEvents.length - 3
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <View style={styles.container}>
       <ToastComponent />
       <WikiEditor
         visible={wikiEditorOpen}
@@ -201,211 +214,169 @@ export default function ChannelHomeScreen() {
         onSaved={() => { refreshWiki(); showToast('위키가 저장됐어요 ✓') }}
       />
 
-      {/* 위키 */}
-      <View style={styles.card}>
-        <WikiViewer content={wikiPage?.content ?? ''} />
-        {isChannelOwner && (
-          <Pressable
-            onPress={() => setWikiEditorOpen(true)}
-            style={({ pressed }) => [styles.editWikiBtn, pressed && styles.pressed]}
-            accessibilityRole="button"
-            accessibilityLabel="위키 편집"
-          >
-            <Text style={styles.editWikiBtnText}>
-              {wikiPage ? '편집' : '위키 작성 시작'}
-            </Text>
-          </Pressable>
-        )}
-      </View>
-
-      {/* 일정 */}
-      <View style={styles.card}>
-        {/* 섹션 헤더 */}
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>📅  일정</Text>
-          <Pressable
-            onPress={() =>
-              router.push({
-                pathname: '/(app)/channels/[id]/events/list',
-                params: { id, channelName: channel?.name },
-              })
-            }
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            accessibilityRole="button"
-            accessibilityLabel="일정 전체 보기"
-          >
-            <Text style={styles.viewAllLink}>전체 보기</Text>
-          </Pressable>
+      <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        {/* 위키 */}
+        <View style={styles.card}>
+          <View style={styles.cardHeader}>
+            <Text style={styles.cardTitle}>📌 방 위키</Text>
+            {isChannelOwner && (
+              <Pressable onPress={() => setWikiEditorOpen(true)} hitSlop={8} accessibilityRole="button" accessibilityLabel="위키 편집">
+                <Text style={styles.editLink}>{wikiPage ? '편집' : '작성 시작'}</Text>
+              </Pressable>
+            )}
+          </View>
+          {wikiPage?.content
+            ? <WikiViewer content={wikiPage.content} />
+            : <Text style={styles.wikiEmpty}>방 소개를 작성해보세요.</Text>}
         </View>
 
-        {/* 로딩 */}
-        {eventsLoading && (
-          <ActivityIndicator size="small" color="#6366f1" style={styles.eventsLoader} />
-        )}
+        {/* 일정 */}
+        <View style={styles.card}>
+          <View style={styles.cardHeader}>
+            <Text style={styles.cardTitle}>다가오는 일정</Text>
+            <Pressable
+              onPress={() => router.push({ pathname: '/(app)/channels/[id]/events/list', params: { id, channelName: channel?.name } })}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel="일정 전체 보기"
+            >
+              <Text style={styles.editLink}>전체 보기</Text>
+            </Pressable>
+          </View>
 
-        {/* 일정 목록 (최대 3개) */}
-        {!eventsLoading && previewEvents.map((event) => (
-          <EventRow
-            key={event.id}
-            event={event}
-            onPress={() =>
-              router.push({
-                pathname: '/(app)/channels/[id]/events/[eventId]/detail',
-                params: { id, eventId: event.id },
-              })
-            }
-          />
-        ))}
+          {eventsLoading && <ActivityIndicator size="small" color="#3B7DD8" style={styles.eventsLoader} />}
 
-        {/* 3개 초과 알림 */}
-        {!eventsLoading && extraCount > 0 && (
+          {!eventsLoading && previewEvents.map((event) => (
+            <EventTileRow
+              key={event.id}
+              event={event}
+              onPress={() => router.push({ pathname: '/(app)/channels/[id]/events/[eventId]/detail', params: { id, eventId: event.id } })}
+            />
+          ))}
+
+          {!eventsLoading && extraCount > 0 && (
+            <Pressable
+              onPress={() => router.push({ pathname: '/(app)/channels/[id]/events/list', params: { id, channelName: channel?.name } })}
+              style={styles.extraMore}
+            >
+              <Text style={styles.extraMoreText}>+ {extraCount}개 더 보기</Text>
+            </Pressable>
+          )}
+
+          {!eventsLoading && upcomingEvents.length === 0 && (
+            <Text style={styles.eventsEmpty}>다가오는 일정이 없어요</Text>
+          )}
+
           <Pressable
-            onPress={() =>
-              router.push({
-                pathname: '/(app)/channels/[id]/events/list',
-                params: { id, channelName: channel?.name },
-              })
-            }
-            style={styles.extraMore}
+            style={({ pressed }) => [styles.addEventBtn, pressed && styles.pressed]}
+            onPress={() => router.push({ pathname: '/(app)/channels/[id]/events/create', params: { id } })}
+            accessibilityRole="button"
+            accessibilityLabel="새 일정 추가"
           >
-            <Text style={styles.extraMoreText}>+ {extraCount}개 더 보기</Text>
+            <Text style={styles.addEventBtnText}>+ 일정 추가</Text>
           </Pressable>
-        )}
+        </View>
+      </ScrollView>
 
-        {/* 빈 상태 */}
-        {!eventsLoading && upcomingEvents.length === 0 && (
-          <Text style={styles.eventsEmpty}>다가오는 일정이 없어요</Text>
-        )}
-
-        {/* 일정 추가 버튼 */}
+      {/* 채팅 버튼 (고정) */}
+      <View style={styles.chatBar}>
         <Pressable
-          style={({ pressed }) => [styles.addEventBtn, pressed && styles.pressed]}
-          onPress={() =>
-            router.push({
-              pathname: '/(app)/channels/[id]/events/create',
-              params: { id },
-            })
-          }
+          style={({ pressed }) => [styles.chatBtn, pressed && styles.pressed]}
+          onPress={() => router.push({ pathname: '/(app)/channels/[id]/chat', params: { id, channelName: channel?.name } })}
           accessibilityRole="button"
-          accessibilityLabel="새 일정 추가"
+          accessibilityLabel="채팅 열기"
         >
-          <Text style={styles.addEventBtnText}>+ 일정 추가</Text>
+          <Text style={styles.chatBtnText}>💬  채팅 열기</Text>
+          {chatUnread > 0 && (
+            <View style={styles.chatUnreadBadge}>
+              <Text style={styles.chatUnreadText}>{chatUnread > 99 ? '99+' : String(chatUnread)}</Text>
+            </View>
+          )}
         </Pressable>
       </View>
-
-      {/* 채팅 */}
-      <Pressable
-        style={({ pressed }) => [styles.chatBtn, pressed && styles.pressed]}
-        onPress={() =>
-          router.push({
-            pathname: '/(app)/channels/[id]/chat',
-            params: { id, channelName: channel?.name },
-          })
-        }
-        accessibilityRole="button"
-        accessibilityLabel="채팅 열기"
-      >
-        <Text style={styles.chatBtnText}>💬  채팅</Text>
-      </Pressable>
-    </ScrollView>
+    </View>
   )
 }
 
 // ─── 스타일 ───────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F3F4F6' },
-  content: { padding: 16, gap: 16, paddingBottom: 40 },
+  container: { flex: 1, backgroundColor: '#F7F8FA' },
+  scroll: { flex: 1 },
+  scrollContent: { padding: 16, gap: 12, paddingBottom: 24 },
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24 },
-  errorText: { fontSize: 15, color: '#DC2626', textAlign: 'center', marginBottom: 20 },
-  retryBtn: { paddingVertical: 10, paddingHorizontal: 24, borderRadius: 10, backgroundColor: '#4A90D9' },
+  errorText: { fontSize: 15, color: '#E5484D', textAlign: 'center', marginBottom: 20 },
+  retryBtn: { paddingVertical: 10, paddingHorizontal: 24, borderRadius: 10, backgroundColor: '#3B7DD8' },
   retryBtnText: { fontSize: 14, fontWeight: '600', color: '#FFFFFF' },
 
+  // 카드
   card: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 14,
-    padding: 16,
-    shadowColor: '#000',
+    borderRadius: 20,
+    padding: 18,
+    shadowColor: 'rgba(25,31,40,1)',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
-    shadowRadius: 4,
+    shadowRadius: 6,
     elevation: 2,
-    gap: 10,
+    gap: 12,
   },
+  cardHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  cardTitle: { fontSize: 15, fontWeight: '800', color: '#191F28' },
+  editLink: { fontSize: 13, fontWeight: '600', color: '#3B7DD8' },
+  wikiEmpty: { fontSize: 13, color: '#A9B1BA', lineHeight: 20 },
 
-  // 위키 편집 버튼
-  editWikiBtn: {
-    alignSelf: 'flex-end',
-    paddingVertical: 6,
-    paddingHorizontal: 14,
-    borderRadius: 8,
-    backgroundColor: '#F3F4F6',
-    borderWidth: 1,
-    borderColor: '#D1D5DB',
-  },
-  editWikiBtnText: { fontSize: 13, fontWeight: '500', color: '#374151' },
-
-  // 일정 섹션 헤더
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 2,
-  },
-  sectionTitle: { fontSize: 15, fontWeight: '700', color: '#1A1A1A' },
-  viewAllLink: { fontSize: 13, color: '#4A90D9', fontWeight: '500' },
-
+  // 일정
   eventsLoader: { marginVertical: 8 },
-
-  // 일정 행
-  eventRow: {
-    flexDirection: 'row',
-    backgroundColor: '#F9FAFB',
-    borderRadius: 10,
-    overflow: 'hidden',
+  eventRow: { flexDirection: 'row', alignItems: 'center', gap: 14 },
+  dateTile: {
+    width: 48, height: 52, borderRadius: 14,
+    alignItems: 'center', justifyContent: 'center', flexShrink: 0,
   },
-  eventAccent: { width: 4, backgroundColor: '#6366f1' },
-  eventRowContent: { flex: 1, paddingVertical: 10, paddingHorizontal: 12, gap: 3 },
-  eventRowHeader: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  eventTitle: { flex: 1, fontSize: 14, fontWeight: '600', color: '#111827' },
-  eventDate: { fontSize: 12, color: '#6B7280' },
-  eventLocation: { fontSize: 12, color: '#9CA3AF' },
-
-  statusPill: {
-    paddingHorizontal: 7,
-    paddingVertical: 2,
-    borderRadius: 99,
-  },
-  statusPillNone: { backgroundColor: '#E5E7EB' },
-  statusPillText: { fontSize: 11, fontWeight: '600', color: '#FFFFFF' },
-  statusPillTextNone: { color: '#6B7280' },
-
-  eventsEmpty: { fontSize: 13, color: '#9CA3AF', textAlign: 'center', paddingVertical: 8 },
-
+  dateTilePrimary: { backgroundColor: '#E7EFFF' },
+  dateTileGray: { backgroundColor: '#F2F4F6' },
+  dateTileMonth: { fontSize: 11, fontWeight: '700' },
+  dateTileMonthPrimary: { color: '#3B7DD8' },
+  dateTileMonthGray: { color: '#6B7684' },
+  dateTileDay: { fontSize: 19, fontWeight: '800', lineHeight: 22 },
+  dateTileDayPrimary: { color: '#3B7DD8' },
+  dateTileDayGray: { color: '#6B7684' },
+  eventInfo: { flex: 1, gap: 2 },
+  eventTitle: { fontSize: 15, fontWeight: '700', color: '#191F28' },
+  eventTime: { fontSize: 13, color: '#8B95A1' },
+  statusPill: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10 },
+  statusPillText: { fontSize: 12, fontWeight: '700' },
+  eventsEmpty: { fontSize: 13, color: '#A9B1BA', textAlign: 'center', paddingVertical: 8 },
   extraMore: { alignItems: 'center', paddingVertical: 4 },
-  extraMoreText: { fontSize: 13, color: '#4A90D9', fontWeight: '500' },
-
-  // 일정 추가 버튼
+  extraMoreText: { fontSize: 13, color: '#3B7DD8', fontWeight: '500' },
   addEventBtn: {
-    height: 40,
-    borderRadius: 10,
-    borderWidth: 1.5,
-    borderColor: '#6366f1',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 2,
+    height: 40, borderRadius: 12, borderWidth: 1.5, borderColor: '#3B7DD8',
+    alignItems: 'center', justifyContent: 'center',
   },
-  addEventBtnText: { fontSize: 14, fontWeight: '600', color: '#6366f1' },
+  addEventBtnText: { fontSize: 14, fontWeight: '600', color: '#3B7DD8' },
 
-  // 채팅 버튼
+  // 채팅 바
+  chatBar: {
+    padding: 12,
+    paddingHorizontal: 20,
+    paddingBottom: 34,
+    backgroundColor: '#F7F8FA',
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: '#EDEFF2',
+  },
   chatBtn: {
-    height: 52,
-    borderRadius: 14,
-    backgroundColor: '#4A90D9',
-    alignItems: 'center',
-    justifyContent: 'center',
+    height: 54, borderRadius: 18, backgroundColor: '#3B7DD8',
+    alignItems: 'center', justifyContent: 'center',
+    flexDirection: 'row', gap: 8,
+    shadowColor: '#3B7DD8', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 14, elevation: 6,
   },
   chatBtnText: { fontSize: 16, fontWeight: '700', color: '#FFFFFF' },
+  chatUnreadBadge: {
+    minWidth: 20, height: 20, borderRadius: 10,
+    backgroundColor: 'rgba(255,255,255,0.25)',
+    paddingHorizontal: 6, alignItems: 'center', justifyContent: 'center',
+  },
+  chatUnreadText: { fontSize: 12, fontWeight: '700', color: '#FFFFFF' },
 
-  pressed: { opacity: 0.7 },
+  pressed: { opacity: 0.65 },
 })

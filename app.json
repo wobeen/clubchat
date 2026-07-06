@@ -3,9 +3,7 @@
     "name": "ClubChat",
     "slug": "clubchat",
     "version": "1.0.0",
-    "runtimeVersion": {
-      "policy": "appVersion"
-    },
+    "runtimeVersion": "1.0.0",
     "scheme": "clubchat",
     "experiments": {
       "typedRoutes": true
@@ -17,7 +15,8 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.clubchat.app",
       "infoPlist": {
-        "NSUserNotificationsUsageDescription": "ClubChat가 새 메시지와 일정 알림을 보내려면 알림 권한이 필요합니다."
+        "NSUserNotificationsUsageDescription": "ClubChat가 새 메시지와 일정 알림을 보내려면 알림 권한이 필요합니다.",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
@@ -32,7 +31,8 @@
       "permissions": [
         "android.permission.RECEIVE_BOOT_COMPLETED",
         "android.permission.VIBRATE",
-        "android.permission.POST_NOTIFICATIONS"
+        "android.permission.POST_NOTIFICATIONS",
+        "android.permission.RECORD_AUDIO"
       ]
     },
     "web": {
@@ -67,9 +67,11 @@
       ]
     ],
     "extra": {
+      "router": {},
       "eas": {
-        "projectId": "YOUR_EAS_PROJECT_ID"
+        "projectId": "634577cf-f1d9-4cec-bb28-d28bd7056895"
       }
-    }
+    },
+    "owner": "shinwoobeen"
   }
 }
