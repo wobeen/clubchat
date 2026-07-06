@@ -47,7 +47,7 @@ export function MainScreen() {
 
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, display_name, avatar_url, avatar_emoji, created_at')
+        .select('id, display_name, avatar_url, avatar_emoji, grade, birth_year, gender, created_at')
         .eq('id', userData.user.id)
         .maybeSingle()
 

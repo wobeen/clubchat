@@ -206,7 +206,7 @@ export default function ApplyScreen() {
             style={({ pressed }) => [
               styles.submitBtn,
               (submitting || !club.is_public) && styles.submitBtnDisabled,
-              pressed && styles.pressed,
+              pressed && styles.submitBtnPressed,
             ]}
             onPress={handleSubmit}
             disabled={submitting || !club.is_public}
@@ -286,7 +286,15 @@ const styles = StyleSheet.create({
     shadowColor: '#3B7DD8', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 14, elevation: 6,
   },
   submitBtnDisabled: { backgroundColor: '#A8C4ED' },
+  submitBtnPressed: {
+    transform: [{ scale: 0.97 }],
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 1,
+    opacity: 0.92,
+  },
   submitBtnText: { fontSize: 16, fontWeight: '700', color: '#FFFFFF' },
-  pressed: { opacity: 0.65 },
+  pressed: { opacity: 0.7, transform: [{ scale: 0.97 }] },
   errorText: { fontSize: 15, color: '#E5484D', textAlign: 'center' },
 })

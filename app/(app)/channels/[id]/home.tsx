@@ -140,7 +140,7 @@ export default function ChannelHomeScreen() {
   const { page: wikiPage, refresh: refreshWiki } = usePage(wikiScope)
 
   // ── 일정 ─────────────────────────────────────────────────────────────────
-  const { events: upcomingEvents, loading: eventsLoading, refresh: refreshEvents } = useEvents(id ?? '')
+  const { events: upcomingEvents, loading: eventsLoading, refresh: refreshEvents } = useEvents({ channelId: id ?? '' })
 
   useFocusEffect(
     useCallback(() => {
@@ -378,5 +378,5 @@ const styles = StyleSheet.create({
   },
   chatUnreadText: { fontSize: 12, fontWeight: '700', color: '#FFFFFF' },
 
-  pressed: { opacity: 0.65 },
+  pressed: { opacity: 0.7, transform: [{ scale: 0.97 }] },
 })

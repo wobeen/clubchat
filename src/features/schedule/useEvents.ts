@@ -4,6 +4,8 @@ import type { Event, EventResponse, EventWithMyResponse, ResponseCounts, Respons
 
 // ─── 목록 훅 ──────────────────────────────────────────────────────────────────
 
+type EventScope = { channelId: string } | { clubId: string }
+
 interface UseEventsResult {
   events: EventWithMyResponse[]
   loading: boolean
@@ -11,10 +13,13 @@ interface UseEventsResult {
   refresh: () => void
 }
 
-export function useEvents(channelId: string): UseEventsResult {
+export function useEvents(scope: EventScope): UseEventsResult {
   const [events, setEvents] = useState<EventWithMyResponse[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+  const scopeField = 'channelId' in scope ? 'channel_id' : 'club_id'
+  const scopeId = 'channelId' in scope ? scope.channelId : scope.clubId
 
   const fetchEvents = useCallback(async () => {
     setLoading(true)
@@ -28,7 +33,7 @@ export function useEvents(channelId: string): UseEventsResult {
       const { data: eventsData, error: eventsError } = await supabase
         .from('events')
         .select('*')
-        .eq('channel_id', channelId)
+        .eq(scopeField as 'channel_id' | 'club_id', scopeId)
         .gte('starts_at', new Date().toISOString())
         .order('starts_at', { ascending: true })
 
@@ -67,7 +72,7 @@ export function useEvents(channelId: string): UseEventsResult {
     } finally {
       setLoading(false)
     }
-  }, [channelId])
+  }, [scopeField, scopeId])
 
   useEffect(() => {
     fetchEvents()
@@ -195,7 +200,8 @@ export function useEventDetail(eventId: string): UseEventDetailResult {
 // ─── 저장(생성/수정) 훅 ──────────────────────────────────────────────────────
 
 interface EventPayload {
-  channel_id: string
+  channel_id?: string | null
+  club_id?: string | null
   title: string
   description: string | null
   starts_at: string
@@ -219,10 +225,11 @@ export function useSaveEvent(): UseSaveEventResult {
         if (userError || !user) return { ok: false, error: '로그인이 필요합니다.' }
 
         if (eventId) {
-          // 수정 — RLS가 작성자/방장만 허용
+          // 수정 — 스코프(channel_id/club_id)는 변경하지 않음, RLS가 작성자만 허용
+          const { channel_id, club_id, ...updateFields } = payload
           const { error: updateError } = await supabase
             .from('events')
-            .update({ ...payload, updated_at: new Date().toISOString() })
+            .update({ ...updateFields, updated_at: new Date().toISOString() })
             .eq('id', eventId)
 
           if (updateError) {

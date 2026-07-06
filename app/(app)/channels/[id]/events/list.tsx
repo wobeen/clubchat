@@ -8,7 +8,7 @@ export default function EventListPage() {
   const router = useRouter()
   const { session } = useAuth()
 
-  const { events, loading, error, refresh } = useEvents(channelId ?? '')
+  const { events, loading, error, refresh } = useEvents({ channelId: channelId ?? '' })
 
   useFocusEffect(
     useCallback(() => {

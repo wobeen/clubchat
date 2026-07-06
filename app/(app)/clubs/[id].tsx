@@ -340,6 +340,37 @@ export default function ClubDetailScreen() {
             : <Text style={styles.wikiEmpty}>동아리 소개를 작성해보세요.</Text>}
         </View>
 
+        {/* ── 동아리 일정 ─────────────────────────────────────────────────── */}
+        <View style={styles.sectionRow}>
+          <Text style={styles.sectionLabel}>📅 동아리 일정</Text>
+          <View style={styles.sectionActions}>
+            {canEdit && (
+              <Pressable
+                onPress={() => router.push({
+                  pathname: '/(app)/clubs/eventcreate' as any,
+                  params: { clubId: id, clubName },
+                })}
+                hitSlop={8}
+                accessibilityRole="button"
+                accessibilityLabel="일정 추가"
+              >
+                <Text style={styles.sectionAction}>+ 추가</Text>
+              </Pressable>
+            )}
+            <Pressable
+              onPress={() => router.push({
+                pathname: '/(app)/clubs/eventslist' as any,
+                params: { clubId: id, clubName },
+              })}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel="일정 목록 보기"
+            >
+              <Text style={styles.sectionAction}>목록 보기</Text>
+            </Pressable>
+          </View>
+        </View>
+
         {/* ── 방 목록 ─────────────────────────────────────────────────────── */}
         <View style={styles.sectionRow}>
           <Text style={styles.sectionLabel}>방 {channels.length}개</Text>
@@ -422,6 +453,7 @@ const styles = StyleSheet.create({
 
   // 섹션 헤더
   sectionRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 4 },
+  sectionActions: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   sectionLabel: { fontSize: 13, fontWeight: '600', color: '#8B95A1' },
   sectionAction: { fontSize: 13, fontWeight: '700', color: '#3B7DD8' },
 
@@ -468,5 +500,5 @@ const styles = StyleSheet.create({
   retryBtn: { paddingVertical: 10, paddingHorizontal: 24, borderRadius: 10, backgroundColor: '#3B7DD8' },
   retryBtnText: { fontSize: 14, fontWeight: '600', color: '#FFFFFF' },
 
-  pressed: { opacity: 0.65 },
+  pressed: { opacity: 0.7, transform: [{ scale: 0.97 }] },
 })

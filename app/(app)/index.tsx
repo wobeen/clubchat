@@ -214,7 +214,7 @@ export default function ClubListScreen() {
         const [profileResult, membershipsResult, myChannelsResult] = await Promise.all([
           supabase
             .from('profiles')
-            .select('id, display_name, avatar_url, avatar_emoji, created_at')
+            .select('id, display_name, avatar_url, avatar_emoji, grade, birth_year, gender, created_at')
             .eq('id', session.user.id)
             .maybeSingle(),
           supabase
@@ -616,7 +616,7 @@ export default function ClubListScreen() {
       {/* ── 하단 버튼 ─────────────────────────────────────────────────────── */}
       <View style={styles.bottomButtons}>
         <Pressable
-          style={({ pressed }) => [styles.primaryBtn, pressed && styles.pressed]}
+          style={({ pressed }) => [styles.primaryBtn, pressed && styles.primaryBtnPressed]}
           onPress={() => router.push('/(app)/clubs/create')}
           accessibilityRole="button"
           accessibilityLabel="동아리 만들기"
@@ -719,6 +719,14 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
     shadowColor: '#3B7DD8', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.28, shadowRadius: 12, elevation: 6,
   },
+  primaryBtnPressed: {
+    transform: [{ scale: 0.97 }],
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 1,
+    opacity: 0.92,
+  },
   primaryBtnText: { fontSize: 15, fontWeight: '700', color: '#FFFFFF' },
   outlineBtn: {
     flex: 1, height: 50, borderRadius: 16, backgroundColor: '#FFFFFF',
@@ -731,7 +739,7 @@ const styles = StyleSheet.create({
   retryBtn: { paddingVertical: 10, paddingHorizontal: 24, borderRadius: 10, backgroundColor: '#3B7DD8' },
   retryBtnText: { fontSize: 14, fontWeight: '600', color: '#FFFFFF' },
 
-  pressed: { opacity: 0.65 },
+  pressed: { opacity: 0.7, transform: [{ scale: 0.97 }] },
 
   // 모달 공통
   modalBackdrop: { flex: 1, backgroundColor: 'rgba(25,31,40,0.4)', justifyContent: 'flex-end' },

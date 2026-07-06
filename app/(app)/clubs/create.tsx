@@ -244,6 +244,7 @@ const styles = StyleSheet.create({
   },
   pressedOpacity: {
     opacity: 0.6,
+    transform: [{ scale: 0.97 }],
   },
   // 생성 완료 상태
   successCard: {

@@ -44,7 +44,8 @@ function combineDateTime(date: Date, timeStr: string): Date {
 // ─── Props ────────────────────────────────────────────────────────────────────
 
 interface Props {
-  channelId: string
+  channelId?: string
+  clubId?: string
   event?: Event
   onSaved: (eventId: string) => void
   onCancel: () => void
@@ -141,7 +142,7 @@ const fieldStyles = StyleSheet.create({
 
 // ─── 화면 ─────────────────────────────────────────────────────────────────────
 
-export default function EventFormScreen({ channelId, event, onSaved, onCancel }: Props) {
+export default function EventFormScreen({ channelId, clubId, event, onSaved, onCancel }: Props) {
   const isEditMode = event != null
 
   const startsInfo = splitISO(event?.starts_at)
@@ -181,7 +182,8 @@ export default function EventFormScreen({ channelId, event, onSaved, onCancel }:
     setSubmitError(null)
 
     const payload = {
-      channel_id: channelId,
+      channel_id: channelId ?? null,
+      club_id: clubId ?? null,
       title: form.title.trim(),
       description: form.description.trim() || null,
       starts_at: combineDateTime(form.startsDate!, form.startsTime).toISOString(),
@@ -465,7 +467,7 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: colors.primary,
   },
-  addEndButtonPressed: { opacity: 0.7 },
+  addEndButtonPressed: { opacity: 0.7, transform: [{ scale: 0.96 }] },
   addEndButtonText: { fontSize: 13, color: colors.primary, fontWeight: '600' },
 
   buttonRow: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.sm },
@@ -487,7 +489,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  saveButtonPressed: { backgroundColor: colors.primaryDark },
+  saveButtonPressed: { backgroundColor: colors.primaryDark, transform: [{ scale: 0.97 }] },
   saveButtonDisabled: { opacity: 0.6 },
   saveButtonText: { fontSize: 15, fontWeight: '700', color: '#fff' },
 })

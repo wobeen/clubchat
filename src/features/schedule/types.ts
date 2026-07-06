@@ -3,7 +3,8 @@
 
 export interface Event {
   id: string
-  channel_id: string
+  channel_id: string | null
+  club_id: string | null
   title: string
   description: string | null
   starts_at: string // ISO 8601 timestamptz

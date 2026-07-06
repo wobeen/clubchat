@@ -401,7 +401,7 @@ const styles = StyleSheet.create({
   codeBtnText: { fontSize: 13, fontWeight: '700', color: '#4E5968' },
   codeBtnDisabled: { opacity: 0.5 },
 
-  pressed: { opacity: 0.65 },
+  pressed: { opacity: 0.7, transform: [{ scale: 0.97 }] },
   errorText: { fontSize: 15, color: '#E5484D', textAlign: 'center', marginBottom: 20 },
   retryBtn: { paddingVertical: 10, paddingHorizontal: 24, borderRadius: 10, backgroundColor: '#3B7DD8' },
   retryBtnText: { fontSize: 14, fontWeight: '600', color: '#FFFFFF' },
