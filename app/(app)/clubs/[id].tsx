@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import {
-  Alert,
+  ActivityIndicator,
   Platform,
   Pressable,
   ScrollView,
@@ -16,6 +16,7 @@ import { WikiViewer } from '../../../src/features/wiki/WikiViewer'
 import { WikiEditor } from '../../../src/features/wiki/WikiEditor'
 import { ClubDetailSkeleton } from '../../../src/features/ui/Skeleton'
 import { useToast } from '../../../src/features/ui/Toast'
+import { useConfirm } from '../../../src/features/ui/ConfirmDialog'
 
 type MemberRole = 'owner' | 'admin' | 'member'
 
@@ -104,23 +105,25 @@ export default function ClubDetailScreen() {
   const [wikiEditorOpen, setWikiEditorOpen] = useState(false)
 
   const wikiScope = id ? { type: 'club' as const, clubId: id } : { type: 'club' as const, clubId: '' }
-  const { page: wikiPage, refresh: refreshWiki } = usePage(wikiScope)
+  const { page: wikiPage, loading: wikiLoading, error: wikiError, refresh: refreshWiki } = usePage(wikiScope)
   const { show: showToast, ToastComponent } = useToast()
+  const { confirm, ConfirmComponent } = useConfirm()
 
-  const handleLeave = useCallback(async () => {
+  const handleLeave = useCallback(() => {
     if (!id || !session?.user) return
-    Alert.alert('동아리 탈퇴', '이 동아리에서 탈퇴할까요?', [
-      { text: '취소', style: 'cancel' },
-      {
-        text: '탈퇴', style: 'destructive', onPress: async () => {
-          const { error } = await supabase.from('memberships').delete()
-            .eq('club_id', id).eq('user_id', session.user.id)
-          if (error) Alert.alert('오류', '탈퇴할 수 없습니다.')
-          else router.replace('/(app)')
-        },
+    confirm({
+      title: '동아리 탈퇴',
+      message: '이 동아리에서 탈퇴할까요? 이 작업은 되돌릴 수 없습니다.',
+      confirmText: '탈퇴',
+      destructive: true,
+      onConfirm: async () => {
+        const { error } = await supabase.from('memberships').delete()
+          .eq('club_id', id).eq('user_id', session.user.id)
+        if (error) showToast('탈퇴할 수 없습니다.')
+        else router.replace('/(app)')
       },
-    ])
-  }, [id, session?.user?.id, router])
+    })
+  }, [id, session?.user?.id, router, confirm, showToast])
 
   useEffect(() => {
     if (state.status !== 'ready') return
@@ -276,6 +279,7 @@ export default function ClubDetailScreen() {
   return (
     <View style={styles.container}>
       <ToastComponent />
+      <ConfirmComponent />
       <WikiEditor
         visible={wikiEditorOpen}
         scope={wikiScope}
@@ -335,9 +339,17 @@ export default function ClubDetailScreen() {
               </Pressable>
             )}
           </View>
-          {wikiPage?.content
-            ? <WikiViewer content={wikiPage.content} />
-            : <Text style={styles.wikiEmpty}>동아리 소개를 작성해보세요.</Text>}
+          {wikiLoading ? (
+            <ActivityIndicator size="small" color="#3B7DD8" />
+          ) : wikiError ? (
+            <Pressable onPress={refreshWiki} accessibilityRole="button" accessibilityLabel="위키 다시 불러오기">
+              <Text style={styles.wikiError}>{wikiError} 다시 시도</Text>
+            </Pressable>
+          ) : wikiPage?.content ? (
+            <WikiViewer content={wikiPage.content} />
+          ) : (
+            <Text style={styles.wikiEmpty}>동아리 소개를 작성해보세요.</Text>
+          )}
         </View>
 
         {/* ── 동아리 일정 ─────────────────────────────────────────────────── */}
@@ -450,6 +462,7 @@ const styles = StyleSheet.create({
   cardTitle: { fontSize: 15, fontWeight: '800', color: '#191F28' },
   editLink: { fontSize: 13, fontWeight: '600', color: '#3B7DD8' },
   wikiEmpty: { fontSize: 13, color: '#A9B1BA', lineHeight: 20 },
+  wikiError: { fontSize: 13, color: '#E5484D', lineHeight: 20 },
 
   // 섹션 헤더
   sectionRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 4 },

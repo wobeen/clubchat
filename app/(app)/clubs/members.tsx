@@ -1,7 +1,6 @@
 import { useCallback, useState } from 'react'
 import {
   ActivityIndicator,
-  Alert,
   Platform,
   Pressable,
   ScrollView,
@@ -13,6 +12,8 @@ import { useFocusEffect, useLocalSearchParams } from 'expo-router'
 import { supabase } from '../../../src/lib/supabase'
 import { MemberProfileCard, MemberProfile } from '../../../src/features/club/MemberProfileCard'
 import { useAuth } from '../../../src/features/auth/useAuth'
+import { useToast } from '../../../src/features/ui/Toast'
+import { useConfirm } from '../../../src/features/ui/ConfirmDialog'
 
 interface MemberRow {
   id: string
@@ -99,6 +100,8 @@ export default function MembersScreen() {
   const [tab, setTab] = useState<Tab>('active')
   const [selectedProfile, setSelectedProfile] = useState<MemberProfile | null>(null)
   const [actionMemberId, setActionMemberId] = useState<string | null>(null)
+  const { show: showToast, ToastComponent } = useToast()
+  const { confirm, ConfirmComponent } = useConfirm()
 
   const isAdmin = myRole === 'owner' || myRole === 'admin'
 
@@ -157,31 +160,27 @@ export default function MembersScreen() {
     const newType = member.member_type === 'ob' ? 'active' : 'ob'
     const label = newType === 'ob' ? 'OB로 전환' : '현역으로 전환'
 
-    Alert.alert(
-      label,
-      `${member.display_name}님을 ${label}하시겠어요?`,
-      [
-        { text: '취소', style: 'cancel' },
-        {
-          text: label,
-          onPress: async () => {
-            setActionMemberId(member.membershipId)
-            const { error: err } = await supabase
-              .from('memberships')
-              .update({ member_type: newType } as any)
-              .eq('id', member.membershipId)
-            setActionMemberId(null)
-            if (err) {
-              Alert.alert('오류', '변경에 실패했습니다.')
-              return
-            }
-            setMembers((prev) =>
-              prev.map((m) => m.membershipId === member.membershipId ? { ...m, member_type: newType } : m)
-            )
-          },
-        },
-      ]
-    )
+    confirm({
+      title: label,
+      message: `${member.display_name}님을 ${label}하시겠어요?`,
+      confirmText: label,
+      destructive: true,
+      onConfirm: async () => {
+        setActionMemberId(member.membershipId)
+        const { error: err } = await supabase
+          .from('memberships')
+          .update({ member_type: newType } as any)
+          .eq('id', member.membershipId)
+        setActionMemberId(null)
+        if (err) {
+          showToast('변경에 실패했습니다.')
+          return
+        }
+        setMembers((prev) =>
+          prev.map((m) => m.membershipId === member.membershipId ? { ...m, member_type: newType } : m)
+        )
+      },
+    })
   }
 
   function openProfile(member: ProcessedMember) {
@@ -220,6 +219,8 @@ export default function MembersScreen() {
 
   return (
     <View style={styles.container}>
+      <ToastComponent />
+      <ConfirmComponent />
       <MemberProfileCard
         profile={selectedProfile}
         onClose={() => setSelectedProfile(null)}

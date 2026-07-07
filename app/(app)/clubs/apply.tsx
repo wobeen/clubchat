@@ -1,7 +1,6 @@
 import { useCallback, useState } from 'react'
 import {
   ActivityIndicator,
-  Alert,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -14,6 +13,7 @@ import {
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router'
 import { supabase } from '../../../src/lib/supabase'
 import { useAuth } from '../../../src/features/auth/useAuth'
+import { useToast } from '../../../src/features/ui/Toast'
 
 interface ClubInfo {
   id: string
@@ -48,6 +48,7 @@ export default function ApplyScreen() {
   const [message, setMessage] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [alreadyApplied, setAlreadyApplied] = useState(false)
+  const { show: showToast, ToastComponent } = useToast()
 
   useFocusEffect(
     useCallback(() => {
@@ -111,19 +112,16 @@ export default function ApplyScreen() {
 
     if (error) {
       if (error.code === '23505') {
-        Alert.alert('이미 신청했어요', '이미 가입 신청을 보냈어요. 동아리 관리자의 승인을 기다려주세요.')
+        showToast('이미 가입 신청을 보냈어요. 동아리 관리자의 승인을 기다려주세요.')
         setAlreadyApplied(true)
       } else {
-        Alert.alert('오류', '가입 신청 중 오류가 발생했습니다.')
+        showToast('가입 신청 중 오류가 발생했습니다.')
       }
       return
     }
 
-    Alert.alert(
-      '신청 완료!',
-      `${club.name}에 가입 신청을 보냈어요.\n관리자가 승인하면 동아리에 가입돼요.`,
-      [{ text: '확인', onPress: () => router.back() }]
-    )
+    showToast(`${club.name}에 가입 신청을 보냈어요 ✓`)
+    setTimeout(() => router.back(), 900)
   }
 
   if (loading) {
@@ -148,6 +146,7 @@ export default function ApplyScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+        <ToastComponent />
 
         {/* 동아리 소개 카드 */}
         <View style={styles.clubCard}>

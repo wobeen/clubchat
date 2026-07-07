@@ -2,7 +2,6 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   ActionSheetIOS,
   ActivityIndicator,
-  Alert,
   FlatList,
   KeyboardAvoidingView,
   Platform,
@@ -21,6 +20,9 @@ import { useAttachmentUpload } from '../../../../src/features/chat/useAttachment
 import { AttachmentMessage } from '../../../../src/features/chat/AttachmentMessage'
 import { Database } from '../../../../src/types/supabase'
 import { MemberProfileCard, MemberProfile } from '../../../../src/features/club/MemberProfileCard'
+import { useToast } from '../../../../src/features/ui/Toast'
+import { useConfirm } from '../../../../src/features/ui/ConfirmDialog'
+import { useActionSheet } from '../../../../src/features/ui/ActionSheet'
 
 // ─── 타입 ────────────────────────────────────────────────────────────────────
 
@@ -211,6 +213,9 @@ export default function ChatScreen() {
 
   const [typingUsers, setTypingUsers] = useState<{ userId: string; name: string }[]>([])
   const [profileCard, setProfileCard] = useState<MemberProfile | null>(null)
+  const { show: showToast, ToastComponent } = useToast()
+  const { confirm, ConfirmComponent } = useConfirm()
+  const { showActionSheet, ActionSheetComponent } = useActionSheet()
 
   async function handleAvatarPress(sender: SenderInfo) {
     const { data: cm } = await supabase
@@ -512,13 +517,13 @@ export default function ChatScreen() {
       .update({ deleted_at: new Date().toISOString() })
       .eq('id', messageId)
     if (error) {
-      Alert.alert('오류', '메시지를 삭제할 수 없습니다.')
+      showToast('메시지를 삭제할 수 없습니다.')
       return
     }
     setMessages((prev) =>
       prev.map((m) => m.id === messageId ? { ...m, deletedAt: new Date().toISOString() } : m)
     )
-  }, [])
+  }, [showToast])
 
   // ── 수정 시작/취소 ────────────────────────────────────────────────────────
   const startEdit = useCallback((msg: ChatMessage) => {
@@ -537,10 +542,13 @@ export default function ChatScreen() {
   // ── 메시지 액션 시트 ─────────────────────────────────────────────────────
   const openMessageActions = useCallback((msg: ChatMessage) => {
     const confirmDelete = () =>
-      Alert.alert('메시지 삭제', '이 메시지를 삭제할까요?', [
-        { text: '취소', style: 'cancel' },
-        { text: '삭제', style: 'destructive', onPress: () => deleteMessage(msg.id) },
-      ])
+      confirm({
+        title: '메시지 삭제',
+        message: '이 메시지를 삭제할까요?',
+        confirmText: '삭제',
+        destructive: true,
+        onConfirm: () => deleteMessage(msg.id),
+      })
 
     if (Platform.OS === 'ios') {
       ActionSheetIOS.showActionSheetWithOptions(
@@ -551,13 +559,15 @@ export default function ChatScreen() {
         }
       )
     } else {
-      Alert.alert('메시지', undefined, [
-        { text: '수정', onPress: () => startEdit(msg) },
-        { text: '삭제', style: 'destructive', onPress: confirmDelete },
-        { text: '취소', style: 'cancel' },
-      ])
+      showActionSheet({
+        options: [
+          { label: '수정', onPress: () => startEdit(msg) },
+          { label: '삭제', style: 'destructive', onPress: confirmDelete },
+          { label: '취소', style: 'cancel' },
+        ],
+      })
     }
-  }, [startEdit, deleteMessage])
+  }, [startEdit, deleteMessage, confirm, showActionSheet])
 
   // ── 텍스트 전송 / 수정 저장 ──────────────────────────────────────────────
   const handleSend = useCallback(async () => {
@@ -572,7 +582,7 @@ export default function ChatScreen() {
         .update({ content: text, edited_at: new Date().toISOString() })
         .eq('id', editingMessageId)
       if (error) {
-        Alert.alert('오류', '메시지를 수정할 수 없습니다.')
+        showToast('메시지를 수정할 수 없습니다.')
       } else {
         setMessages((prev) =>
           prev.map((m) =>
@@ -615,13 +625,13 @@ export default function ChatScreen() {
     if (error) {
       setMessages((prev) => prev.filter((m) => m.id !== tempId))
       setInputText(text)
-      Alert.alert('전송 실패', error.message)
+      showToast(`전송 실패: ${error.message}`)
     } else if (data) {
       setMessages((prev) => prev.map((m) => (m.id === tempId ? { ...m, id: data.id } : m)))
     }
 
     setSending(false)
-  }, [inputText, channelId, session?.user?.id, sending, editingMessageId, trackTyping])
+  }, [inputText, channelId, session?.user?.id, sending, editingMessageId, trackTyping, showToast])
 
   useEffect(() => { handleSendRef.current = handleSend }, [handleSend])
 
@@ -641,7 +651,7 @@ export default function ChatScreen() {
         .select('id').single()
 
       if (msgError || !msgData) {
-        Alert.alert('전송 실패', msgError?.message ?? '메시지를 보낼 수 없습니다.')
+        showToast(`전송 실패: ${msgError?.message ?? '메시지를 보낼 수 없습니다.'}`)
         return
       }
 
@@ -656,7 +666,7 @@ export default function ChatScreen() {
 
       if (attachError) console.error('[chat] attachments insert error:', attachError)
     },
-    [channelId, session?.user?.id]
+    [channelId, session?.user?.id, showToast]
   )
 
   // ── 첨부 메뉴 ──────────────────────────────────────────────────────────────
@@ -699,6 +709,9 @@ export default function ChatScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
+      <ToastComponent />
+      <ConfirmComponent />
+      <ActionSheetComponent />
       <MemberProfileCard profile={profileCard} onClose={() => setProfileCard(null)} />
       <FlatList
         ref={flatListRef}

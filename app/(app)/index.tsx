@@ -1,7 +1,6 @@
 import { useCallback, useState } from 'react'
 import {
   ActivityIndicator,
-  Alert,
   FlatList,
   Modal,
   Platform,
@@ -332,7 +331,7 @@ export default function ClubListScreen() {
       .eq('id', session.user.id)
     setProfileSaving(false)
     if (error) {
-      Alert.alert('오류', '프로필을 변경할 수 없습니다.')
+      showToast('프로필을 변경할 수 없습니다.')
       return
     }
     setState((prev) => {

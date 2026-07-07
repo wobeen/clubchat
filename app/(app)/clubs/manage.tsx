@@ -12,6 +12,8 @@ import {
 } from 'react-native'
 import { useFocusEffect, useLocalSearchParams } from 'expo-router'
 import { supabase } from '../../../src/lib/supabase'
+import { useToast } from '../../../src/features/ui/Toast'
+import { useConfirm } from '../../../src/features/ui/ConfirmDialog'
 
 interface ClubInfo {
   invite_code: string
@@ -69,6 +71,8 @@ export default function ManageClubScreen() {
   const [toggling, setToggling] = useState(false)
   const [regenerating, setRegenerating] = useState(false)
   const [processingId, setProcessingId] = useState<string | null>(null)
+  const { show: showToast, ToastComponent } = useToast()
+  const { confirm, ConfirmComponent } = useConfirm()
 
   useFocusEffect(
     useCallback(() => {
@@ -121,7 +125,7 @@ export default function ManageClubScreen() {
       .eq('id', clubId)
     setToggling(false)
     if (error) {
-      Alert.alert('오류', '공개 설정을 변경할 수 없습니다.')
+      showToast('공개 설정을 변경할 수 없습니다.')
       return
     }
     setState((prev) => prev.status === 'ready' ? { ...prev, club: { ...prev.club, is_public: value } } : prev)
@@ -139,7 +143,7 @@ export default function ManageClubScreen() {
 
     if (updateErr) {
       setProcessingId(null)
-      Alert.alert('오류', '처리 중 오류가 발생했습니다.')
+      showToast('처리 중 오류가 발생했습니다.')
       return
     }
 
@@ -166,9 +170,9 @@ export default function ManageClubScreen() {
     if (Platform.OS === 'web') {
       try {
         await navigator.clipboard.writeText(code)
-        Alert.alert('복사 완료', '초대 코드가 복사됐어요.')
+        showToast('초대 코드가 복사됐어요 ✓')
       } catch {
-        Alert.alert('복사 실패', '코드를 직접 선택해 복사해 주세요.')
+        showToast('코드를 직접 선택해 복사해 주세요.')
       }
     } else {
       Alert.alert('초대 코드', code, [{ text: '닫기' }])
@@ -176,10 +180,13 @@ export default function ManageClubScreen() {
   }
 
   function confirmRegenerate() {
-    Alert.alert('새 코드 발급', '기존 초대 코드가 즉시 만료됩니다. 계속할까요?', [
-      { text: '취소', style: 'cancel' },
-      { text: '발급', style: 'destructive', onPress: handleRegenerate },
-    ])
+    confirm({
+      title: '새 코드 발급',
+      message: '기존 초대 코드가 즉시 만료됩니다. 계속할까요?',
+      confirmText: '발급',
+      destructive: true,
+      onConfirm: handleRegenerate,
+    })
   }
 
   async function handleRegenerate() {
@@ -187,9 +194,9 @@ export default function ManageClubScreen() {
     setRegenerating(true)
     const { data, error } = await supabase.rpc('regenerate_club_invite', { p_club_id: clubId })
     setRegenerating(false)
-    if (error) { Alert.alert('오류', '코드 재생성 중 오류가 발생했습니다.'); return }
+    if (error) { showToast('코드 재생성 중 오류가 발생했습니다.'); return }
     const result = data as { invite_code?: string; error?: string } | null
-    if (!result?.invite_code) { Alert.alert('오류', '코드 재생성 중 오류가 발생했습니다.'); return }
+    if (!result?.invite_code) { showToast('코드 재생성 중 오류가 발생했습니다.'); return }
     setState((prev) =>
       prev.status === 'ready' ? { ...prev, club: { ...prev.club, invite_code: result.invite_code! } } : prev
     )
@@ -214,6 +221,8 @@ export default function ManageClubScreen() {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      <ToastComponent />
+      <ConfirmComponent />
 
       {/* 공개 토글 카드 */}
       <View style={styles.card}>

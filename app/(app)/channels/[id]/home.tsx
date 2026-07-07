@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import {
   ActivityIndicator,
-  Alert,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -18,6 +17,7 @@ import { useEvents } from '../../../../src/features/schedule'
 import type { EventWithMyResponse } from '../../../../src/features/schedule'
 import { ChannelHomeSkeleton } from '../../../../src/features/ui/Skeleton'
 import { useToast } from '../../../../src/features/ui/Toast'
+import { useConfirm } from '../../../../src/features/ui/ConfirmDialog'
 
 interface ChannelInfo {
   id: string
@@ -97,6 +97,7 @@ export default function ChannelHomeScreen() {
   const [wikiEditorOpen, setWikiEditorOpen] = useState(false)
   const [chatUnread, setChatUnread] = useState(0)
   const { show: showToast, ToastComponent } = useToast()
+  const { confirm, ConfirmComponent } = useConfirm()
 
   // ── 채널 정보 로드 ────────────────────────────────────────────────────────
   useFocusEffect(
@@ -137,7 +138,7 @@ export default function ChannelHomeScreen() {
   const wikiScope = channel
     ? { type: 'room' as const, clubId: channel.club_id, roomId: channel.id }
     : { type: 'room' as const, clubId: '', roomId: '' }
-  const { page: wikiPage, refresh: refreshWiki } = usePage(wikiScope)
+  const { page: wikiPage, loading: wikiLoading, error: wikiError, refresh: refreshWiki } = usePage(wikiScope)
 
   // ── 일정 ─────────────────────────────────────────────────────────────────
   const { events: upcomingEvents, loading: eventsLoading, refresh: refreshEvents } = useEvents({ channelId: id ?? '' })
@@ -151,40 +152,55 @@ export default function ChannelHomeScreen() {
   // ── 방 퇴장 ──────────────────────────────────────────────────────────────
   const isChannelOwner = !!session?.user && channel?.owner_id === session.user.id
 
-  const handleLeave = useCallback(async () => {
+  const handleLeave = useCallback(() => {
     if (!channel || !session?.user) return
     if (isChannelOwner) {
-      Alert.alert('방장은 나갈 수 없습니다', '방장 권한을 이전하거나 방을 삭제하세요.')
+      showToast('방장은 나갈 수 없어요. 권한을 이전하거나 방을 삭제하세요.')
       return
     }
-    Alert.alert('방 나가기', '이 방에서 나갈까요?', [
-      { text: '취소', style: 'cancel' },
-      {
-        text: '나가기', style: 'destructive', onPress: async () => {
-          const { error } = await supabase.from('channel_members').delete()
-            .eq('channel_id', channel.id).eq('user_id', session.user.id)
-          if (error) Alert.alert('오류', '방을 나갈 수 없습니다.')
-          else router.back()
-        },
+    confirm({
+      title: '방 나가기',
+      message: '이 방에서 나갈까요? 다시 입장하려면 초대가 필요할 수 있습니다.',
+      confirmText: '나가기',
+      destructive: true,
+      onConfirm: async () => {
+        const { error } = await supabase.from('channel_members').delete()
+          .eq('channel_id', channel.id).eq('user_id', session.user.id)
+        if (error) showToast('방을 나갈 수 없습니다.')
+        else router.back()
       },
-    ])
-  }, [channel, session?.user?.id, isChannelOwner, router])
+    })
+  }, [channel, session?.user?.id, isChannelOwner, router, confirm, showToast])
 
   useEffect(() => {
     if (!channel) return
     navigation.setOptions({
       headerRight: () => (
-        <Pressable
-          onPress={handleLeave}
-          style={{ paddingHorizontal: 16, paddingVertical: 8 }}
-          accessibilityRole="button"
-          accessibilityLabel="방 나가기"
-        >
-          <Text style={{ color: '#E5484D', fontSize: 13, fontWeight: '600' }}>나가기</Text>
-        </Pressable>
+        isChannelOwner ? (
+          <Pressable
+            onPress={() => router.push({
+              pathname: '/(app)/channels/[id]/manage',
+              params: { id: channel.id, channelName: channel.name, clubId: channel.club_id },
+            })}
+            style={{ paddingHorizontal: 16, paddingVertical: 8 }}
+            accessibilityRole="button"
+            accessibilityLabel="방 관리"
+          >
+            <Text style={{ color: '#8B95A1', fontSize: 15, fontWeight: '700' }}>관리</Text>
+          </Pressable>
+        ) : (
+          <Pressable
+            onPress={handleLeave}
+            style={{ paddingHorizontal: 16, paddingVertical: 8 }}
+            accessibilityRole="button"
+            accessibilityLabel="방 나가기"
+          >
+            <Text style={{ color: '#E5484D', fontSize: 13, fontWeight: '600' }}>나가기</Text>
+          </Pressable>
+        )
       ),
     })
-  }, [channel, handleLeave])
+  }, [channel, handleLeave, isChannelOwner, router])
 
   // ── 로딩 / 에러 ──────────────────────────────────────────────────────────
   if (loadState === 'loading') return <ChannelHomeSkeleton />
@@ -206,6 +222,7 @@ export default function ChannelHomeScreen() {
   return (
     <View style={styles.container}>
       <ToastComponent />
+      <ConfirmComponent />
       <WikiEditor
         visible={wikiEditorOpen}
         scope={wikiScope}
@@ -225,9 +242,17 @@ export default function ChannelHomeScreen() {
               </Pressable>
             )}
           </View>
-          {wikiPage?.content
-            ? <WikiViewer content={wikiPage.content} />
-            : <Text style={styles.wikiEmpty}>방 소개를 작성해보세요.</Text>}
+          {wikiLoading ? (
+            <ActivityIndicator size="small" color="#3B7DD8" />
+          ) : wikiError ? (
+            <Pressable onPress={refreshWiki} accessibilityRole="button" accessibilityLabel="위키 다시 불러오기">
+              <Text style={styles.wikiError}>{wikiError} 다시 시도</Text>
+            </Pressable>
+          ) : wikiPage?.content ? (
+            <WikiViewer content={wikiPage.content} />
+          ) : (
+            <Text style={styles.wikiEmpty}>방 소개를 작성해보세요.</Text>
+          )}
         </View>
 
         {/* 일정 */}
@@ -325,6 +350,7 @@ const styles = StyleSheet.create({
   cardTitle: { fontSize: 15, fontWeight: '800', color: '#191F28' },
   editLink: { fontSize: 13, fontWeight: '600', color: '#3B7DD8' },
   wikiEmpty: { fontSize: 13, color: '#A9B1BA', lineHeight: 20 },
+  wikiError: { fontSize: 13, color: '#E5484D', lineHeight: 20 },
 
   // 일정
   eventsLoader: { marginVertical: 8 },

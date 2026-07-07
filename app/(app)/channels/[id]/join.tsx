@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import {
   ActivityIndicator,
-  Alert,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -13,6 +12,7 @@ import {
 } from 'react-native'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { supabase } from '../../../../src/lib/supabase'
+import { useToast } from '../../../../src/features/ui/Toast'
 
 interface JoinChannelSuccess {
   success: true
@@ -77,6 +77,7 @@ export default function JoinChannelScreen() {
 
   const [channelPassword, setChannelPassword] = useState('')
   const [passwordForm, setPasswordForm] = useState<PasswordFormState>({ status: 'idle' })
+  const { show: showToast, ToastComponent } = useToast()
 
   async function handleJoinByInvite() {
     const trimmed = inviteToken.trim()
@@ -107,9 +108,8 @@ export default function JoinChannelScreen() {
     }
 
     if ('success' in result && result.success) {
-      Alert.alert('입장 완료', `${channelName ?? '방'}에 입장했습니다.`, [
-        { text: '확인', onPress: () => router.back() },
-      ])
+      showToast(`${channelName ?? '방'}에 입장했습니다 ✓`)
+      setTimeout(() => router.back(), 700)
     } else {
       setInviteForm({ status: 'error', message: '입장에 실패했습니다.' })
     }
@@ -145,9 +145,8 @@ export default function JoinChannelScreen() {
     }
 
     if ('success' in result && result.success) {
-      Alert.alert('입장 완료', `${channelName ?? '방'}에 입장했습니다.`, [
-        { text: '확인', onPress: () => router.back() },
-      ])
+      showToast(`${channelName ?? '방'}에 입장했습니다 ✓`)
+      setTimeout(() => router.back(), 700)
     } else {
       setPasswordForm({ status: 'error', message: '입장에 실패했습니다.' })
     }
@@ -165,6 +164,7 @@ export default function JoinChannelScreen() {
         contentContainerStyle={styles.inner}
         keyboardShouldPersistTaps="handled"
       >
+        <ToastComponent />
         <Text style={styles.screenTitle}>
           <Text style={styles.channelNameBold}>{channelName ?? '방'}</Text>에 입장하기
         </Text>

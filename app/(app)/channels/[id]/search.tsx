@@ -39,15 +39,17 @@ export default function SearchScreen() {
   const [results, setResults] = useState<SearchResult[]>([])
   const [loading, setLoading] = useState(false)
   const [searched, setSearched] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const inputRef = useRef<TextInput>(null)
 
   const doSearch = useCallback(async (q: string) => {
     const trimmed = q.trim()
-    if (!trimmed) { setResults([]); setSearched(false); return }
+    if (!trimmed) { setResults([]); setSearched(false); setError(null); return }
 
     setLoading(true)
     setSearched(true)
+    setError(null)
 
     const { data, error } = await supabase
       .from('messages')
@@ -66,6 +68,8 @@ export default function SearchScreen() {
 
     if (error) {
       console.error('[search]', error)
+      setError('검색 중 오류가 발생했습니다.')
+      setResults([])
       return
     }
 
@@ -134,6 +138,18 @@ export default function SearchScreen() {
         <View style={styles.centered}>
           <ActivityIndicator size="large" color="#4A90D9" />
         </View>
+      ) : error ? (
+        <View style={styles.centered}>
+          <Text style={styles.emptyText}>{error}</Text>
+          <Pressable
+            onPress={() => doSearch(query)}
+            accessibilityRole="button"
+            accessibilityLabel="다시 시도"
+            style={styles.retryButton}
+          >
+            <Text style={styles.retryButtonText}>다시 시도</Text>
+          </Pressable>
+        </View>
       ) : (
         <FlatList
           data={results}
@@ -192,6 +208,14 @@ const styles = StyleSheet.create({
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: 80 },
   emptyText: { fontSize: 14, color: '#9CA3AF', textAlign: 'center' },
   hintText: { fontSize: 14, color: '#CBD5E1', textAlign: 'center' },
+  retryButton: {
+    marginTop: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+    backgroundColor: '#F2F4F6',
+  },
+  retryButtonText: { fontSize: 14, color: '#3B7DD8', fontWeight: '600' },
   listContent: { flexGrow: 1, padding: 12 },
   resultItem: {
     backgroundColor: '#FFFFFF',

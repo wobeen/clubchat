@@ -1,7 +1,6 @@
 import React, { useState } from 'react'
 import {
   ActivityIndicator,
-  Alert,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -15,6 +14,7 @@ import {
 import { WikiViewer } from './WikiViewer'
 import type { Page, PageScope } from './types'
 import { useUpsertPage } from './usePage'
+import { useToast } from '../ui/Toast'
 
 interface WikiEditorProps {
   visible: boolean
@@ -28,6 +28,7 @@ export function WikiEditor({ visible, scope, existingPage, onClose, onSaved }: W
   const [content, setContent] = useState(existingPage?.content ?? '')
   const [preview, setPreview] = useState(false)
   const { saving, savePage } = useUpsertPage()
+  const { show: showToast, ToastComponent } = useToast()
 
   // visible이 true로 바뀔 때 초기값 동기화
   React.useEffect(() => {
@@ -41,16 +42,13 @@ export function WikiEditor({ visible, scope, existingPage, onClose, onSaved }: W
     const result = await savePage(scope, { content }, existingPage)
 
     if (result.conflict) {
-      Alert.alert(
-        '저장 충돌',
-        '다른 사람이 이미 수정했습니다. 최신 내용을 불러온 뒤 다시 편집해 주세요.',
-        [{ text: '확인', onPress: onClose }]
-      )
+      showToast('다른 사람이 이미 수정했습니다. 최신 내용을 불러온 뒤 다시 편집해 주세요.')
+      onClose()
       return
     }
 
     if (!result.ok) {
-      Alert.alert('오류', result.error ?? '저장에 실패했습니다.')
+      showToast(result.error ?? '저장에 실패했습니다.')
       return
     }
 
@@ -64,6 +62,7 @@ export function WikiEditor({ visible, scope, existingPage, onClose, onSaved }: W
         style={styles.root}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
+        <ToastComponent />
         {/* 헤더 */}
         <View style={styles.header}>
           <TouchableOpacity onPress={onClose} disabled={saving}>
