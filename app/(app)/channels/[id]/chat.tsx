@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   ActionSheetIOS,
   ActivityIndicator,
@@ -194,7 +194,6 @@ export default function ChatScreen() {
   const { session } = useAuth()
   const navigation = useNavigation()
   const router = useRouter()
-  const flatListRef = useRef<FlatList<ChatMessage>>(null)
 
   const [pageStatus, setPageStatus] = useState<PageState>({ status: 'loading' })
   const [messages, setMessages] = useState<ChatMessage[]>([])
@@ -426,7 +425,6 @@ export default function ChatScreen() {
               ).then(() => {})
             }
 
-            setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 50)
           }
         )
         .on(
@@ -611,7 +609,6 @@ export default function ChatScreen() {
     }
 
     setMessages((prev) => [...prev, optimisticMsg])
-    setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 50)
     setInputText('')
     setSending(true)
     if (typingTimerRef.current) clearTimeout(typingTimerRef.current)
@@ -684,6 +681,11 @@ export default function ChatScreen() {
     }
   }, [channelId, pickImage, pickFile, handleAttachSend])
 
+  // 리스트를 inverted로 렌더링(최신 메시지가 항상 하단에 고정)하기 위해 역순으로 뒤집는다.
+  // 이렇게 하면 새 메시지가 와도 스크롤 위치가 자동으로 하단에 붙고, 내가 보낼 때도
+  // 수동 scrollToEnd 호출 없이 자연스럽게 반영돼 화면이 튀지 않는다.
+  const invertedMessages = useMemo(() => [...messages].reverse(), [messages])
+
   // ── 로딩 / 에러 ────────────────────────────────────────────────────────────
   if (pageStatus.status === 'loading') {
     return <View style={styles.centered}><ActivityIndicator size="large" color="#3B7DD8" /></View>
@@ -713,80 +715,85 @@ export default function ChatScreen() {
       <ConfirmComponent />
       <ActionSheetComponent />
       <MemberProfileCard profile={profileCard} onClose={() => setProfileCard(null)} />
-      <FlatList
-        ref={flatListRef}
-        data={messages}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContent}
-        onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: false })}
-        ListEmptyComponent={
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyText}>아직 메시지가 없어요. 첫 메시지를 보내보세요!</Text>
-          </View>
-        }
-        renderItem={({ item }) =>
-          item.senderId === myId
-            ? <MyMessageBubble msg={item} onLongPress={() => openMessageActions(item)} />
-            : <OtherMessageBubble msg={item} onAvatarPress={() => handleAvatarPress(item.sender)} />
-        }
-      />
 
-      {/* Android/Web 첨부 메뉴 */}
-      {showAttachMenu && (
-        <View style={styles.attachMenu}>
-          <Pressable
-            style={styles.attachMenuItem}
-            onPress={async () => {
-              setShowAttachMenu(false)
-              handleAttachSend(await pickImage(channelId!))
-            }}
-          >
-            <Text style={styles.attachMenuIcon}>🖼️</Text>
-            <Text style={styles.attachMenuText}>이미지</Text>
-          </Pressable>
-          <Pressable
-            style={styles.attachMenuItem}
-            onPress={async () => {
-              setShowAttachMenu(false)
-              handleAttachSend(await pickFile(channelId!))
-            }}
-          >
-            <Text style={styles.attachMenuIcon}>📄</Text>
-            <Text style={styles.attachMenuText}>파일</Text>
-          </Pressable>
-        </View>
-      )}
-
-      {/* 입력중 표시 */}
-      {typingUsers.length > 0 && (
-        <View style={styles.typingBar}>
-          <Text style={styles.typingText}>
-            {typingUsers.map((u) => u.name).join(', ')}님이 입력 중...
-          </Text>
-        </View>
-      )}
-
-      {/* 수정 모드 배너 */}
-      {editingMessageId && (
-        <View style={styles.editBanner}>
-          <Text style={styles.editBannerLabel} numberOfLines={1}>
-            수정 중: {editingContent}
-          </Text>
-          <Pressable
-            onPress={cancelEdit}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            accessibilityRole="button"
-            accessibilityLabel="수정 취소"
-          >
-            <Text style={styles.editBannerCancel}>✕</Text>
-          </Pressable>
-        </View>
-      )}
-
+      {/* 리스트+입력창을 함께 감싸야 키보드가 올라올 때 전송 버튼이 그 위로 따라 올라간다.
+          windowSoftInputMode를 adjustPan으로 바꿔서(app.json) 네이티브 리사이즈를 끄고
+          KeyboardAvoidingView가 단독으로 레이아웃을 담당하게 했다 — 전에는 adjustResize와
+          'height' behavior가 동시에 적용돼 입력창이 찌그러지고 화면이 튀는 문제가 있었다. */}
       <KeyboardAvoidingView
+        style={styles.flexOne}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       >
+        <FlatList
+          data={invertedMessages}
+          inverted
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.listContent}
+          ListEmptyComponent={
+            <View style={[styles.emptyState, styles.invertedFlip]}>
+              <Text style={styles.emptyText}>아직 메시지가 없어요. 첫 메시지를 보내보세요!</Text>
+            </View>
+          }
+          renderItem={({ item }) =>
+            item.senderId === myId
+              ? <MyMessageBubble msg={item} onLongPress={() => openMessageActions(item)} />
+              : <OtherMessageBubble msg={item} onAvatarPress={() => handleAvatarPress(item.sender)} />
+          }
+        />
+
+        {/* Android/Web 첨부 메뉴 */}
+        {showAttachMenu && (
+          <View style={styles.attachMenu}>
+            <Pressable
+              style={styles.attachMenuItem}
+              onPress={async () => {
+                setShowAttachMenu(false)
+                handleAttachSend(await pickImage(channelId!))
+              }}
+            >
+              <Text style={styles.attachMenuIcon}>🖼️</Text>
+              <Text style={styles.attachMenuText}>이미지</Text>
+            </Pressable>
+            <Pressable
+              style={styles.attachMenuItem}
+              onPress={async () => {
+                setShowAttachMenu(false)
+                handleAttachSend(await pickFile(channelId!))
+              }}
+            >
+              <Text style={styles.attachMenuIcon}>📄</Text>
+              <Text style={styles.attachMenuText}>파일</Text>
+            </Pressable>
+          </View>
+        )}
+
+        {/* 입력중 표시 */}
+        {typingUsers.length > 0 && (
+          <View style={styles.typingBar}>
+            <Text style={styles.typingText}>
+              {typingUsers.map((u) => u.name).join(', ')}님이 입력 중...
+            </Text>
+          </View>
+        )}
+
+        {/* 수정 모드 배너 */}
+        {editingMessageId && (
+          <View style={styles.editBanner}>
+            <Text style={styles.editBannerLabel} numberOfLines={1}>
+              수정 중: {editingContent}
+            </Text>
+            <Pressable
+              onPress={cancelEdit}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              accessibilityRole="button"
+              accessibilityLabel="수정 취소"
+            >
+              <Text style={styles.editBannerCancel}>✕</Text>
+            </Pressable>
+          </View>
+        )}
+
         <View style={styles.inputBar}>
           {/* 첨부 버튼 — 수정 모드에서 숨김 */}
           {!editingMessageId && (
@@ -840,9 +847,13 @@ export default function ChatScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F7F8FA' },
+  flexOne: { flex: 1 },
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#F7F8FA' },
-  listContent: { padding: 16, paddingBottom: 8, gap: 14, flexGrow: 1 },
+  // inverted 리스트라 top/bottom padding이 시각적으로 뒤바뀐다 (아래쪽 여백 16, 위쪽 여백 8을 만들려면 반대로 지정).
+  listContent: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 16, gap: 14, flexGrow: 1 },
   emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: 80 },
+  // ListEmptyComponent는 리스트 셀과 달리 자동으로 뒤집히지 않으므로 직접 역상쇄한다.
+  invertedFlip: { transform: [{ scaleY: -1 }] },
   emptyText: { fontSize: 14, color: '#8B95A1', textAlign: 'center' },
 
   myRow: { flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'flex-end', gap: 6 },

@@ -21,6 +21,7 @@
     },
     "android": {
       "package": "com.clubchat.app",
+      "softwareKeyboardLayoutMode": "pan",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",
