@@ -12,6 +12,7 @@ import {
   View,
 } from 'react-native'
 import { useFocusEffect, useRouter } from 'expo-router'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { supabase } from '../../src/lib/supabase'
 import { useAuth } from '../../src/features/auth/useAuth'
 import { ClubListSkeleton } from '../../src/features/ui/Skeleton'
@@ -154,6 +155,7 @@ function UserAvatar({ profile, size }: { profile: ProfileData | null; size: numb
 export default function ClubListScreen() {
   const { session } = useAuth()
   const router = useRouter()
+  const insets = useSafeAreaInsets()
   const [state, setState] = useState<PageState>({ status: 'loading' })
   const [signingOut, setSigningOut] = useState(false)
   const [profileEditVisible, setProfileEditVisible] = useState(false)
@@ -613,7 +615,7 @@ export default function ClubListScreen() {
       />
 
       {/* ── 하단 버튼 ─────────────────────────────────────────────────────── */}
-      <View style={styles.bottomButtons}>
+      <View style={[styles.bottomButtons, { paddingBottom: 12 + insets.bottom }]}>
         <Pressable
           style={({ pressed }) => [styles.primaryBtn, pressed && styles.primaryBtnPressed]}
           onPress={() => router.push('/(app)/clubs/create')}
@@ -708,7 +710,6 @@ const styles = StyleSheet.create({
     gap: 10,
     paddingHorizontal: 20,
     paddingTop: 12,
-    paddingBottom: Platform.OS === 'ios' ? 34 : 20,
     backgroundColor: '#F7F8FA',
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: '#EDEFF2',

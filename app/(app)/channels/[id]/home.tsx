@@ -8,6 +8,7 @@ import {
   View,
 } from 'react-native'
 import { useFocusEffect, useLocalSearchParams, useNavigation, useRouter } from 'expo-router'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { supabase } from '../../../../src/lib/supabase'
 import { useAuth } from '../../../../src/features/auth/useAuth'
 import { usePage } from '../../../../src/features/wiki/usePage'
@@ -91,6 +92,7 @@ export default function ChannelHomeScreen() {
   const { session } = useAuth()
   const router = useRouter()
   const navigation = useNavigation()
+  const insets = useSafeAreaInsets()
   const [loadState, setLoadState] = useState<LoadState>('loading')
   const [channel, setChannel] = useState<ChannelInfo | null>(null)
   const [errorMsg, setErrorMsg] = useState('')
@@ -304,7 +306,7 @@ export default function ChannelHomeScreen() {
       </ScrollView>
 
       {/* 채팅 버튼 (고정) */}
-      <View style={styles.chatBar}>
+      <View style={[styles.chatBar, { paddingBottom: 12 + insets.bottom }]}>
         <Pressable
           style={({ pressed }) => [styles.chatBtn, pressed && styles.pressed]}
           onPress={() => router.push({ pathname: '/(app)/channels/[id]/chat', params: { id, channelName: channel?.name } })}
@@ -385,7 +387,6 @@ const styles = StyleSheet.create({
   chatBar: {
     padding: 12,
     paddingHorizontal: 20,
-    paddingBottom: 34,
     backgroundColor: '#F7F8FA',
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: '#EDEFF2',

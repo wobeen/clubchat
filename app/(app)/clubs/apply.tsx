@@ -11,6 +11,7 @@ import {
   View,
 } from 'react-native'
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { supabase } from '../../../src/lib/supabase'
 import { useAuth } from '../../../src/features/auth/useAuth'
 import { useToast } from '../../../src/features/ui/Toast'
@@ -42,6 +43,7 @@ export default function ApplyScreen() {
   const { clubId } = useLocalSearchParams<{ clubId: string }>()
   const { session } = useAuth()
   const router = useRouter()
+  const insets = useSafeAreaInsets()
 
   const [club, setClub] = useState<ClubInfo | null>(null)
   const [loading, setLoading] = useState(true)
@@ -200,7 +202,7 @@ export default function ApplyScreen() {
 
       {/* 하단 버튼 */}
       {!alreadyApplied && (
-        <View style={styles.bottomBar}>
+        <View style={[styles.bottomBar, { paddingBottom: 12 + insets.bottom }]}>
           <Pressable
             style={({ pressed }) => [
               styles.submitBtn,
@@ -275,7 +277,6 @@ const styles = StyleSheet.create({
   bottomBar: {
     position: 'absolute', bottom: 0, left: 0, right: 0,
     paddingHorizontal: 20, paddingTop: 12,
-    paddingBottom: Platform.OS === 'ios' ? 34 : 20,
     backgroundColor: '#F7F8FA',
     borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: '#EDEFF2',
   },
