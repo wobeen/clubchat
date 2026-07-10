@@ -214,6 +214,15 @@ export default function JoinChannelScreen() {
               : <Text style={styles.primaryButtonText}>입장하기</Text>
             }
           </Pressable>
+
+          <Pressable
+            style={({ pressed }) => [styles.scanButton, pressed && styles.pressedOpacity]}
+            onPress={() => router.push('/(app)/scan')}
+            accessibilityRole="button"
+            accessibilityLabel="QR코드로 입장하기"
+          >
+            <Text style={styles.scanButtonText}>📷 QR코드 스캔으로 입장</Text>
+          </Pressable>
         </View>
 
         {/* 비밀번호로 입장 — 비밀번호 방일 때만 표시 */}
@@ -357,6 +366,17 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '700',
     color: '#4A90D9',
+  },
+  scanButton: {
+    height: 44,
+    marginTop: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  scanButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#6B7280',
   },
   divider: {
     flexDirection: 'row',

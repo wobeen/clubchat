@@ -87,7 +87,7 @@ export default function ManageClubScreen() {
           supabase.from('clubs').select('is_public').eq('id', clubId).maybeSingle(),
           supabase
             .from('join_requests')
-            .select('id, message, status, created_at, profiles(id, display_name, avatar_emoji, grade)')
+            .select('id, message, status, created_at, profiles!join_requests_user_id_fkey(id, display_name, avatar_emoji, grade)')
             .eq('club_id', clubId)
             .eq('status', 'pending')
             .order('created_at', { ascending: false }),

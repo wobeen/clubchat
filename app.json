@@ -65,6 +65,12 @@
           "color": "#4A90D9",
           "iosDisplayInForeground": true
         }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "ClubChat가 초대 QR코드를 스캔하려면 카메라 접근이 필요합니다."
+        }
       ]
     ],
     "extra": {

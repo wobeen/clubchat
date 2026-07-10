@@ -4,12 +4,16 @@ import {
   Platform,
   Pressable,
   ScrollView,
+  Share,
   StyleSheet,
   Text,
   View,
 } from 'react-native'
 import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router'
+import QRCode from 'react-native-qrcode-svg'
+import * as Clipboard from 'expo-clipboard'
 import { supabase } from '../../../../src/lib/supabase'
+import { buildInviteLink } from '../../../../src/features/deeplink/parseInviteLink'
 
 interface CreateInviteSuccess {
   success: true
@@ -97,14 +101,24 @@ export default function InviteScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id])
 
-  function handleCopy(token: string) {
+  async function handleCopyLink(link: string) {
     if (Platform.OS === 'web') {
-      navigator.clipboard?.writeText(token).catch((e) => {
+      await navigator.clipboard?.writeText(link).catch((e) => {
         console.warn('[Invite] clipboard write failed:', e)
       })
+    } else {
+      await Clipboard.setStringAsync(link)
     }
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
+  }
+
+  async function handleShareLink(link: string) {
+    try {
+      await Share.share({ message: `${channelName ?? '방'} 초대 링크\n${link}` })
+    } catch (e) {
+      console.warn('[Invite] share failed:', e)
+    }
   }
 
   if (state.status === 'loading') {
@@ -133,6 +147,7 @@ export default function InviteScreen() {
   }
 
   const { token } = state
+  const inviteLink = buildInviteLink(token)
 
   return (
     <ScrollView
@@ -141,38 +156,42 @@ export default function InviteScreen() {
       keyboardShouldPersistTaps="handled"
     >
       <View style={styles.card}>
-        <View style={styles.iconCircle}>
-          <Text style={styles.iconText}>IN</Text>
-        </View>
         <Text style={styles.cardTitle}>
-          {channelName ?? '방'} 초대 코드
+          {channelName ?? '방'} 초대
         </Text>
         <Text style={styles.cardSubtitle}>
-          이 코드를 공유하면 멤버가 '방 입장' 화면에서 입력해 참여할 수 있어요.
+          QR코드를 스캔하거나 링크를 공유하면 바로 입장할 수 있어요.
         </Text>
 
-        <View style={styles.tokenBox}>
-          <Text style={styles.tokenText} selectable>{token}</Text>
+        <View style={styles.qrBox}>
+          <QRCode value={inviteLink} size={180} />
         </View>
 
-        {Platform.OS === 'web' && (
+        <View style={styles.linkRow}>
           <Pressable
             style={({ pressed }) => [styles.copyButton, pressed && styles.pressedOpacity]}
-            onPress={() => handleCopy(token)}
+            onPress={() => handleCopyLink(inviteLink)}
             accessibilityRole="button"
-            accessibilityLabel="초대 코드 복사"
+            accessibilityLabel="초대 링크 복사"
           >
             <Text style={styles.copyButtonText}>
-              {copied ? '복사됐어요!' : '코드 복사'}
+              {copied ? '복사됐어요!' : '링크 복사'}
             </Text>
           </Pressable>
-        )}
+          <Pressable
+            style={({ pressed }) => [styles.shareButton, pressed && styles.pressedOpacity]}
+            onPress={() => handleShareLink(inviteLink)}
+            accessibilityRole="button"
+            accessibilityLabel="초대 링크 공유"
+          >
+            <Text style={styles.shareButtonText}>공유하기</Text>
+          </Pressable>
+        </View>
 
-        {Platform.OS !== 'web' && (
-          <Text style={styles.nativeCopyHint}>
-            코드를 길게 눌러 복사하세요
-          </Text>
-        )}
+        <View style={styles.tokenBox}>
+          <Text style={styles.tokenLabel}>초대 코드 (직접 입력용)</Text>
+          <Text style={styles.tokenText} selectable>{token}</Text>
+        </View>
       </View>
 
       <Pressable
@@ -225,19 +244,19 @@ const styles = StyleSheet.create({
     elevation: 3,
     marginBottom: 24,
   },
-  iconCircle: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: '#4A90D9',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 18,
+  qrBox: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1.5,
+    borderColor: '#E5E7EB',
+    marginBottom: 20,
   },
-  iconText: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: '#FFFFFF',
+  linkRow: {
+    flexDirection: 'row',
+    gap: 10,
+    width: '100%',
+    marginBottom: 20,
   },
   cardTitle: {
     fontSize: 20,
@@ -256,38 +275,52 @@ const styles = StyleSheet.create({
   tokenBox: {
     backgroundColor: '#EFF6FF',
     borderRadius: 12,
-    paddingVertical: 18,
+    paddingVertical: 14,
     paddingHorizontal: 20,
     width: '100%',
     alignItems: 'center',
     borderWidth: 1.5,
     borderColor: '#BFDBFE',
-    marginBottom: 16,
+  },
+  tokenLabel: {
+    fontSize: 11,
+    color: '#6B7280',
+    marginBottom: 4,
   },
   tokenText: {
-    fontSize: 22,
+    fontSize: 16,
     fontWeight: '800',
     color: '#1D4ED8',
-    letterSpacing: 3,
+    letterSpacing: 1.5,
     textAlign: 'center',
   },
   copyButton: {
-    paddingVertical: 10,
-    paddingHorizontal: 28,
+    flex: 1,
+    paddingVertical: 12,
     borderRadius: 10,
-    backgroundColor: '#4A90D9',
-    marginTop: 4,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+    borderColor: '#4A90D9',
+    alignItems: 'center',
     ...(Platform.OS === 'web' ? ({ cursor: 'pointer' } as object) : {}),
   },
   copyButtonText: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#FFFFFF',
+    fontWeight: '700',
+    color: '#4A90D9',
   },
-  nativeCopyHint: {
-    fontSize: 13,
-    color: '#9CA3AF',
-    marginTop: 4,
+  shareButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 10,
+    backgroundColor: '#4A90D9',
+    alignItems: 'center',
+    ...(Platform.OS === 'web' ? ({ cursor: 'pointer' } as object) : {}),
+  },
+  shareButtonText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#FFFFFF',
   },
   doneButton: {
     height: 52,
