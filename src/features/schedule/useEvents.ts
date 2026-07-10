@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
-import type { Event, EventResponse, EventWithMyResponse, ResponseCounts, ResponseStatus } from './types'
+import type { Event, EventResponseWithProfile, EventWithMyResponse, ResponseCounts, ResponseStatus } from './types'
 
 // ─── 목록 훅 ──────────────────────────────────────────────────────────────────
 
@@ -85,7 +85,7 @@ export function useEvents(scope: EventScope): UseEventsResult {
 
 interface UseEventDetailResult {
   event: Event | null
-  responses: EventResponse[]
+  responses: EventResponseWithProfile[]
   myStatus: ResponseStatus | null
   counts: ResponseCounts
   loading: boolean
@@ -97,7 +97,7 @@ interface UseEventDetailResult {
 
 export function useEventDetail(eventId: string): UseEventDetailResult {
   const [event, setEvent] = useState<Event | null>(null)
-  const [responses, setResponses] = useState<EventResponse[]>([])
+  const [responses, setResponses] = useState<EventResponseWithProfile[]>([])
   const [myStatus, setMyStatus] = useState<ResponseStatus | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -112,13 +112,16 @@ export function useEventDetail(eventId: string): UseEventDetailResult {
 
       const [eventResult, responsesResult] = await Promise.all([
         supabase.from('events').select('*').eq('id', eventId).single(),
-        supabase.from('event_responses').select('*').eq('event_id', eventId),
+        supabase
+          .from('event_responses')
+          .select('*, profile:profiles!event_responses_user_id_fkey(id, display_name, avatar_emoji)')
+          .eq('event_id', eventId),
       ])
 
       if (eventResult.error) throw eventResult.error
       if (responsesResult.error) throw responsesResult.error
 
-      const allResponses: EventResponse[] = (responsesResult.data ?? []) as EventResponse[]
+      const allResponses = (responsesResult.data ?? []) as unknown as EventResponseWithProfile[]
       const mine = allResponses.find((r) => r.user_id === user.id) ?? null
 
       setEvent(eventResult.data)
@@ -156,23 +159,39 @@ export function useEventDetail(eventId: string): UseEventDetailResult {
         throw new Error('응답을 저장하는 데 실패했습니다.')
       }
 
-      // 낙관적 업데이트
+      // 낙관적 업데이트 — 기존 응답이면 프로필 정보를 재사용하고,
+      // 처음 응답하는 경우에만 본인 프로필을 가져온다(자기 프로필이라 RLS상 항상 조회 가능).
       setMyStatus(status)
       setResponses((prev) => {
         const idx = prev.findIndex((r) => r.user_id === user.id)
-        const updated: EventResponse = {
-          id: idx >= 0 ? prev[idx].id : crypto.randomUUID(),
-          event_id: eventId,
-          user_id: user.id,
-          status,
-          responded_at: new Date().toISOString(),
+        if (idx >= 0) {
+          const updated = { ...prev[idx], status, responded_at: new Date().toISOString() }
+          return prev.map((r, i) => (i === idx ? updated : r))
         }
-        return idx >= 0
-          ? prev.map((r, i) => (i === idx ? updated : r))
-          : [...prev, updated]
+        return prev
       })
+
+      if (!responses.some((r) => r.user_id === user.id)) {
+        const { data: myProfile } = await supabase
+          .from('profiles')
+          .select('id, display_name, avatar_emoji')
+          .eq('id', user.id)
+          .single()
+
+        setResponses((prev) => [
+          ...prev,
+          {
+            id: crypto.randomUUID(),
+            event_id: eventId,
+            user_id: user.id,
+            status,
+            responded_at: new Date().toISOString(),
+            profile: myProfile ?? null,
+          },
+        ])
+      }
     },
-    [eventId]
+    [eventId, responses]
   )
 
   const deleteEvent = useCallback(async (): Promise<{ ok: boolean; error?: string }> => {

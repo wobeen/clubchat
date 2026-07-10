@@ -25,6 +25,16 @@ export interface EventResponse {
   responded_at: string
 }
 
+export interface ResponderProfile {
+  id: string
+  display_name: string
+  avatar_emoji: string | null
+}
+
+export interface EventResponseWithProfile extends EventResponse {
+  profile: ResponderProfile | null
+}
+
 // 집계용 — 서버에서 count() 쿼리로 받거나 클라이언트에서 계산
 export interface ResponseCounts {
   going: number

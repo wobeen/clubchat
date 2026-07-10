@@ -19,7 +19,7 @@ import {
   STATUS_COLOR,
   STATUS_LABEL,
 } from './scheduleUtils'
-import type { ResponseStatus } from './types'
+import type { EventResponseWithProfile, ResponseStatus } from './types'
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
@@ -64,6 +64,57 @@ function CountChip({ label, count, color }: { label: string; count: number; colo
       <View style={[styles.countDot, { backgroundColor: color }]} />
       <Text style={styles.countLabel}>{label}</Text>
       <Text style={[styles.countNumber, { color }]}>{count}명</Text>
+    </View>
+  )
+}
+
+// ─── 응답자 목록 ──────────────────────────────────────────────────────────────
+
+function ResponderGroup({
+  status,
+  responses,
+}: {
+  status: ResponseStatus
+  responses: EventResponseWithProfile[]
+}) {
+  if (responses.length === 0) return null
+
+  return (
+    <View style={styles.responderGroup}>
+      <View style={styles.responderGroupHeader}>
+        <View style={[styles.countDot, { backgroundColor: STATUS_COLOR[status] }]} />
+        <Text style={[styles.responderGroupLabel, { color: STATUS_COLOR[status] }]}>
+          {STATUS_LABEL[status]} {responses.length}명
+        </Text>
+      </View>
+      <View style={styles.responderChipRow}>
+        {responses.map((r) => (
+          <View key={r.id} style={styles.responderChip}>
+            {r.profile?.avatar_emoji && (
+              <Text style={styles.responderChipEmoji}>{r.profile.avatar_emoji}</Text>
+            )}
+            <Text style={styles.responderChipText} numberOfLines={1}>
+              {r.profile?.display_name ?? '알 수 없음'}
+            </Text>
+          </View>
+        ))}
+      </View>
+    </View>
+  )
+}
+
+function ResponderList({ responses }: { responses: EventResponseWithProfile[] }) {
+  if (responses.length === 0) {
+    return <Text style={styles.noResponsesText}>아직 응답한 사람이 없어요</Text>
+  }
+
+  const byStatus = (status: ResponseStatus) => responses.filter((r) => r.status === status)
+
+  return (
+    <View style={styles.responderList}>
+      <ResponderGroup status="going" responses={byStatus('going')} />
+      <ResponderGroup status="maybe" responses={byStatus('maybe')} />
+      <ResponderGroup status="not_going" responses={byStatus('not_going')} />
     </View>
   )
 }
@@ -121,7 +172,7 @@ export default function EventDetailScreen({
   onDeleted,
   onBack,
 }: Props) {
-  const { event, myStatus, counts, loading, error, upsertResponse, deleteEvent, refresh } =
+  const { event, responses, myStatus, counts, loading, error, upsertResponse, deleteEvent, refresh } =
     useEventDetail(eventId)
 
   const [submitting, setSubmitting] = useState(false)
@@ -265,6 +316,7 @@ export default function EventDetailScreen({
           not_going={counts.not_going}
           maybe={counts.maybe}
         />
+        <ResponderList responses={responses} />
       </View>
 
       {/* 내 응답 */}
@@ -488,6 +540,51 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.textSecondary,
     marginLeft: 'auto',
+  },
+
+  responderList: {
+    gap: spacing.sm,
+    marginTop: spacing.sm,
+  },
+  noResponsesText: {
+    fontSize: 13,
+    color: colors.textSecondary,
+    marginTop: spacing.sm,
+  },
+  responderGroup: {
+    gap: spacing.xs,
+  },
+  responderGroupHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  responderGroupLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  responderChipRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.xs,
+  },
+  responderChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 5,
+    borderRadius: radius.full,
+    backgroundColor: colors.surfaceSecondary,
+    maxWidth: 140,
+  },
+  responderChipEmoji: {
+    fontSize: 13,
+  },
+  responderChipText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.textPrimary,
   },
 
   // 응답 버튼
