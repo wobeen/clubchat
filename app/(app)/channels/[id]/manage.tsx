@@ -1,19 +1,22 @@
 import { useCallback, useState } from 'react'
 import {
   ActivityIndicator,
-  Alert,
   Platform,
   Pressable,
   ScrollView,
+  Share,
   StyleSheet,
   Text,
   TextInput,
   View,
 } from 'react-native'
 import { useFocusEffect, useLocalSearchParams } from 'expo-router'
+import QRCode from 'react-native-qrcode-svg'
+import * as Clipboard from 'expo-clipboard'
 import { supabase } from '../../../../src/lib/supabase'
 import { useToast } from '../../../../src/features/ui/Toast'
 import { useConfirm } from '../../../../src/features/ui/ConfirmDialog'
+import { buildInviteLink } from '../../../../src/features/deeplink/parseInviteLink'
 
 type LoadState =
   | { status: 'loading' }
@@ -31,6 +34,7 @@ export default function ManageChannelScreen() {
   const [regenerating, setRegenerating] = useState(false)
   const [newPassword, setNewPassword] = useState('')
   const [settingPassword, setSettingPassword] = useState(false)
+  const [copied, setCopied] = useState(false)
   const { show: showToast, ToastComponent } = useToast()
   const { confirm, ConfirmComponent } = useConfirm()
 
@@ -78,18 +82,26 @@ export default function ManageChannelScreen() {
     }, [id])
   )
 
-  async function handleCopy(token: string) {
+  async function handleCopyLink(link: string) {
     if (Platform.OS === 'web') {
       try {
-        await navigator.clipboard.writeText(token)
-        showToast('초대 코드가 클립보드에 복사되었습니다.')
+        await navigator.clipboard.writeText(link)
       } catch {
-        showToast('수동으로 코드를 선택하여 복사해 주세요.')
+        showToast('링크 복사에 실패했어요.')
+        return
       }
     } else {
-      // React Native: Clipboard API는 @react-native-clipboard/clipboard 패키지가 필요.
-      // 설치 전이므로 텍스트가 selectable이라 사용자가 직접 길게 눌러 복사할 수 있음을 안내.
-      Alert.alert('복사', '코드를 길게 눌러 선택한 뒤 복사해 주세요.')
+      await Clipboard.setStringAsync(link)
+    }
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  async function handleShareLink(link: string) {
+    try {
+      await Share.share({ message: `${channelName ?? '방'} 초대 링크\n${link}` })
+    } catch (e) {
+      console.warn('[ManageChannel] share failed:', e)
     }
   }
 
@@ -212,6 +224,7 @@ export default function ManageChannelScreen() {
   }
 
   const { token, hasPassword } = state
+  const inviteLink = buildInviteLink(token)
 
   return (
     <ScrollView
@@ -224,13 +237,37 @@ export default function ManageChannelScreen() {
       {channelName ? (
         <Text style={styles.sectionLabel}>
           <Text style={styles.channelNameHighlight}>{channelName}</Text>
-          {' '}초대 코드
+          {' '}초대
         </Text>
       ) : (
-        <Text style={styles.sectionLabel}>현재 초대 코드</Text>
+        <Text style={styles.sectionLabel}>초대</Text>
       )}
 
+      <View style={styles.qrBox}>
+        <QRCode value={inviteLink} size={160} />
+      </View>
+
+      <View style={styles.linkRow}>
+        <Pressable
+          style={({ pressed }) => [styles.linkButton, pressed && styles.pressedOpacity]}
+          onPress={() => handleCopyLink(inviteLink)}
+          accessibilityRole="button"
+          accessibilityLabel="초대 링크 복사"
+        >
+          <Text style={styles.linkButtonText}>{copied ? '복사됐어요!' : '링크 복사'}</Text>
+        </Pressable>
+        <Pressable
+          style={({ pressed }) => [styles.copyButton, styles.shareButton, pressed && styles.pressedOpacity]}
+          onPress={() => handleShareLink(inviteLink)}
+          accessibilityRole="button"
+          accessibilityLabel="초대 링크 공유"
+        >
+          <Text style={styles.copyButtonText}>공유하기</Text>
+        </Pressable>
+      </View>
+
       <View style={styles.tokenBox}>
+        <Text style={styles.tokenLabel}>초대 코드 (직접 입력용)</Text>
         <Text
           style={styles.tokenText}
           selectable
@@ -239,15 +276,6 @@ export default function ManageChannelScreen() {
           {token}
         </Text>
       </View>
-
-      <Pressable
-        style={({ pressed }) => [styles.copyButton, pressed && styles.pressedOpacity]}
-        onPress={() => handleCopy(token)}
-        accessibilityRole="button"
-        accessibilityLabel="초대 코드 복사"
-      >
-        <Text style={styles.copyButtonText}>복사하기</Text>
-      </Pressable>
 
       <View style={styles.divider} />
 
@@ -356,21 +384,60 @@ const styles = StyleSheet.create({
     color: '#1A1A1A',
     fontWeight: '700',
   },
+  qrBox: {
+    alignSelf: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1.5,
+    borderColor: '#E5E7EB',
+    marginBottom: 16,
+  },
+  linkRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 16,
+  },
+  linkButton: {
+    flex: 1,
+    height: 44,
+    borderRadius: 10,
+    borderWidth: 1.5,
+    borderColor: '#4A90D9',
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...(Platform.OS === 'web' ? ({ cursor: 'pointer' } as object) : {}),
+  },
+  linkButtonText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#4A90D9',
+  },
+  shareButton: {
+    flex: 1,
+    marginBottom: 0,
+  },
   tokenBox: {
     backgroundColor: '#EFF6FF',
     borderWidth: 1.5,
     borderColor: '#BFDBFE',
     borderRadius: 12,
-    paddingVertical: 20,
+    paddingVertical: 14,
     paddingHorizontal: 16,
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 32,
+  },
+  tokenLabel: {
+    fontSize: 11,
+    color: '#6B7280',
+    marginBottom: 4,
   },
   tokenText: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '600',
     color: '#1D4ED8',
-    letterSpacing: 2,
+    letterSpacing: 1.5,
     textAlign: 'center',
   },
   copyButton: {
