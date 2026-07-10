@@ -9,6 +9,7 @@ import {
   Text,
   View,
 } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useEventDetail } from './useEvents'
 import {
   colors,
@@ -125,6 +126,7 @@ export default function EventDetailScreen({
 
   const [submitting, setSubmitting] = useState(false)
   const [responseError, setResponseError] = useState<string | null>(null)
+  const insets = useSafeAreaInsets()
 
   const isAuthor = event !== null && event.created_by === currentUserId
 
@@ -198,7 +200,7 @@ export default function EventDetailScreen({
   return (
     <ScrollView
       style={styles.container}
-      contentContainerStyle={styles.content}
+      contentContainerStyle={[styles.content, { paddingBottom: spacing.md + insets.bottom }]}
       keyboardShouldPersistTaps="handled"
     >
       {/* 제목 + 수정/삭제 */}

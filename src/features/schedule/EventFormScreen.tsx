@@ -11,6 +11,7 @@ import {
   TextInput,
   View,
 } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useSaveEvent } from './useEvents'
 import { colors, radius, spacing } from './scheduleUtils'
 import { DatePickerField } from './DatePickerField'
@@ -161,6 +162,7 @@ export default function EventFormScreen({ channelId, clubId, event, onSaved, onC
   const [errors, setErrors] = useState<FormErrors>({})
   const [submitError, setSubmitError] = useState<string | null>(null)
   const { saving, saveEvent } = useSaveEvent()
+  const insets = useSafeAreaInsets()
 
   const setField = useCallback(<K extends keyof FormState>(key: K, value: FormState[K]) => {
     setForm((prev) => ({ ...prev, [key]: value }))
@@ -225,7 +227,7 @@ export default function EventFormScreen({ channelId, clubId, event, onSaved, onC
     >
       <ScrollView
         style={styles.container}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, { paddingBottom: spacing.md + insets.bottom }]}
         keyboardShouldPersistTaps="handled"
       >
         {/* 헤더 */}

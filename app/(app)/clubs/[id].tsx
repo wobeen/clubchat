@@ -14,6 +14,7 @@ import { useAuth } from '../../../src/features/auth/useAuth'
 import { usePage } from '../../../src/features/wiki/usePage'
 import { WikiViewer } from '../../../src/features/wiki/WikiViewer'
 import { WikiEditor } from '../../../src/features/wiki/WikiEditor'
+import { useEvents, EventPreviewRow } from '../../../src/features/schedule'
 import { ClubDetailSkeleton } from '../../../src/features/ui/Skeleton'
 import { useToast } from '../../../src/features/ui/Toast'
 import { useConfirm } from '../../../src/features/ui/ConfirmDialog'
@@ -106,8 +107,15 @@ export default function ClubDetailScreen() {
 
   const wikiScope = id ? { type: 'club' as const, clubId: id } : { type: 'club' as const, clubId: '' }
   const { page: wikiPage, loading: wikiLoading, error: wikiError, refresh: refreshWiki } = usePage(wikiScope)
+  const { events: upcomingEvents, loading: eventsLoading, refresh: refreshEvents } = useEvents({ clubId: id ?? '' })
   const { show: showToast, ToastComponent } = useToast()
   const { confirm, ConfirmComponent } = useConfirm()
+
+  useFocusEffect(
+    useCallback(() => {
+      if (id) refreshEvents()
+    }, [id, refreshEvents])
+  )
 
   const handleLeave = useCallback(() => {
     if (!id || !session?.user) return
@@ -275,6 +283,8 @@ export default function ClubDetailScreen() {
   const canEdit = myRole === 'owner' || myRole === 'admin'
   const color = getClubColor(id ?? '')
   const firstChar = clubName[0]?.toUpperCase() ?? '?'
+  const previewEvents = upcomingEvents.slice(0, 3)
+  const extraEventCount = upcomingEvents.length - 3
 
   return (
     <View style={styles.container}>
@@ -383,6 +393,37 @@ export default function ClubDetailScreen() {
           </View>
         </View>
 
+        <View style={styles.eventCard}>
+          {eventsLoading ? (
+            <ActivityIndicator size="small" color="#3B7DD8" style={styles.eventsLoader} />
+          ) : previewEvents.length === 0 ? (
+            <View style={styles.eventsEmpty}>
+              <Text style={styles.eventsEmptyText}>다가오는 일정이 없어요</Text>
+            </View>
+          ) : (
+            <>
+              {previewEvents.map((event) => (
+                <EventPreviewRow
+                  key={event.id}
+                  event={event}
+                  onPress={() => router.push({
+                    pathname: '/(app)/clubs/eventdetail' as any,
+                    params: { clubId: id, eventId: event.id },
+                  })}
+                />
+              ))}
+              {extraEventCount > 0 && (
+                <Pressable
+                  onPress={() => router.push({ pathname: '/(app)/clubs/eventslist' as any, params: { clubId: id, clubName } })}
+                  style={styles.extraMore}
+                >
+                  <Text style={styles.extraMoreText}>+ {extraEventCount}개 더 보기</Text>
+                </Pressable>
+              )}
+            </>
+          )}
+        </View>
+
         {/* ── 방 목록 ─────────────────────────────────────────────────────── */}
         <View style={styles.sectionRow}>
           <Text style={styles.sectionLabel}>방 {channels.length}개</Text>
@@ -469,6 +510,24 @@ const styles = StyleSheet.create({
   sectionActions: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   sectionLabel: { fontSize: 13, fontWeight: '600', color: '#8B95A1' },
   sectionAction: { fontSize: 13, fontWeight: '700', color: '#3B7DD8' },
+
+  // 동아리 일정 카드
+  eventCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 16,
+    gap: 12,
+    shadowColor: 'rgba(25,31,40,1)',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  eventsLoader: { marginVertical: 4 },
+  eventsEmpty: { paddingVertical: 16, alignItems: 'center' },
+  eventsEmptyText: { fontSize: 13, color: '#A9B1BA' },
+  extraMore: { alignItems: 'center', paddingVertical: 2 },
+  extraMoreText: { fontSize: 13, color: '#3B7DD8', fontWeight: '500' },
 
   // 방 컨테이너
   channelContainer: {
