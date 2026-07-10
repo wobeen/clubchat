@@ -66,7 +66,7 @@
 - `events` SELECT: 요청자가 해당 `channel_id`의 `channel_members`에 속한 경우만.
 - `events` INSERT: 해당 방의 멤버만. `created_by`는 `auth.uid()`로 강제.
 - `events` UPDATE/DELETE: 작성자 본인(`created_by = auth.uid()`)만.
-- `event_responses` SELECT: 그 일정이 속한 방의 멤버만.
+- `event_responses` SELECT: 그 일정이 속한 방의 멤버 또는(club 스코프 일정이면) 그 동아리 멤버.
 - `event_responses` INSERT/UPDATE/DELETE: 본인 응답만(`user_id = auth.uid()`). 타인의 응답 변경 불가.
 
 **위키 페이지 RLS**
