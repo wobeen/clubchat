@@ -21,3 +21,9 @@ Thumbs.db
 
 expo-env.d.ts
 # @end expo-cli
+
+# Supabase 셀프호스팅 (self-host/) — 실행 시 생성되는 실데이터
+self-host/volumes/db/data/
+self-host/volumes/storage/*
+!self-host/volumes/storage/.gitkeep
+self-host/backups/
