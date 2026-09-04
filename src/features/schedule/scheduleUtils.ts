@@ -1,4 +1,10 @@
 import type { ResponseStatus } from './types'
+import { colors, spacing, radius } from '../ui/theme'
+
+// colors/spacing/radius는 src/features/ui/theme.ts의 값을 그대로 재노출한다.
+// (이 파일이 예전에 직접 정의하던 값은 앱의 실제 팔레트와 다른 임의 색상이었다.
+//  이 화면들을 건드리지 않고 값만 교체하기 위해 키 이름은 그대로 유지한다.)
+export { colors, spacing, radius }
 
 // ─── 날짜 포맷 ────────────────────────────────────────────────────────────────
 
@@ -56,31 +62,3 @@ export const STATUS_COLOR: Record<ResponseStatus, string> = {
   maybe: '#f59e0b',  // amber-500
 }
 
-// ─── 디자인 토큰 ──────────────────────────────────────────────────────────────
-
-export const colors = {
-  primary: '#6366f1',       // indigo-500
-  primaryDark: '#4f46e5',   // indigo-600
-  surface: '#ffffff',
-  surfaceSecondary: '#f8fafc',
-  border: '#e2e8f0',
-  textPrimary: '#0f172a',
-  textSecondary: '#64748b',
-  error: '#ef4444',
-  destructive: '#dc2626',
-} as const
-
-export const spacing = {
-  xs: 4,
-  sm: 8,
-  md: 16,
-  lg: 24,
-  xl: 32,
-} as const
-
-export const radius = {
-  sm: 6,
-  md: 10,
-  lg: 16,
-  full: 9999,
-} as const

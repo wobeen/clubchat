@@ -17,7 +17,8 @@ Notifications.setNotificationHandler({
 export function usePushToken(userId: string | undefined) {
   useEffect(() => {
     if (!userId) return
-    if (!Device.isDevice) return  // 시뮬레이터/웹 제외 — 실기기에서만 동작
+    if (Platform.OS === 'web') return  // 웹 푸시(VAPID)는 범위 밖 — 모바일 실기기에서만 동작
+    if (!Device.isDevice) return  // 시뮬레이터 제외 — expo-device는 웹에서 isDevice=true를 반환하므로 위 web 체크가 별도로 필요
 
     void registerAndSave(userId)
   }, [userId])
