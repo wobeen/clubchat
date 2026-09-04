@@ -10,10 +10,11 @@ import {
   Text,
   View,
 } from 'react-native'
-import { useFocusEffect, useLocalSearchParams } from 'expo-router'
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router'
 import { supabase } from '../../../src/lib/supabase'
 import { useToast } from '../../../src/features/ui/Toast'
 import { useConfirm } from '../../../src/features/ui/ConfirmDialog'
+import { ScreenOverlay } from '../../../src/features/shell'
 
 interface ClubInfo {
   invite_code: string
@@ -65,7 +66,9 @@ function timeAgo(iso: string) {
   return `${day}일 전`
 }
 
-export default function ManageClubScreen() {
+// Phase 4: 넓은 화면에서는 아래 default export의 ScreenOverlay가 이 컴포넌트를
+// 다이얼로그 카드로 감싼다. 컴팩트 화면에서는 기존과 동일한 풀스크린 라우트.
+function ManageClubScreenContent() {
   const { clubId, clubName } = useLocalSearchParams<{ clubId: string; clubName: string }>()
   const [state, setState] = useState<LoadState>({ status: 'loading' })
   const [toggling, setToggling] = useState(false)
@@ -340,6 +343,17 @@ export default function ManageClubScreen() {
       </View>
 
     </ScrollView>
+  )
+}
+
+export default function ManageClubScreen() {
+  const { clubName } = useLocalSearchParams<{ clubName: string }>()
+  const router = useRouter()
+
+  return (
+    <ScreenOverlay title={`${clubName ?? '동아리'} 관리`} onClose={() => router.back()}>
+      <ManageClubScreenContent />
+    </ScreenOverlay>
   )
 }
 

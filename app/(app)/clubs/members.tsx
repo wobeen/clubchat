@@ -8,12 +8,13 @@ import {
   Text,
   View,
 } from 'react-native'
-import { useFocusEffect, useLocalSearchParams } from 'expo-router'
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router'
 import { supabase } from '../../../src/lib/supabase'
 import { MemberProfileCard, MemberProfile } from '../../../src/features/club/MemberProfileCard'
 import { useAuth } from '../../../src/features/auth/useAuth'
 import { useToast } from '../../../src/features/ui/Toast'
 import { useConfirm } from '../../../src/features/ui/ConfirmDialog'
+import { ScreenOverlay } from '../../../src/features/shell'
 
 interface MemberRow {
   id: string
@@ -86,7 +87,9 @@ function MemberAvatar({ member, size }: { member: ProcessedMember; size: number 
   )
 }
 
-export default function MembersScreen() {
+// Phase 4: 넓은 화면에서는 아래 default export의 ScreenOverlay가 이 컴포넌트를
+// 다이얼로그 카드로 감싼다. 컴팩트 화면에서는 기존과 동일한 풀스크린 라우트.
+function MembersScreenContent() {
   const { clubId, clubName, myRole } = useLocalSearchParams<{
     clubId: string
     clubName: string
@@ -311,6 +314,17 @@ export default function MembersScreen() {
         </View>
       </ScrollView>
     </View>
+  )
+}
+
+export default function MembersScreen() {
+  const { clubName } = useLocalSearchParams<{ clubName: string }>()
+  const router = useRouter()
+
+  return (
+    <ScreenOverlay title={`${clubName ?? '동아리'} 멤버`} onClose={() => router.back()}>
+      <MembersScreenContent />
+    </ScreenOverlay>
   )
 }
 

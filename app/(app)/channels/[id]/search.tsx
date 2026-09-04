@@ -10,8 +10,9 @@ import {
   View,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { useLocalSearchParams } from 'expo-router'
+import { useLocalSearchParams, useRouter } from 'expo-router'
 import { supabase } from '../../../../src/lib/supabase'
+import { ScreenOverlay } from '../../../../src/features/shell'
 
 interface SearchResult {
   id: string
@@ -33,7 +34,9 @@ function highlight(text: string, query: string): string {
   return text
 }
 
-export default function SearchScreen() {
+// Phase 4: 넓은 화면에서는 아래 default export의 ScreenOverlay가 이 컴포넌트를
+// 다이얼로그 카드로 감싼다. 컴팩트 화면에서는 기존과 동일한 풀스크린 라우트.
+function SearchScreenContent() {
   const { id: channelId } = useLocalSearchParams<{ id: string }>()
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<SearchResult[]>([])
@@ -181,6 +184,16 @@ export default function SearchScreen() {
         />
       )}
     </SafeAreaView>
+  )
+}
+
+export default function SearchScreen() {
+  const router = useRouter()
+
+  return (
+    <ScreenOverlay title="메시지 검색" onClose={() => router.back()}>
+      <SearchScreenContent />
+    </ScreenOverlay>
   )
 }
 

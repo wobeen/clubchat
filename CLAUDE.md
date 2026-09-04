@@ -10,6 +10,7 @@
 
 - **무엇**: 학교 동아리·소모임을 위한 올인원 협업 공간. 위키(동아리·방 홈페이지) + 채팅 + 일정을 하나의 앱에서.
 - **UX 골격**: 마이 페이지(내 동아리 목록) → 동아리 홈페이지(위키 + 스터디 방 목록) → 스터디 방 홈페이지(위키 + 채팅)
+- **반응형 워크스페이스 셸 (진행 중)**: 위 3단계 네비게이션을 하나의 반응형 셸로 재구성 중. 넓은 화면(웹/태블릿)은 아이콘 레일+목록+본문(+상세패널)을 나란히, 좁은 화면(모바일)은 같은 구조를 드릴다운으로 보여준다. 상세 계획·진행상황은 §5 참고.
 - **핵심 원칙**: 보안 우선. "이 사용자가 이 데이터를 볼 수 있는가"는 항상 서버(RLS)에서 강제한다. 클라이언트를 신뢰하지 않는다.
 - **암호화 정책**: 전송구간 TLS + 저장 시 암호화 + 엄격한 RLS. **종단간 암호화(E2EE)는 도입하지 않는다.**
 - **배포**: 내부 배포 (TestFlight / APK 직접 배포 / PWA)
@@ -79,28 +80,37 @@
 
 ## 5. 기능 범위
 
-**화면 흐름 (네비게이션 구조)**
+**화면 흐름 (네비게이션 구조) — 현재 실제 구현**
+
+레거시 경로(`/(app)/index`, `/clubs/[id]`, `/channels/[id]/home`)는 전부 아래 `/w` 셸 주소로 **리다이렉트되는 얇은 어댑터**로 남아있다(북마크·딥링크 호환용). 실제 화면은 `/w` 아래에 있다.
+
 ```
 로그인
-  └─ 마이 페이지 (/(app)/index)
-       ├─ 내 동아리 카드 목록
-       ├─ "+" 버튼 → 초대 코드 입력 → 동아리 가입
-       └─ 동아리 카드 탭 → 동아리 홈페이지 (/(app)/clubs/[id]/home)
-            ├─ 동아리 위키 (블록 에디터, admin/owner만 편집)
-            ├─ 스터디 방 목록 (기존 channels)
-            └─ 스터디 방 탭 → 스터디 방 홈페이지 (/(app)/channels/[id]/home)
-                 ├─ 방 위키 (블록 에디터, 방장만 편집)
-                 ├─ "채팅" 버튼 → 채팅 화면 (/(app)/channels/[id]/chat)
-                 └─ "일정" 버튼 → 일정 목록 (/(app)/channels/[id]/events/list)
+  └─ /(app)/w                         depth 0 — 동아리 미선택
+       ├─ 아이콘 레일(넓은 화면만): 동아리 아바타 목록 + "+"(초대코드 가입 시트) + 프로필 아바타(편집 시트)
+       ├─ 동아리 목록 패널(ClubListPane)
+       └─ 동아리 선택 → /w/[clubId]                    depth 1
+            ├─ 동아리 위키(usePage/WikiViewer/WikiEditor, admin/owner만 편집) + 초대코드 복사
+            ├─ 스터디 방 목록(RoomListPane)
+            └─ 방 선택 → /w/[clubId]/[roomId]           depth 2
+                 ├─ 방 위키(방장만 편집) + 다가오는 일정 미리보기
+                 ├─ "채팅 열기" → /(app)/channels/[id]/chat (아직 별도 풀스크린 라우트, 셸 본문 통합 전)
+                 └─ "일정" → /(app)/channels/[id]/events/list
 ```
 
-**완료된 기능**: 구글 로그인, 동아리 생성/가입, 방 생성, 초대 링크·QR·비밀번호 입장, 실시간 텍스트 채팅, 파일·이미지 공유, 읽음표시, 입력중 표시(Presence), 메시지 검색, 일정 CRUD + 참석 응답, PWA 설정.
+넓은 화면(≥768px, `useBreakpoint`)은 레일+목록+본문을 나란히, 좁은 화면은 depth별로 한 패널씩 드릴다운(뒤로가기=상위 depth로 이동)한다. 상세 아키텍처·라우팅 근거는 `src/features/shell/`와 계획 문서(`~/.claude/plans/async-brewing-conway.md`, 세션 종료 후에도 남아있음) 참고.
 
-**구현 예정 (6단계)**:
-- 마이 페이지 UX 개편: 동아리 카드 그리드, "+" 버튼 → 초대 코드 입력 모달(현재 별도 화면 → 인라인)
-- 동아리 홈페이지(`clubs/[id]/home`): 블록 에디터 위키 + 하단 스터디 방 목록
-- 스터디 방 홈페이지(`channels/[id]/home`): 블록 에디터 위키 + 채팅·일정 바로가기 버튼
-- 블록 에디터: H1/H2/본문 텍스트, 이미지(Storage), 링크 카드, 구분선. 인라인 툴바.
+**완료된 기능**: 구글 로그인, 동아리 생성/가입, 방 생성, 초대 링크·QR·비밀번호 입장, 실시간 텍스트 채팅, 파일·이미지 공유, 읽음표시, 입력중 표시(Presence), 메시지 검색, 일정 CRUD + 참석 응답, PWA 설정, **반응형 워크스페이스 셸 Phase 0+1**(아래 참고).
+
+**반응형 워크스페이스 셸 — 진행 상황**:
+- ✅ Phase 0(기반): 디자인 토큰 통일(`src/features/ui/theme.ts`, 실제 팔레트 `#3B7DD8`/`#F7F8FA`/`#191F28`/`#8B95A1`), `useAuth`를 Context/Provider화(`src/features/auth/AuthProvider.tsx`, 시그니처 불변), `src/lib/realtime.ts`(토픽 이름 빌더), 채팅 화면을 `src/features/chat/`로 분해(`ChatScreen`이 prop만 받고 `useRouter`/`useLocalSearchParams` 직접 호출 안 함).
+- ✅ Phase 1(셸 골격): `/w` 네임스페이스 + `src/features/shell/`(레일·목록 패널·반응형 프리미티브·`useWorkspaceNavigation`/`useWorkspaceData`), 레거시 경로 리다이렉트.
+- ✅ Phase 2(채팅 통합): `/w/[clubId]/[roomId]`에 `view` 쿼리 파라미터(`home`|`chat`) 추가(`useWorkspaceNavigation`의 `roomView`/`openChat`/`closeChat`). `view=chat`이면 본문이 기존 위키+일정 홈 대신 `ChatScreen`(자체 헤더로 뒤로가기/검색/일정 버튼 포함)을 렌더링. 넓은 화면에서 `view=chat`일 때만 오른쪽에 `RoomDetailPane`(멤버 목록 + 위키 미리보기 + 다가오는 일정, `src/features/shell/RoomDetailPane.tsx` + `useChannelMembers.ts`) 추가 표시. 기존 풀스크린 라우트(`channels/[id]/chat.tsx`)는 딥링크 호환용으로 유지하되 "채팅 열기" 버튼은 더 이상 그쪽으로 push하지 않음.
+- ✅ Phase 3(위키 에디터): `WikiEditor`(`src/features/wiki/WikiEditor.tsx`)를 인라인/시트 겸용으로 분리 — 넓은 화면은 위키 카드 안에서 그대로 펼쳐지는 인라인 편집(셸 유지), 컴팩트 화면은 기존 풀스크린 Modal 시트 유지. 상태/저장 로직은 하나의 컴포넌트에서 공유하고 `useBreakpoint()`로 렌더만 분기. 부수적으로 `w/[clubId]/index.tsx`(동아리 홈)에 `<WikiEditor>`가 아예 렌더링되지 않아 "편집" 버튼이 동작하지 않던 기존 버그도 함께 고침(방 홈에는 있었는데 동아리 홈에는 빠져 있었음). "위키·일정 상세패널"은 Phase 2의 `RoomDetailPane`으로 이미 충족.
+- ✅ Phase 4(관리 화면 오버레이 + 정리): 초대(`channels/[id]/invite`)·방 관리(`channels/[id]/manage`)·메시지 검색(`channels/[id]/search`)·동아리 관리(`clubs/manage`)·멤버(`clubs/members`) 5개 화면에 `src/features/shell/ScreenOverlay.tsx` 적용 — 넓은 화면에서는 셸 위에 뜨는 다이얼로그 카드(자체 헤더+닫기), 컴팩트 화면에서는 기존 네이티브 풀스크린 그대로. 각 화면은 기존 컴포넌트를 `XScreenContent`로 이름만 바꾸고 얇은 `ScreenOverlay` 래퍼를 새 default export로 추가하는 방식이라 내부 로직(로딩/에러 분기 등)은 무변경. `app/(app)/_layout.tsx`가 `useBreakpoint()`로 이 5개 라우트의 `headerShown`을 넓은 화면에서만 끔(헤더 이중 렌더 방지). 정리: `src/features/ui/Skeleton.tsx`의 `ClubListSkeleton`(레거시 `app/(app)/index.tsx` 전용, Phase 1에서 그 화면이 리다이렉트 어댑터로 바뀌며 아무도 안 쓰던 죽은 컴포넌트)과 그 전용 스타일 제거.
+- **Phase 0~4 전부 완료 — 반응형 워크스페이스 셸 이니셔티브 종료.**
+
+**⚠️ §3 데이터 모델과 실제 구현 불일치**: 아래 §3의 `pages` 테이블 설명(`owner_type`/`owner_id`/`blocks` jsonb 블록 배열)은 실제 구현(`src/features/wiki/types.ts`: `club_id`/`room_id`(nullable)/`content`(마크다운 문자열), `react-native-markdown-display`로 렌더링)과 다르다. 위키가 실제로는 블록 에디터가 아니라 마크다운 텍스트 기반으로 구현된 것으로 보인다. db-schema 에이전트와 함께 §3을 실제 스키마에 맞게 재작성 필요(스키마 소유권은 §7 규칙에 따라 db-schema 에이전트).
 
 **구현 예정 (7단계)**:
 - 메시지 수정·삭제 UI, 프로필 편집(이름·아바타), 방 퇴장·동아리 탈퇴
@@ -136,7 +146,7 @@
 3. **읽음·파일** ✅: `channel_reads` 포인터, Storage 버킷·업로드·서명 URL
 4. **일정** ✅: 일정 CRUD, 참석 응답 집계, 일정 RLS
 5. **프레즌스·검색·PWA** ✅: 입력중 표시(Realtime Presence), 메시지 전문 검색, 데스크톱 PWA 패키징
-6. **위키 홈페이지**: `pages` 테이블 + RLS, 블록 에디터 컴포넌트(H1/H2/본문/이미지/링크/구분선), 동아리 홈(`clubs/[id]/home`) + 스터디 방 홈(`channels/[id]/home`), 마이 페이지 UX 개편(카드 그리드 + "+" 모달)
+6. **위키 홈페이지 + 반응형 워크스페이스 셸** ✅: 동아리 홈 + 스터디 방 홈 + 마이 페이지를 `/w` 네임스페이스의 반응형 셸로 재구성. **Phase 0~4 전부 완료**(§5 참고) — 토큰 통일, 채팅 분해, 레일+목록 2단 골격, 레거시 경로 리다이렉트, 채팅 본문 패널 통합 + 상세패널(멤버/위키 미리보기/일정), 위키 에디터 인라인/시트 겸용, 관리성 화면(초대/관리/멤버/검색) 오버레이.
 7. **배포 전 필수기능**: 메시지 수정·삭제 UI, 프로필 편집(이름·아바타), 방 퇴장·동아리 탈퇴, 앱 전반 UX 완성도(빈 상태·에러 처리·로딩 스켈레톤)
 8. **운영 이전**: OCI A1에 Supabase 셀프호스팅 마이그레이션, TLS·백업·방화벽 하드닝
 9. **모바일 배포 + 푸시**: EAS Build로 TestFlight(iOS)/APK(Android) 배포, Expo Push 알림 Edge Function 연동, 딥링크 처리

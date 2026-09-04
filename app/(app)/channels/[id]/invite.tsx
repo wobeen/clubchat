@@ -14,6 +14,7 @@ import QRCode from 'react-native-qrcode-svg'
 import * as Clipboard from 'expo-clipboard'
 import { supabase } from '../../../../src/lib/supabase'
 import { buildInviteLink } from '../../../../src/features/deeplink/parseInviteLink'
+import { ScreenOverlay } from '../../../../src/features/shell'
 
 interface CreateInviteSuccess {
   success: true
@@ -32,7 +33,10 @@ type PageState =
   | { status: 'error'; message: string }
   | { status: 'ready'; token: string }
 
-export default function InviteScreen() {
+// Phase 4: 넓은 화면에서는 ScreenOverlay가 이 컴포넌트를 다이얼로그 카드로 감싼다
+// (아래 default export 참고). 컴팩트 화면에서는 기존과 동일하게 네이티브 풀스크린
+// 라우트로 보인다.
+function InviteScreenContent() {
   const { id, channelName, clubId } = useLocalSearchParams<{ id: string; channelName: string; clubId: string }>()
   const router = useRouter()
   const navigation = useNavigation()
@@ -203,6 +207,17 @@ export default function InviteScreen() {
         <Text style={styles.doneButtonText}>완료</Text>
       </Pressable>
     </ScrollView>
+  )
+}
+
+export default function InviteScreen() {
+  const { channelName } = useLocalSearchParams<{ channelName: string }>()
+  const router = useRouter()
+
+  return (
+    <ScreenOverlay title={`${channelName ?? '방'} 초대`} onClose={() => router.back()}>
+      <InviteScreenContent />
+    </ScreenOverlay>
   )
 }
 
