@@ -81,16 +81,6 @@ export default function WorkspaceRoomScreen() {
     })
   }
 
-  const wikiEditor = (
-    <WikiEditor
-      visible={wikiEditorOpen}
-      scope={wikiScope}
-      existingPage={wikiPage}
-      onClose={() => setWikiEditorOpen(false)}
-      onSaved={() => { refreshWiki(); showToast('위키가 저장됐어요 ✓') }}
-    />
-  )
-
   const homeContent = !room && roomsLoading ? (
     <ChannelHomeSkeleton />
   ) : (
@@ -100,13 +90,21 @@ export default function WorkspaceRoomScreen() {
         <View style={styles.card}>
           <View style={styles.cardHeader}>
             <Text style={styles.cardTitle}>📌 방 위키</Text>
-            {isRoomOwner && (
+            {isRoomOwner && !wikiEditorOpen && (
               <Pressable onPress={() => setWikiEditorOpen(true)} hitSlop={8} accessibilityRole="button" accessibilityLabel="위키 편집">
                 <Text style={styles.editLink}>{wikiPage ? '편집' : '작성 시작'}</Text>
               </Pressable>
             )}
           </View>
-          {wikiLoading ? (
+          {wikiEditorOpen ? (
+            <WikiEditor
+              visible={wikiEditorOpen}
+              scope={wikiScope}
+              existingPage={wikiPage}
+              onClose={() => setWikiEditorOpen(false)}
+              onSaved={() => { refreshWiki(); showToast('위키가 저장됐어요 ✓') }}
+            />
+          ) : wikiLoading ? (
             <ActivityIndicator size="small" color={colors.primary} />
           ) : wikiError ? (
             <Pressable onPress={refreshWiki} accessibilityRole="button" accessibilityLabel="위키 다시 불러오기">
@@ -207,7 +205,6 @@ export default function WorkspaceRoomScreen() {
     return (
       <View style={styles.fill}>
         <ToastComponent />
-        {wikiEditor}
         {roomView === 'home' && <PaneHeader title={room?.name ?? '방'} onPressBack={goUp} />}
         {bodyContent}
       </View>
@@ -217,7 +214,6 @@ export default function WorkspaceRoomScreen() {
   return (
     <View style={styles.fill}>
       <ToastComponent />
-      {wikiEditor}
       <PaneGroup>
         <IconRail />
         <Pane width={300}>

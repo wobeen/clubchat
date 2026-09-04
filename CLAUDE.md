@@ -106,8 +106,9 @@
 - ✅ Phase 0(기반): 디자인 토큰 통일(`src/features/ui/theme.ts`, 실제 팔레트 `#3B7DD8`/`#F7F8FA`/`#191F28`/`#8B95A1`), `useAuth`를 Context/Provider화(`src/features/auth/AuthProvider.tsx`, 시그니처 불변), `src/lib/realtime.ts`(토픽 이름 빌더), 채팅 화면을 `src/features/chat/`로 분해(`ChatScreen`이 prop만 받고 `useRouter`/`useLocalSearchParams` 직접 호출 안 함).
 - ✅ Phase 1(셸 골격): `/w` 네임스페이스 + `src/features/shell/`(레일·목록 패널·반응형 프리미티브·`useWorkspaceNavigation`/`useWorkspaceData`), 레거시 경로 리다이렉트.
 - ✅ Phase 2(채팅 통합): `/w/[clubId]/[roomId]`에 `view` 쿼리 파라미터(`home`|`chat`) 추가(`useWorkspaceNavigation`의 `roomView`/`openChat`/`closeChat`). `view=chat`이면 본문이 기존 위키+일정 홈 대신 `ChatScreen`(자체 헤더로 뒤로가기/검색/일정 버튼 포함)을 렌더링. 넓은 화면에서 `view=chat`일 때만 오른쪽에 `RoomDetailPane`(멤버 목록 + 위키 미리보기 + 다가오는 일정, `src/features/shell/RoomDetailPane.tsx` + `useChannelMembers.ts`) 추가 표시. 기존 풀스크린 라우트(`channels/[id]/chat.tsx`)는 딥링크 호환용으로 유지하되 "채팅 열기" 버튼은 더 이상 그쪽으로 push하지 않음.
-- ⬜ Phase 3(다음): `WikiEditor` 인라인/시트 겸용 분리, 위키·일정 상세패널.
-- ⬜ Phase 4: 관리·초대·멤버·검색 등을 넓은 화면에서 오버레이로 표시, 정리(죽은 스켈레톤 제거 등).
+- ✅ Phase 3(위키 에디터): `WikiEditor`(`src/features/wiki/WikiEditor.tsx`)를 인라인/시트 겸용으로 분리 — 넓은 화면은 위키 카드 안에서 그대로 펼쳐지는 인라인 편집(셸 유지), 컴팩트 화면은 기존 풀스크린 Modal 시트 유지. 상태/저장 로직은 하나의 컴포넌트에서 공유하고 `useBreakpoint()`로 렌더만 분기. 부수적으로 `w/[clubId]/index.tsx`(동아리 홈)에 `<WikiEditor>`가 아예 렌더링되지 않아 "편집" 버튼이 동작하지 않던 기존 버그도 함께 고침(방 홈에는 있었는데 동아리 홈에는 빠져 있었음). "위키·일정 상세패널"은 Phase 2의 `RoomDetailPane`으로 이미 충족.
+- ✅ Phase 4(관리 화면 오버레이 + 정리): 초대(`channels/[id]/invite`)·방 관리(`channels/[id]/manage`)·메시지 검색(`channels/[id]/search`)·동아리 관리(`clubs/manage`)·멤버(`clubs/members`) 5개 화면에 `src/features/shell/ScreenOverlay.tsx` 적용 — 넓은 화면에서는 셸 위에 뜨는 다이얼로그 카드(자체 헤더+닫기), 컴팩트 화면에서는 기존 네이티브 풀스크린 그대로. 각 화면은 기존 컴포넌트를 `XScreenContent`로 이름만 바꾸고 얇은 `ScreenOverlay` 래퍼를 새 default export로 추가하는 방식이라 내부 로직(로딩/에러 분기 등)은 무변경. `app/(app)/_layout.tsx`가 `useBreakpoint()`로 이 5개 라우트의 `headerShown`을 넓은 화면에서만 끔(헤더 이중 렌더 방지). 정리: `src/features/ui/Skeleton.tsx`의 `ClubListSkeleton`(레거시 `app/(app)/index.tsx` 전용, Phase 1에서 그 화면이 리다이렉트 어댑터로 바뀌며 아무도 안 쓰던 죽은 컴포넌트)과 그 전용 스타일 제거.
+- **Phase 0~4 전부 완료 — 반응형 워크스페이스 셸 이니셔티브 종료.**
 
 **⚠️ §3 데이터 모델과 실제 구현 불일치**: 아래 §3의 `pages` 테이블 설명(`owner_type`/`owner_id`/`blocks` jsonb 블록 배열)은 실제 구현(`src/features/wiki/types.ts`: `club_id`/`room_id`(nullable)/`content`(마크다운 문자열), `react-native-markdown-display`로 렌더링)과 다르다. 위키가 실제로는 블록 에디터가 아니라 마크다운 텍스트 기반으로 구현된 것으로 보인다. db-schema 에이전트와 함께 §3을 실제 스키마에 맞게 재작성 필요(스키마 소유권은 §7 규칙에 따라 db-schema 에이전트).
 
@@ -145,7 +146,7 @@
 3. **읽음·파일** ✅: `channel_reads` 포인터, Storage 버킷·업로드·서명 URL
 4. **일정** ✅: 일정 CRUD, 참석 응답 집계, 일정 RLS
 5. **프레즌스·검색·PWA** ✅: 입력중 표시(Realtime Presence), 메시지 전문 검색, 데스크톱 PWA 패키징
-6. **위키 홈페이지 + 반응형 워크스페이스 셸**: 동아리 홈 + 스터디 방 홈 + 마이 페이지를 `/w` 네임스페이스의 반응형 셸로 재구성. **Phase 0~2 완료**(§5 참고) — 토큰 통일, 채팅 분해, 레일+목록 2단 골격, 레거시 경로 리다이렉트, 채팅 본문 패널 통합 + 상세패널(멤버/위키 미리보기/일정). **Phase 3~4 남음** — 위키 인라인 에디터, 관리류 화면 오버레이.
+6. **위키 홈페이지 + 반응형 워크스페이스 셸** ✅: 동아리 홈 + 스터디 방 홈 + 마이 페이지를 `/w` 네임스페이스의 반응형 셸로 재구성. **Phase 0~4 전부 완료**(§5 참고) — 토큰 통일, 채팅 분해, 레일+목록 2단 골격, 레거시 경로 리다이렉트, 채팅 본문 패널 통합 + 상세패널(멤버/위키 미리보기/일정), 위키 에디터 인라인/시트 겸용, 관리성 화면(초대/관리/멤버/검색) 오버레이.
 7. **배포 전 필수기능**: 메시지 수정·삭제 UI, 프로필 편집(이름·아바타), 방 퇴장·동아리 탈퇴, 앱 전반 UX 완성도(빈 상태·에러 처리·로딩 스켈레톤)
 8. **운영 이전**: OCI A1에 Supabase 셀프호스팅 마이그레이션, TLS·백업·방화벽 하드닝
 9. **모바일 배포 + 푸시**: EAS Build로 TestFlight(iOS)/APK(Android) 배포, Expo Push 알림 Edge Function 연동, 딥링크 처리

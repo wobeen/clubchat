@@ -150,13 +150,21 @@ export default function WorkspaceClubScreen() {
       <View style={[styles.card, styles.colCard]}>
         <View style={styles.cardHeader}>
           <Text style={styles.cardTitle}>📌 동아리 위키</Text>
-          {canEdit && (
+          {canEdit && !wikiEditorOpen && (
             <Pressable onPress={() => setWikiEditorOpen(true)} hitSlop={8} accessibilityRole="button" accessibilityLabel="위키 편집">
               <Text style={styles.editLink}>{wikiPage ? '편집' : '작성 시작'}</Text>
             </Pressable>
           )}
         </View>
-        {wikiLoading ? (
+        {wikiEditorOpen ? (
+          <WikiEditor
+            visible={wikiEditorOpen}
+            scope={wikiScope}
+            existingPage={wikiPage}
+            onClose={() => setWikiEditorOpen(false)}
+            onSaved={() => { refreshWiki(); showToast('위키가 저장됐어요 ✓') }}
+          />
+        ) : wikiLoading ? (
           <ActivityIndicator size="small" color={colors.primary} />
         ) : wikiError ? (
           <Pressable onPress={refreshWiki} accessibilityRole="button" accessibilityLabel="위키 다시 불러오기">
