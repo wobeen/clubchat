@@ -16,7 +16,6 @@ import {
 import { supabase } from '../../lib/supabase'
 import { removeStaleChannels, topics } from '../../lib/realtime'
 import { useAuth } from '../auth/useAuth'
-import { useWorkspaceNavigation } from './useWorkspaceNavigation'
 
 export interface WorkspaceClub {
   id: string
@@ -44,6 +43,9 @@ interface WorkspaceDataContextValue {
   roomsLoading: boolean
   refreshClubs: () => void
   refreshRooms: () => void
+  // 화면(스크린) 쪽에서 자신의 clubId param을 동기화해 넣는 setter.
+  // 아래 "activeClubId 출처" 설명 참고.
+  setActiveClubId: (clubId: string | undefined) => void
 }
 
 const WorkspaceDataContext = createContext<WorkspaceDataContextValue | undefined>(undefined)
@@ -51,7 +53,19 @@ const WorkspaceDataContext = createContext<WorkspaceDataContextValue | undefined
 export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const { session } = useAuth()
   const userId = session?.user?.id
-  const { clubId: activeClubId } = useWorkspaceNavigation()
+
+  // ── activeClubId 출처 ────────────────────────────────────────────────────
+  // 예전엔 여기서 useWorkspaceNavigation()(내부적으로 useLocalSearchParams())을
+  // 직접 불러서 clubId를 읽었다. 그런데 이 Provider는 app/(app)/w/_layout.tsx의
+  // Stack보다 "위"에서 한 번만 마운트되는 컴포넌트라, 같은 라우트 패턴(w/[clubId])
+  // 안에서 clubId "값만" 바뀌는 push(동아리 A -> 동아리 B로 이동)에는 이 계층의
+  // useLocalSearchParams가 제때 갱신되지 않는 버그가 있었다(웹에서 재현: 사이드바
+  // 하이라이트는 새 동아리로 바뀌는데 본문의 activeClub/rooms는 이전 동아리 것을
+  // 계속 보여줌 — 새로고침해야만 맞아짐).
+  // 그래서 대신 각 화면(w/[clubId]/index.tsx, w/[clubId]/[roomId].tsx)이 자신의
+  // clubId param(이건 확실히 매 push마다 fresh함 — Stack 바로 아래 있으니까)을
+  // useEffect로 setActiveClubId에 밀어 넣는 방식으로 바꿨다.
+  const [activeClubId, setActiveClubId] = useState<string | undefined>(undefined)
 
   const [clubs, setClubs] = useState<WorkspaceClub[]>([])
   const [clubsLoading, setClubsLoading] = useState(true)
@@ -262,7 +276,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   }, [userId, activeClubId, roomsRefreshCounter])
 
   const value = useMemo<WorkspaceDataContextValue>(
-    () => ({ clubs, clubsLoading, activeClub, rooms, roomsLoading, refreshClubs, refreshRooms }),
+    () => ({ clubs, clubsLoading, activeClub, rooms, roomsLoading, refreshClubs, refreshRooms, setActiveClubId }),
     [clubs, clubsLoading, activeClub, rooms, roomsLoading, refreshClubs, refreshRooms]
   )
 

@@ -1,6 +1,6 @@
 // depth 0 — 동아리 미선택. 넓은 화면: 레일 + 320px 동아리 목록 + 빈 본문 안내.
 // 컴팩트 화면: 동아리 목록이 곧 화면 전체(레일 생략).
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'expo-router'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
 import { useAuth } from '@/features/auth/useAuth'
@@ -23,7 +23,7 @@ import {
 export default function WorkspaceIndexScreen() {
   const { isCompact } = useBreakpoint()
   const router = useRouter()
-  const { clubs, clubsLoading, refreshClubs } = useWorkspaceData()
+  const { clubs, clubsLoading, refreshClubs, setActiveClubId } = useWorkspaceData()
   const { openClub } = useWorkspaceNavigation()
   const { user } = useAuth()
   const { profile, refresh: refreshProfile } = useProfile(user?.id)
@@ -31,6 +31,12 @@ export default function WorkspaceIndexScreen() {
 
   const [joinVisible, setJoinVisible] = useState(false)
   const [profileVisible, setProfileVisible] = useState(false)
+
+  // 동아리 미선택 상태로 돌아왔으니 Provider가 들고 있던 이전 동아리의
+  // activeClub/rooms(+realtime 구독)도 함께 비운다.
+  useEffect(() => {
+    setActiveClubId(undefined)
+  }, [setActiveClubId])
 
   function handleJoined(clubName: string) {
     refreshClubs()

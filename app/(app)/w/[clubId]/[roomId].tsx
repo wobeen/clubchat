@@ -1,9 +1,11 @@
-// depth 2 — 방 선택. 본문 = 방 위키 + 다가오는 일정 + "채팅 열기" 버튼
-// (app/(app)/channels/[id]/home.tsx와 동일한 패턴; 채팅 버튼은 여전히 기존
-// channels/[id]/chat.tsx 어댑터 경로로 이동한다 — 메인 패널로 채팅을 통합하는 건
-// Phase 2 범위).
-// 넓은 화면: 레일 + 300px 방 목록(현재 방 강조) + 본문. 컴팩트: PaneHeader(뒤로 → 방 목록) + 본문.
-import { useCallback, useState } from 'react'
+// depth 2 — 방 선택. 본문은 view 쿼리 파라미터로 "홈"(위키+일정)과 "채팅" 사이를
+// 전환한다(Phase 2). 넓은 화면 + 채팅 뷰일 때는 오른쪽에 RoomDetailPane(멤버/위키
+// 미리보기/일정)이 추가로 뜬다. 레거시 풀스크린 채팅 라우트(channels/[id]/chat.tsx)는
+// 딥링크 호환을 위해 그대로 남겨두되, 이 화면의 "채팅 열기" 버튼은 더 이상 그쪽으로
+// 이동하지 않고 openChat()으로 같은 라우트 안에서 view만 바꾼다.
+// 넓은 화면: 레일 + 300px 방 목록(현재 방 강조) + 본문(+채팅 뷰일 때 상세패널).
+// 컴팩트: 홈 뷰는 PaneHeader(뒤로 → 방 목록) + 본문, 채팅 뷰는 ChatScreen 자체 헤더만.
+import { useCallback, useEffect, useState } from 'react'
 import { useFocusEffect, useRouter } from 'expo-router'
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -15,13 +17,16 @@ import { usePage } from '@/features/wiki/usePage'
 import { WikiViewer } from '@/features/wiki/WikiViewer'
 import { WikiEditor } from '@/features/wiki/WikiEditor'
 import { useEvents, EventPreviewRow } from '@/features/schedule'
+import { ChatScreen } from '@/features/chat'
 import {
   IconRail,
   Pane,
   PaneGroup,
   PaneHeader,
   RoomListPane,
+  RoomDetailPane,
   useBreakpoint,
+  useChannelMembers,
   useWorkspaceData,
   useWorkspaceNavigation,
 } from '@/features/shell'
@@ -31,8 +36,15 @@ export default function WorkspaceRoomScreen() {
   const router = useRouter()
   const insets = useSafeAreaInsets()
   const { user } = useAuth()
-  const { clubId, roomId, openRoom, goUp } = useWorkspaceNavigation()
-  const { rooms, roomsLoading, activeClub } = useWorkspaceData()
+  const { clubId, roomId, roomView, openRoom, openChat, closeChat, goUp } = useWorkspaceNavigation()
+  const { rooms, roomsLoading, activeClub, setActiveClubId } = useWorkspaceData()
+
+  // [clubId]/index.tsx와 동일한 이유 — WorkspaceProvider가 자체적으로 clubId param
+  // 변경을 못 읽으므로, 방 화면에 직접 진입(딥링크 등)했을 때도 rooms가 이 방이
+  // 속한 동아리 것으로 맞게 로드되도록 이 화면의 fresh한 clubId를 동기화한다.
+  useEffect(() => {
+    setActiveClubId(clubId)
+  }, [clubId, setActiveClubId])
   const { show: showToast, ToastComponent } = useToast()
   const [wikiEditorOpen, setWikiEditorOpen] = useState(false)
 
@@ -44,6 +56,7 @@ export default function WorkspaceRoomScreen() {
     : { type: 'room' as const, clubId: '', roomId: '' }
   const { page: wikiPage, loading: wikiLoading, error: wikiError, refresh: refreshWiki } = usePage(wikiScope)
   const { events: upcomingEvents, loading: eventsLoading, refresh: refreshEvents } = useEvents({ channelId: roomId ?? '' })
+  const { members, loading: membersLoading } = useChannelMembers(roomView === 'chat' ? roomId : undefined)
 
   useFocusEffect(
     useCallback(() => {
@@ -78,7 +91,7 @@ export default function WorkspaceRoomScreen() {
     />
   )
 
-  const mainContent = !room && roomsLoading ? (
+  const homeContent = !room && roomsLoading ? (
     <ChannelHomeSkeleton />
   ) : (
     <View style={styles.fill}>
@@ -158,7 +171,7 @@ export default function WorkspaceRoomScreen() {
       <View style={[styles.chatBar, { paddingBottom: 12 + insets.bottom }]}>
         <Pressable
           style={({ pressed }) => [styles.chatBtn, pressed && styles.pressed]}
-          onPress={() => router.push({ pathname: '/(app)/channels/[id]/chat', params: { id: roomId, channelName: room?.name } })}
+          onPress={openChat}
           accessibilityRole="button"
           accessibilityLabel="채팅 열기"
         >
@@ -173,13 +186,30 @@ export default function WorkspaceRoomScreen() {
     </View>
   )
 
+  const chatContent = !user ? (
+    <ChannelHomeSkeleton />
+  ) : (
+    <ChatScreen
+      channelId={roomId}
+      channelName={room?.name ?? '채팅'}
+      currentUserId={user.id}
+      showHeader
+      keyboardAvoiding={isCompact}
+      onPressBack={closeChat}
+      onPressSearch={() => router.push({ pathname: '/(app)/channels/[id]/search', params: { id: roomId } })}
+      onPressEvents={() => router.push({ pathname: '/(app)/channels/[id]/events/list', params: { id: roomId, channelName: room?.name } })}
+    />
+  )
+
+  const bodyContent = roomView === 'chat' ? chatContent : homeContent
+
   if (isCompact) {
     return (
       <View style={styles.fill}>
         <ToastComponent />
         {wikiEditor}
-        <PaneHeader title={room?.name ?? '방'} onPressBack={goUp} />
-        {mainContent}
+        {roomView === 'home' && <PaneHeader title={room?.name ?? '방'} onPressBack={goUp} />}
+        {bodyContent}
       </View>
     )
   }
@@ -203,7 +233,23 @@ export default function WorkspaceRoomScreen() {
             />
           </ScrollView>
         </Pane>
-        <View style={styles.fill}>{mainContent}</View>
+        <View style={styles.fill}>{bodyContent}</View>
+        {roomView === 'chat' && (
+          <Pane width={300}>
+            <RoomDetailPane
+              roomName={room?.name ?? '방'}
+              wikiContent={wikiPage?.content ?? null}
+              wikiLoading={wikiLoading}
+              events={upcomingEvents}
+              eventsLoading={eventsLoading}
+              members={members}
+              membersLoading={membersLoading}
+              onPressWiki={closeChat}
+              onPressEvent={(eventId) => router.push({ pathname: '/(app)/channels/[id]/events/[eventId]/detail', params: { id: roomId, eventId } })}
+              onPressAllEvents={() => router.push({ pathname: '/(app)/channels/[id]/events/list', params: { id: roomId, channelName: room?.name } })}
+            />
+          </Pane>
+        )}
       </PaneGroup>
     </View>
   )

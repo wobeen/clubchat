@@ -2,7 +2,7 @@
 // app/(app)/clubs/[id].tsx의 카드 섹션들을 그대로 재사용한다(로직은 WorkspaceProvider로
 // 이전됨). 넓은 화면: 레일 + 320px 동아리 목록(현재 동아리 강조) + 본문.
 // 컴팩트 화면: PaneHeader(뒤로 → 동아리 목록) + 본문.
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useFocusEffect, useRouter } from 'expo-router'
 import {
   ActivityIndicator,
@@ -42,7 +42,15 @@ export default function WorkspaceClubScreen() {
   const { isCompact } = useBreakpoint()
   const router = useRouter()
   const { clubId, openClub, openRoom, goToClubList } = useWorkspaceNavigation()
-  const { clubs, clubsLoading, activeClub, rooms, roomsLoading } = useWorkspaceData()
+  const { clubs, clubsLoading, activeClub, rooms, roomsLoading, setActiveClubId } = useWorkspaceData()
+
+  // WorkspaceProvider는 Stack보다 위에서 한 번만 마운트되기 때문에 자체적으로는
+  // clubId param 변경(동아리 A -> B로 push)을 제때 못 읽는다(useWorkspaceData.tsx
+  // 주석 참고). 이 화면 자신의 clubId(Stack 바로 아래라 항상 fresh함)를 매 렌더마다
+  // Provider에 동기화해서 activeClub/rooms가 항상 올바른 동아리 것을 가리키게 한다.
+  useEffect(() => {
+    setActiveClubId(clubId)
+  }, [clubId, setActiveClubId])
 
   const [wikiEditorOpen, setWikiEditorOpen] = useState(false)
   const [joinVisible, setJoinVisible] = useState(false)
