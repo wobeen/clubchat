@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Modal, Pressable, StyleSheet, Text, View } from 'react-native'
+import { Modal, StyleSheet, Text, View } from 'react-native'
+import { Pressable } from './Pressable'
 
 interface ActionSheetOption {
   label: string
@@ -29,8 +30,8 @@ export function useActionSheet() {
     if (!sheet) return null
     return (
       <Modal transparent visible animationType="fade" onRequestClose={close}>
-        <Pressable style={styles.backdrop} onPress={close}>
-          <Pressable style={styles.sheet} onPress={(e) => e.stopPropagation()}>
+        <Pressable style={styles.backdrop} onPress={close} animated={false}>
+          <Pressable style={styles.sheet} onPress={(e) => e.stopPropagation()} animated={false}>
             {sheet.title && (
               <View style={styles.titleWrap}>
                 <Text style={styles.title}>{sheet.title}</Text>

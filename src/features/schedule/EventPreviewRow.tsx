@@ -1,4 +1,5 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native'
+import { StyleSheet, Text, View } from 'react-native'
+import { Pressable } from '../ui/Pressable'
 import type { EventWithMyResponse } from './types'
 
 const STATUS_COLOR = { going: '#1FA65A', not_going: '#E5484D', maybe: '#8B95A1' } as const

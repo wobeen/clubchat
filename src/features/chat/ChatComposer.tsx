@@ -3,12 +3,12 @@ import {
   ActionSheetIOS,
   ActivityIndicator,
   Platform,
-  Pressable,
   StyleSheet,
   Text,
   TextInput,
   View,
 } from 'react-native'
+import { Pressable } from '../ui/Pressable'
 
 interface Props {
   value: string

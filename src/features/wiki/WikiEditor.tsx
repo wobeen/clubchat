@@ -4,13 +4,13 @@ import {
   KeyboardAvoidingView,
   Modal,
   Platform,
-  Pressable,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
   View,
 } from 'react-native'
+import { Pressable } from '../ui/Pressable'
 import { WikiViewer } from './WikiViewer'
 import type { Page, PageScope } from './types'
 import { useUpsertPage } from './usePage'

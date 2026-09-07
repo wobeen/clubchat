@@ -22,7 +22,8 @@
 // 내부 로직(early return, 로딩/에러 상태 등)은 전혀 건드리지 않아도 된다.
 
 import { ReactNode } from 'react'
-import { Modal, Pressable, StyleSheet, Text, View } from 'react-native'
+import { Modal, StyleSheet, Text, View } from 'react-native'
+import { Pressable } from '../ui/Pressable'
 import { colors, radius, shadows } from '../ui/theme'
 import { useBreakpoint } from './useBreakpoint'
 
@@ -40,8 +41,8 @@ export function ScreenOverlay({ title, onClose, children, maxWidth = 480 }: Scre
 
   return (
     <Modal transparent visible animationType="fade" onRequestClose={onClose}>
-      <Pressable style={styles.backdrop} onPress={onClose} accessibilityLabel="배경을 눌러 닫기">
-        <Pressable style={[styles.card, { maxWidth }]} onPress={() => {}}>
+      <Pressable style={styles.backdrop} onPress={onClose} accessibilityLabel="배경을 눌러 닫기" animated={false}>
+        <Pressable style={[styles.card, { maxWidth }]} onPress={() => {}} animated={false}>
           <View style={styles.header}>
             <Text style={styles.title} numberOfLines={1}>{title}</Text>
             <Pressable onPress={onClose} hitSlop={10} style={styles.closeBtn} accessibilityRole="button" accessibilityLabel="닫기">

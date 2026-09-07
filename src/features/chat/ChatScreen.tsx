@@ -4,12 +4,12 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
-  Pressable,
   StyleSheet,
   Text,
   View,
 } from 'react-native'
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
+import { Pressable } from '../ui/Pressable'
 import { supabase } from '../../lib/supabase'
 import { useBreakpoint } from '../shell/useBreakpoint'
 import { MemberProfileCard, MemberProfile } from '../club/MemberProfileCard'

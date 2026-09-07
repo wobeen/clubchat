@@ -4,7 +4,6 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
-  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -12,6 +11,7 @@ import {
   View,
 } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { Pressable } from '../ui/Pressable'
 import { useSaveEvent } from './useEvents'
 import { colors, radius, spacing } from './scheduleUtils'
 import { DatePickerField } from './DatePickerField'

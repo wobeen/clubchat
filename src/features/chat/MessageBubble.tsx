@@ -1,4 +1,5 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native'
+import { StyleSheet, Text, View } from 'react-native'
+import { Pressable } from '../ui/Pressable'
 import { AttachmentMessage } from './AttachmentMessage'
 import { AvatarPlaceholder } from './Avatar'
 import { formatTime } from './chatUtils'

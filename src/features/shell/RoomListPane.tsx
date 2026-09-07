@@ -12,7 +12,8 @@
 // activeRoomId?는 스펙 필수 prop 목록에는 없지만, 목록 컬럼으로 쓰일 때 현재 선택된
 // 방을 강조 표시하기 위해 추가한 선택적 prop이다(ClubListPane의 activeClubId와 동일한 이유).
 
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native'
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native'
+import { Pressable } from '../ui/Pressable'
 import { colors, radius, shadows } from '../ui/theme'
 import type { WorkspaceRoom } from './useWorkspaceData'
 
