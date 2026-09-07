@@ -9,13 +9,13 @@ import {
   ActivityIndicator,
   Modal,
   Platform,
-  Pressable,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
   View,
 } from 'react-native'
+import { Pressable } from '../ui/Pressable'
 import { useProfile, ProfileRow } from '../auth/useProfile'
 import { useAuth } from '../auth/useAuth'
 import { useToast } from '../ui/Toast'
@@ -95,8 +95,8 @@ export function ProfileEditSheet({ visible, profile, onClose, onSaved }: Profile
           닫힘 이후에도 보이도록 Modal 형제로 렌더링한다. */}
       <ToastComponent />
       <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
-      <Pressable style={styles.modalBackdrop} onPress={onClose}>
-        <Pressable style={styles.modalSheet} onPress={() => {}}>
+      <Pressable style={styles.modalBackdrop} onPress={onClose} animated={false}>
+        <Pressable style={styles.modalSheet} onPress={() => {}} animated={false}>
           <View style={styles.sheetHandle} />
           <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={styles.sheetScroll}>
             <View style={styles.sheetHeader}>

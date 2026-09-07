@@ -4,7 +4,8 @@
 // 풀 위키 렌더링(WikiViewer)이 아니라 텍스트 미리보기만 보여준다 — 전체 내용은
 // "홈에서 보기"로 view=home으로 돌아가서 본다.
 
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
+import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native'
+import { Pressable } from '../ui/Pressable'
 import { colors, radius, shadows } from '../ui/theme'
 import type { ChannelMemberSummary } from './useChannelMembers'
 import { EventPreviewRow } from '../schedule/EventPreviewRow'

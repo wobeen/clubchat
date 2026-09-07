@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { ActivityIndicator, Modal, Pressable, StyleSheet, Text, View } from 'react-native'
+import { ActivityIndicator, Modal, StyleSheet, Text, View } from 'react-native'
+import { Pressable } from './Pressable'
 
 interface ConfirmOptions {
   title: string
@@ -40,8 +41,8 @@ export function useConfirm() {
     if (!options) return null
     return (
       <Modal transparent visible animationType="fade" onRequestClose={close}>
-        <Pressable style={styles.backdrop} onPress={close}>
-          <Pressable style={styles.card} onPress={(e) => e.stopPropagation()}>
+        <Pressable style={styles.backdrop} onPress={close} animated={false}>
+          <Pressable style={styles.card} onPress={(e) => e.stopPropagation()} animated={false}>
             <Text style={styles.title}>{options.title}</Text>
             {options.message && <Text style={styles.message}>{options.message}</Text>}
             <View style={styles.actions}>

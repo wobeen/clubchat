@@ -4,7 +4,8 @@
 // 원본과 동일하게 유지한다.
 
 import { useState } from 'react'
-import { ActivityIndicator, Modal, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native'
+import { ActivityIndicator, Modal, Platform, StyleSheet, Text, TextInput, View } from 'react-native'
+import { Pressable } from '../ui/Pressable'
 import { supabase } from '../../lib/supabase'
 
 type JoinState =
@@ -66,8 +67,8 @@ export function JoinByCodeSheet({ visible, onClose, onJoined }: JoinByCodeSheetP
 
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={handleClose}>
-      <Pressable style={styles.modalBackdrop} onPress={handleClose}>
-        <Pressable style={styles.modalSheet} onPress={() => {}}>
+      <Pressable style={styles.modalBackdrop} onPress={handleClose} animated={false}>
+        <Pressable style={styles.modalSheet} onPress={() => {}} animated={false}>
           <View style={styles.sheetHandle} />
           {joinState.status === 'joined' ? (
             <View style={styles.joinSuccess}>

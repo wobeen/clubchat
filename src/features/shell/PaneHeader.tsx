@@ -4,8 +4,9 @@
 // 쓰는 커스텀 헤더로, 두 헤더 시스템이 공존하되 담당 영역이 겹치지 않게 한다.
 
 import { ReactNode } from 'react'
-import { Pressable, StyleSheet, Text, View } from 'react-native'
+import { StyleSheet, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { Pressable } from '../ui/Pressable'
 import { colors } from '../ui/theme'
 
 interface PaneHeaderProps {

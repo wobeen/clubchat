@@ -3,13 +3,13 @@ import {
   ActivityIndicator,
   Alert,
   Platform,
-  Pressable,
   ScrollView,
   StyleSheet,
   Text,
   View,
 } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { Pressable } from '../ui/Pressable'
 import { useEventDetail } from './useEvents'
 import {
   colors,

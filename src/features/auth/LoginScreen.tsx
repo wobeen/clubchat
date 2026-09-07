@@ -1,11 +1,11 @@
 import {
   ActivityIndicator,
   Platform,
-  Pressable,
   StyleSheet,
   Text,
   View,
 } from 'react-native'
+import { Pressable } from '../ui/Pressable'
 import { useGoogleAuth } from './useGoogleAuth'
 
 export function LoginScreen() {

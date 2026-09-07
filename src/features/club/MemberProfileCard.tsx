@@ -1,4 +1,5 @@
-import { Modal, Pressable, StyleSheet, Text, View } from 'react-native'
+import { Modal, StyleSheet, Text, View } from 'react-native'
+import { Pressable } from '../ui/Pressable'
 
 export interface MemberProfile {
   id: string
@@ -60,8 +61,8 @@ export function MemberProfileCard({ profile, onClose }: Props) {
 
   return (
     <Modal visible transparent animationType="fade" onRequestClose={onClose}>
-      <Pressable style={styles.backdrop} onPress={onClose}>
-        <Pressable style={styles.card} onPress={() => {}}>
+      <Pressable style={styles.backdrop} onPress={onClose} animated={false}>
+        <Pressable style={styles.card} onPress={() => {}} animated={false}>
           <View style={[styles.avatarLarge, { backgroundColor: profile.avatar_emoji ? '#FFF3E0' : color.bg }]}>
             {profile.avatar_emoji
               ? <Text style={styles.avatarEmoji}>{profile.avatar_emoji}</Text>

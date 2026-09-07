@@ -11,7 +11,8 @@
 //    호출부(app/(app)/w/index.tsx)가 이 슬롯에 프로필 아바타 버튼을 꽂아 넣을 수 있게 함
 
 import { ReactNode } from 'react'
-import { ActivityIndicator, FlatList, Platform, Pressable, StyleSheet, Text, View } from 'react-native'
+import { ActivityIndicator, FlatList, Platform, StyleSheet, Text, View } from 'react-native'
+import { Pressable } from '../ui/Pressable'
 import { colors, radius, shadows } from '../ui/theme'
 import { getClubColor } from './shellUtils'
 import type { WorkspaceClub } from './useWorkspaceData'

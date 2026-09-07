@@ -4,7 +4,8 @@
 // 아예 생략" — 스펙 원문).
 
 import { useState } from 'react'
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
+import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native'
+import { Pressable } from '../ui/Pressable'
 import { useAuth } from '../auth/useAuth'
 import { useProfile, ProfileRow } from '../auth/useProfile'
 import { useToast } from '../ui/Toast'
