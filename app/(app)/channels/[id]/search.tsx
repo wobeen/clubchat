@@ -226,9 +226,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 8,
-    backgroundColor: '#F2F4F6',
+    backgroundColor: '#F4F5F6',
   },
-  retryButtonText: { fontSize: 14, color: '#3B7DD8', fontWeight: '600' },
+  retryButtonText: { fontSize: 14, color: '#417029', fontWeight: '600' },
   listContent: { flexGrow: 1, padding: 12 },
   resultItem: {
     backgroundColor: '#FFFFFF',

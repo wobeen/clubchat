@@ -10,7 +10,8 @@ import { colors, radius, shadows } from '../ui/theme'
 import type { ChannelMemberSummary } from './useChannelMembers'
 import { EventPreviewRow } from '../schedule/EventPreviewRow'
 import type { EventWithMyResponse } from '../schedule/types'
-import { getClubColor, getInitials } from './shellUtils'
+import { getInitials } from './shellUtils'
+import { getAvatarColor } from '../chat/chatUtils'
 
 const WIKI_PREVIEW_LENGTH = 160
 
@@ -60,7 +61,7 @@ export function RoomDetailPane({
         ) : (
           <View style={styles.memberList}>
             {members.map((m) => {
-              const color = getClubColor(m.display_name)
+              const color = getAvatarColor(m.display_name)
               return (
                 <View key={m.id} style={styles.memberRow}>
                   <View style={[styles.memberAvatar, { backgroundColor: m.avatar_emoji ? '#FFF3E0' : color.bg }]}>

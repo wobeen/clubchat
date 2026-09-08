@@ -103,12 +103,16 @@
 **완료된 기능**: 구글 로그인, 동아리 생성/가입, 방 생성, 초대 링크·QR·비밀번호 입장, 실시간 텍스트 채팅, 파일·이미지 공유, 읽음표시, 입력중 표시(Presence), 메시지 검색, 일정 CRUD + 참석 응답, PWA 설정, **반응형 워크스페이스 셸 Phase 0+1**(아래 참고).
 
 **반응형 워크스페이스 셸 — 진행 상황**:
-- ✅ Phase 0(기반): 디자인 토큰 통일(`src/features/ui/theme.ts`, 실제 팔레트 `#3B7DD8`/`#F7F8FA`/`#191F28`/`#8B95A1`), `useAuth`를 Context/Provider화(`src/features/auth/AuthProvider.tsx`, 시그니처 불변), `src/lib/realtime.ts`(토픽 이름 빌더), 채팅 화면을 `src/features/chat/`로 분해(`ChatScreen`이 prop만 받고 `useRouter`/`useLocalSearchParams` 직접 호출 안 함).
+- ✅ Phase 0(기반): 디자인 토큰 통일(`src/features/ui/theme.ts`), `useAuth`를 Context/Provider화(`src/features/auth/AuthProvider.tsx`, 시그니처 불변), `src/lib/realtime.ts`(토픽 이름 빌더), 채팅 화면을 `src/features/chat/`로 분해(`ChatScreen`이 prop만 받고 `useRouter`/`useLocalSearchParams` 직접 호출 안 함).
 - ✅ Phase 1(셸 골격): `/w` 네임스페이스 + `src/features/shell/`(레일·목록 패널·반응형 프리미티브·`useWorkspaceNavigation`/`useWorkspaceData`), 레거시 경로 리다이렉트.
 - ✅ Phase 2(채팅 통합): `/w/[clubId]/[roomId]`에 `view` 쿼리 파라미터(`home`|`chat`) 추가(`useWorkspaceNavigation`의 `roomView`/`openChat`/`closeChat`). `view=chat`이면 본문이 기존 위키+일정 홈 대신 `ChatScreen`(자체 헤더로 뒤로가기/검색/일정 버튼 포함)을 렌더링. 넓은 화면에서 `view=chat`일 때만 오른쪽에 `RoomDetailPane`(멤버 목록 + 위키 미리보기 + 다가오는 일정, `src/features/shell/RoomDetailPane.tsx` + `useChannelMembers.ts`) 추가 표시. 기존 풀스크린 라우트(`channels/[id]/chat.tsx`)는 딥링크 호환용으로 유지하되 "채팅 열기" 버튼은 더 이상 그쪽으로 push하지 않음.
 - ✅ Phase 3(위키 에디터): `WikiEditor`(`src/features/wiki/WikiEditor.tsx`)를 인라인/시트 겸용으로 분리 — 넓은 화면은 위키 카드 안에서 그대로 펼쳐지는 인라인 편집(셸 유지), 컴팩트 화면은 기존 풀스크린 Modal 시트 유지. 상태/저장 로직은 하나의 컴포넌트에서 공유하고 `useBreakpoint()`로 렌더만 분기. 부수적으로 `w/[clubId]/index.tsx`(동아리 홈)에 `<WikiEditor>`가 아예 렌더링되지 않아 "편집" 버튼이 동작하지 않던 기존 버그도 함께 고침(방 홈에는 있었는데 동아리 홈에는 빠져 있었음). "위키·일정 상세패널"은 Phase 2의 `RoomDetailPane`으로 이미 충족.
 - ✅ Phase 4(관리 화면 오버레이 + 정리): 초대(`channels/[id]/invite`)·방 관리(`channels/[id]/manage`)·메시지 검색(`channels/[id]/search`)·동아리 관리(`clubs/manage`)·멤버(`clubs/members`) 5개 화면에 `src/features/shell/ScreenOverlay.tsx` 적용 — 넓은 화면에서는 셸 위에 뜨는 다이얼로그 카드(자체 헤더+닫기), 컴팩트 화면에서는 기존 네이티브 풀스크린 그대로. 각 화면은 기존 컴포넌트를 `XScreenContent`로 이름만 바꾸고 얇은 `ScreenOverlay` 래퍼를 새 default export로 추가하는 방식이라 내부 로직(로딩/에러 분기 등)은 무변경. `app/(app)/_layout.tsx`가 `useBreakpoint()`로 이 5개 라우트의 `headerShown`을 넓은 화면에서만 끔(헤더 이중 렌더 방지). 정리: `src/features/ui/Skeleton.tsx`의 `ClubListSkeleton`(레거시 `app/(app)/index.tsx` 전용, Phase 1에서 그 화면이 리다이렉트 어댑터로 바뀌며 아무도 안 쓰던 죽은 컴포넌트)과 그 전용 스타일 제거.
 - **Phase 0~4 전부 완료 — 반응형 워크스페이스 셸 이니셔티브 종료.**
+
+**리브랜딩 (2026-09)**: 팔레트를 하늘색·시안·민트·올리브그린 그라데이션(`accentSky` `#BAE2FE` / `accentCyan` `#95E4F3` / `accentTurquoise` `#42F2F2` / `accentMint` `#24F8AE` / `accentOlive` `#63AB3F`) 기반으로 교체. `primary`는 대비 확보를 위해 올리브그린 계열을 어둡게 파생시킨 `#417029`. 배경·구분선 계층은 회색→민트→세이지→카키로 이어지는 중성 팔레트(`#F8F7FA`/`#F4F5F6`/`#EBF0F0`/`#E9EFE8`/`#EDEDDB`)로 교체. 모든 값은 `src/features/ui/theme.ts`가 단일 소스.
+
+동아리/스터디 아이콘은 라벤더→페리윙클→시안→민트→옐로우 팔레트(`iconPalette`)에서 각각 고정색 하나씩만 쓴다(동아리=페리윙클, 스터디=민트) — 동아리마다 색이 달라 목록이 산만해 보인다는 피드백으로, id 해시 대신 고정값으로 바꿈(`getClubColor`/`getRoomColor`, `src/features/shell/shellUtils.ts`). 렌더링은 `EntityAvatar`(`src/features/shell/EntityAvatar.tsx`)로 통일했고, 이 컴포넌트는 `imageUrl` prop을 이미 받아둬서 나중에 동아리/방에 커스텀 이미지 업로드가 추가되면(예: `clubs.avatar_url`, `channels.avatar_url` — db-schema 에이전트가 컬럼 추가) 호출부가 그 값만 넘기면 된다. 채팅 멤버 아바타처럼 사람마다 색이 달라야 하는 곳(`RoomDetailPane`)은 여전히 `chatUtils.getAvatarColor`(이름 해시)를 쓴다 — 이건 통일 대상이 아니다.
 
 **⚠️ §3 데이터 모델과 실제 구현 불일치**: 아래 §3의 `pages` 테이블 설명(`owner_type`/`owner_id`/`blocks` jsonb 블록 배열)은 실제 구현(`src/features/wiki/types.ts`: `club_id`/`room_id`(nullable)/`content`(마크다운 문자열), `react-native-markdown-display`로 렌더링)과 다르다. 위키가 실제로는 블록 에디터가 아니라 마크다운 텍스트 기반으로 구현된 것으로 보인다. db-schema 에이전트와 함께 §3을 실제 스키마에 맞게 재작성 필요(스키마 소유권은 §7 규칙에 따라 db-schema 에이전트).
 
@@ -157,3 +161,13 @@
 - 무료 한도는 콘솔에서 직접 확인(4 OCPU/24GB ↔ 2 OCPU/12GB 변경 보고 있음). 둘 다 소규모엔 충분.
 - 서울 리전 우선, 용량 없으면 인접 리전. 신용카드 본인확인 필요(한도 내 무과금).
 - 하드닝: OS 방화벽 + OCI 보안목록 포트 최소 개방, 리버스 프록시(SSL), DB 자동 백업, 인스턴스 유휴 회수 방지.
+
+## graphify
+
+This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.
+
+Rules:
+- For codebase questions, first run `graphify query "<question>"` when graphify-out/graph.json exists. Use `graphify path "<A>" "<B>"` for relationships and `graphify explain "<concept>"` for focused concepts. These return a scoped subgraph, usually much smaller than GRAPH_REPORT.md or raw grep output.
+- If graphify-out/wiki/index.md exists, use it for broad navigation instead of raw source browsing.
+- Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
+- After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).

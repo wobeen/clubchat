@@ -2,7 +2,7 @@ import { StyleSheet, Text, View } from 'react-native'
 import { Pressable } from '../ui/Pressable'
 import type { EventWithMyResponse } from './types'
 
-const STATUS_COLOR = { going: '#1FA65A', not_going: '#E5484D', maybe: '#8B95A1' } as const
+const STATUS_COLOR = { going: '#0FA876', not_going: '#E5484D', maybe: '#5C7A6E' } as const
 const STATUS_LABEL = { going: '참석', not_going: '불참', maybe: '미정' } as const
 
 export function getMonthDay(iso: string) {
@@ -54,8 +54,8 @@ export function EventPreviewRow({
           <Text style={[styles.statusPillText, { color: STATUS_COLOR[status] }]}>{STATUS_LABEL[status]}</Text>
         </View>
       ) : (
-        <View style={[styles.statusPill, { backgroundColor: '#F2F4F6' }]}>
-          <Text style={[styles.statusPillText, { color: '#8B95A1' }]}>미응답</Text>
+        <View style={[styles.statusPill, { backgroundColor: '#F4F5F6' }]}>
+          <Text style={[styles.statusPillText, { color: '#5C7A6E' }]}>미응답</Text>
         </View>
       )}
     </Pressable>
@@ -69,17 +69,17 @@ const styles = StyleSheet.create({
     width: 48, height: 52, borderRadius: 14,
     alignItems: 'center', justifyContent: 'center', flexShrink: 0,
   },
-  dateTilePrimary: { backgroundColor: '#E7EFFF' },
-  dateTileGray: { backgroundColor: '#F2F4F6' },
+  dateTilePrimary: { backgroundColor: '#BAE2FE' },
+  dateTileGray: { backgroundColor: '#F4F5F6' },
   dateTileMonth: { fontSize: 11, fontWeight: '700' },
-  dateTileMonthPrimary: { color: '#3B7DD8' },
+  dateTileMonthPrimary: { color: '#2F8FD1' },
   dateTileMonthGray: { color: '#6B7684' },
   dateTileDay: { fontSize: 19, fontWeight: '800', lineHeight: 22 },
-  dateTileDayPrimary: { color: '#3B7DD8' },
+  dateTileDayPrimary: { color: '#2F8FD1' },
   dateTileDayGray: { color: '#6B7684' },
   info: { flex: 1, gap: 2 },
   title: { fontSize: 15, fontWeight: '700', color: '#191F28' },
-  time: { fontSize: 13, color: '#8B95A1' },
+  time: { fontSize: 13, color: '#5C7A6E' },
   statusPill: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10 },
   statusPillText: { fontSize: 12, fontWeight: '700' },
 })

@@ -15,15 +15,16 @@ import { ActivityIndicator, FlatList, Platform, StyleSheet, Text, View } from 'r
 import { Pressable } from '../ui/Pressable'
 import { colors, radius, shadows } from '../ui/theme'
 import { getClubColor } from './shellUtils'
+import { EntityAvatar } from './EntityAvatar'
 import type { WorkspaceClub } from './useWorkspaceData'
 
 type MemberRole = WorkspaceClub['role']
 
 const ROLE_LABEL: Record<MemberRole, string> = { owner: '방장', admin: '관리자', member: '멤버' }
 const ROLE_COLOR: Record<MemberRole, { bg: string; text: string }> = {
-  owner: { bg: '#E7EFFF', text: '#3B7DD8' },
-  admin: { bg: '#E8F7EE', text: '#1FA65A' },
-  member: { bg: '#F2F4F6', text: '#6B7684' },
+  owner: { bg: '#BAE2FE', text: '#2F8FD1' },
+  admin: { bg: '#95E4F3', text: '#1EA8C4' },
+  member: { bg: '#F4F5F6', text: '#6B7684' },
 }
 
 function RoleBadge({ role }: { role: MemberRole }) {
@@ -53,9 +54,14 @@ function ClubCard({
       accessibilityRole="button"
       accessibilityLabel={`${item.name} 동아리 열기`}
     >
-      <View style={[styles.clubBadge, { backgroundColor: color.bg }]}>
-        <Text style={[styles.clubBadgeText, { color: color.text }]}>{firstChar}</Text>
-      </View>
+      <EntityAvatar
+        label={firstChar}
+        color={color}
+        size={50}
+        radius={16}
+        style={styles.clubBadgeShrink}
+        textStyle={styles.clubBadgeText}
+      />
       <View style={styles.clubInfo}>
         <View style={styles.clubNameRow}>
           <Text style={styles.clubName} numberOfLines={1}>{item.name}</Text>
@@ -184,10 +190,7 @@ const styles = StyleSheet.create({
     ...shadows.card,
   },
   clubCardActive: { borderWidth: 1.5, borderColor: colors.primary },
-  clubBadge: {
-    width: 50, height: 50, borderRadius: 16,
-    alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-  },
+  clubBadgeShrink: { flexShrink: 0 },
   clubBadgeText: { fontSize: 22, fontWeight: '800' },
   clubInfo: { flex: 1, gap: 3 },
   clubNameRow: { flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' },

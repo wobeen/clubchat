@@ -15,7 +15,11 @@
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native'
 import { Pressable } from '../ui/Pressable'
 import { colors, radius, shadows } from '../ui/theme'
+import { getRoomColor } from './shellUtils'
+import { EntityAvatar } from './EntityAvatar'
 import type { WorkspaceRoom } from './useWorkspaceData'
+
+const roomColor = getRoomColor()
 
 function RoomRow({
   item,
@@ -42,13 +46,13 @@ function RoomRow({
       accessibilityRole="button"
       accessibilityLabel={`${item.name} ${item.joined ? '열기' : '입장'}`}
     >
-      <View style={[styles.roomIcon, item.hasPassword && styles.roomIconLock]}>
-        {item.hasPassword ? (
-          <Text style={styles.roomIconLockText}>🔒</Text>
-        ) : (
-          <Text style={styles.roomIconHash}>#</Text>
-        )}
-      </View>
+      <EntityAvatar
+        label={item.hasPassword ? '🔒' : '#'}
+        color={item.hasPassword ? { bg: colors.surfaceSecondary, text: colors.textSecondary } : roomColor}
+        size={38}
+        radius={12}
+        textStyle={item.hasPassword ? styles.roomIconLockText : styles.roomIconHash}
+      />
       <View style={styles.roomRowInfo}>
         <Text style={styles.roomRowName} numberOfLines={1}>{item.name}</Text>
         {!item.joined && <Text style={styles.roomRowSub}>아직 입장하지 않은 방</Text>}
@@ -145,13 +149,8 @@ const styles = StyleSheet.create({
   },
   roomRow: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 15, paddingHorizontal: 16 },
   roomRowBorder: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.borderLight },
-  roomRowActive: { backgroundColor: '#E7EFFF' },
-  roomIcon: {
-    width: 38, height: 38, borderRadius: 12,
-    backgroundColor: '#E7EFFF', alignItems: 'center', justifyContent: 'center',
-  },
-  roomIconLock: { backgroundColor: '#F2F4F6' },
-  roomIconHash: { fontSize: 16, fontWeight: '800', color: colors.primary },
+  roomRowActive: { backgroundColor: colors.accentSky },
+  roomIconHash: { fontSize: 16, fontWeight: '800' },
   roomIconLockText: { fontSize: 14 },
   roomRowInfo: { flex: 1, gap: 2 },
   roomRowName: { fontSize: 15, fontWeight: '700', color: colors.text },
@@ -163,7 +162,7 @@ const styles = StyleSheet.create({
   unreadBadgeText: { fontSize: 11, fontWeight: '700', color: '#FFFFFF' },
   joinBtn: {
     height: 32, paddingHorizontal: 16, borderRadius: 12,
-    backgroundColor: '#E7EFFF', alignItems: 'center', justifyContent: 'center',
+    backgroundColor: colors.accentSky, alignItems: 'center', justifyContent: 'center',
   },
   joinBtnText: { fontSize: 13, fontWeight: '700', color: colors.primary },
 

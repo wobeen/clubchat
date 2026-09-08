@@ -87,7 +87,7 @@ const styles = StyleSheet.create({
   myRow: { flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'flex-end', gap: 6 },
   myTime: { fontSize: 11, color: '#A9B1BA', marginBottom: 2 },
   myBubble: {
-    backgroundColor: '#3B7DD8',
+    backgroundColor: '#417029',
     borderRadius: 18,
     borderTopRightRadius: 4,
     paddingVertical: 11,
@@ -98,7 +98,7 @@ const styles = StyleSheet.create({
   editedMark: { fontSize: 11, color: 'rgba(255,255,255,0.65)', marginTop: 2, textAlign: 'right' },
   editedMarkOther: { fontSize: 11, color: '#A9B1BA', marginTop: 2 },
 
-  deletedBubble: { backgroundColor: '#F2F4F6', borderWidth: StyleSheet.hairlineWidth, borderColor: '#EDEFF2' },
+  deletedBubble: { backgroundColor: '#F4F5F6', borderWidth: StyleSheet.hairlineWidth, borderColor: '#EBF0F0' },
   deletedText: { fontSize: 14, color: '#A9B1BA', fontStyle: 'italic' },
 
   otherRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 9 },

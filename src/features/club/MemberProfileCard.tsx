@@ -19,12 +19,11 @@ interface Props {
 }
 
 const AVATAR_COLORS = [
-  { bg: '#E7EFFF', text: '#3B7DD8' },
-  { bg: '#E8F7EE', text: '#1FA65A' },
-  { bg: '#FDF0E7', text: '#E07A2E' },
-  { bg: '#F0EAFB', text: '#7B5CD6' },
-  { bg: '#E7F5FB', text: '#2493C6' },
-  { bg: '#FBEFF3', text: '#D6588A' },
+  { bg: '#BAE2FE', text: '#2F8FD1' },
+  { bg: '#95E4F3', text: '#1EA8C4' },
+  { bg: '#42F2F2', text: '#0F9797' },
+  { bg: '#24F8AE', text: '#0FA876' },
+  { bg: '#63AB3F', text: '#191F28' },
 ]
 
 function getAvatarColor(name: string) {
@@ -35,9 +34,9 @@ function getAvatarColor(name: string) {
 
 const ROLE_LABEL: Record<string, string> = { owner: '방장', admin: '관리자', member: '멤버' }
 const ROLE_COLOR: Record<string, { bg: string; text: string }> = {
-  owner: { bg: '#E7EFFF', text: '#3B7DD8' },
-  admin: { bg: '#E8F7EE', text: '#1FA65A' },
-  member: { bg: '#F2F4F6', text: '#6B7684' },
+  owner: { bg: '#BAE2FE', text: '#2F8FD1' },
+  admin: { bg: '#95E4F3', text: '#1EA8C4' },
+  member: { bg: '#F4F5F6', text: '#6B7684' },
 }
 const GENDER_LABEL: Record<string, string> = { female: '여성', male: '남성', private: '비공개' }
 
@@ -78,8 +77,8 @@ export function MemberProfileCard({ profile, onClose }: Props) {
               </View>
             )}
             {profile.channelName && (
-              <View style={[styles.badge, { backgroundColor: '#E7EFFF' }]}>
-                <Text style={[styles.badgeText, { color: '#3B7DD8' }]}>{profile.channelName}</Text>
+              <View style={[styles.badge, { backgroundColor: '#BAE2FE' }]}>
+                <Text style={[styles.badgeText, { color: '#2F8FD1' }]}>{profile.channelName}</Text>
               </View>
             )}
           </View>
@@ -155,7 +154,7 @@ const styles = StyleSheet.create({
   badgeText: { fontSize: 12, fontWeight: '700' },
   infoBox: {
     width: '100%',
-    backgroundColor: '#F7F8FA',
+    backgroundColor: '#F8F7FA',
     borderRadius: 16,
     paddingHorizontal: 16,
   },
@@ -165,15 +164,15 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 12,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#EDEFF2',
+    borderBottomColor: '#EBF0F0',
   },
-  infoLabel: { fontSize: 14, color: '#8B95A1' },
+  infoLabel: { fontSize: 14, color: '#5C7A6E' },
   infoValue: { fontSize: 14, fontWeight: '700', color: '#191F28' },
   closeBtn: {
     width: '100%',
     height: 48,
     borderRadius: 14,
-    backgroundColor: '#F2F4F6',
+    backgroundColor: '#F4F5F6',
     alignItems: 'center',
     justifyContent: 'center',
   },

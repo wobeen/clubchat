@@ -67,7 +67,7 @@ export function useConfirm() {
                 accessibilityLabel={options.confirmText ?? '확인'}
               >
                 {busy
-                  ? <ActivityIndicator size="small" color={options.destructive ? '#E5484D' : '#3B7DD8'} />
+                  ? <ActivityIndicator size="small" color={options.destructive ? '#E5484D' : '#417029'} />
                   : (
                       <Text style={options.destructive ? styles.confirmTextDestructive : styles.confirmText}>
                         {options.confirmText ?? '확인'}
@@ -112,9 +112,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   btnPressed: { opacity: 0.7 },
-  cancelBtn: { backgroundColor: '#F2F4F6' },
+  cancelBtn: { backgroundColor: '#F4F5F6' },
   cancelText: { fontSize: 15, fontWeight: '600', color: '#4E5968' },
-  confirmBtn: { backgroundColor: '#3B7DD8' },
+  confirmBtn: { backgroundColor: '#417029' },
   confirmText: { fontSize: 15, fontWeight: '600', color: '#FFFFFF' },
   confirmBtnDestructive: { backgroundColor: '#FDEBEC' },
   confirmTextDestructive: { fontSize: 15, fontWeight: '600', color: '#E5484D' },

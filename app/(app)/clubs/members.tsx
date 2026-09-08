@@ -49,12 +49,11 @@ interface ProcessedMember {
 type Tab = 'active' | 'ob'
 
 const AVATAR_COLORS = [
-  { bg: '#E7EFFF', text: '#3B7DD8' },
-  { bg: '#E8F7EE', text: '#1FA65A' },
-  { bg: '#FDF0E7', text: '#E07A2E' },
-  { bg: '#F0EAFB', text: '#7B5CD6' },
-  { bg: '#E7F5FB', text: '#2493C6' },
-  { bg: '#FBEFF3', text: '#D6588A' },
+  { bg: '#BAE2FE', text: '#2F8FD1' },
+  { bg: '#95E4F3', text: '#1EA8C4' },
+  { bg: '#42F2F2', text: '#0F9797' },
+  { bg: '#24F8AE', text: '#0FA876' },
+  { bg: '#63AB3F', text: '#191F28' },
 ]
 
 function getAvatarColor(name: string) {
@@ -65,14 +64,14 @@ function getAvatarColor(name: string) {
 
 const ROLE_LABEL: Record<string, string> = { owner: '방장', admin: '관리자', member: '멤버' }
 const ROLE_COLOR: Record<string, { bg: string; text: string }> = {
-  owner: { bg: '#E7EFFF', text: '#3B7DD8' },
-  admin: { bg: '#E8F7EE', text: '#1FA65A' },
+  owner: { bg: '#BAE2FE', text: '#2F8FD1' },
+  admin: { bg: '#95E4F3', text: '#1EA8C4' },
 }
 
 function MemberAvatar({ member, size }: { member: ProcessedMember; size: number }) {
   const color = getAvatarColor(member.display_name)
   const isOb = member.member_type === 'ob'
-  const avatarBg = isOb ? '#EDEFF2' : (member.avatar_emoji ? '#FFF3E0' : color.bg)
+  const avatarBg = isOb ? '#EBF0F0' : (member.avatar_emoji ? '#FFF3E0' : color.bg)
   const avatarTextColor = isOb ? '#6B7684' : color.text
 
   return (
@@ -205,7 +204,7 @@ function MembersScreenContent() {
   if (loading) {
     return (
       <View style={styles.centered}>
-        <ActivityIndicator size="large" color="#3B7DD8" />
+        <ActivityIndicator size="large" color="#417029" />
       </View>
     )
   }
@@ -295,7 +294,7 @@ function MembersScreenContent() {
                 </View>
                 {isAdmin && member.role !== 'owner' && (
                   isActioning
-                    ? <ActivityIndicator size="small" color="#8B95A1" />
+                    ? <ActivityIndicator size="small" color="#5C7A6E" />
                     : (
                       <Pressable
                         onPress={() => handleToggleMemberType(member)}
@@ -329,12 +328,12 @@ export default function MembersScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F7F8FA' },
+  container: { flex: 1, backgroundColor: '#F8F7FA' },
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   content: { padding: 16, gap: 12, paddingBottom: 40 },
 
   segmentControl: {
-    height: 44, borderRadius: 14, backgroundColor: '#EDEFF2',
+    height: 44, borderRadius: 14, backgroundColor: '#EBF0F0',
     padding: 4, flexDirection: 'row', gap: 4,
   },
   segmentOption: {
@@ -345,7 +344,7 @@ const styles = StyleSheet.create({
     shadowColor: 'rgba(25,31,40,1)', shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.08, shadowRadius: 4, elevation: 2,
   },
-  segmentText: { fontSize: 14, fontWeight: '600', color: '#8B95A1' },
+  segmentText: { fontSize: 14, fontWeight: '600', color: '#5C7A6E' },
   segmentTextActive: { fontWeight: '700', color: '#191F28' },
 
   memberList: {
@@ -358,7 +357,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', gap: 12,
   },
   memberRowBorder: {
-    borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#F2F4F6',
+    borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#F4F5F6',
   },
 
   avatarCircle: { alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
@@ -367,17 +366,17 @@ const styles = StyleSheet.create({
   memberInfo: { flex: 1, gap: 2 },
   memberNameRow: { flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' },
   memberName: { fontSize: 15, fontWeight: '700', color: '#191F28' },
-  memberSub: { fontSize: 12, color: '#8B95A1' },
+  memberSub: { fontSize: 12, color: '#5C7A6E' },
 
   roleBadge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 10 },
   roleBadgeText: { fontSize: 11, fontWeight: '700' },
-  obBadge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 10, backgroundColor: '#EDEFF2' },
+  obBadge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 10, backgroundColor: '#EBF0F0' },
   obBadgeText: { fontSize: 11, fontWeight: '700', color: '#6B7684' },
 
-  toggleText: { fontSize: 13, fontWeight: '600', color: '#8B95A1' },
+  toggleText: { fontSize: 13, fontWeight: '600', color: '#5C7A6E' },
 
   emptyState: { padding: 32, alignItems: 'center' },
-  emptyText: { fontSize: 14, color: '#8B95A1' },
+  emptyText: { fontSize: 14, color: '#5C7A6E' },
 
   errorText: { fontSize: 15, color: '#E5484D', textAlign: 'center' },
 })

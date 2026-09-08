@@ -55,14 +55,14 @@ const styles = StyleSheet.create({
   emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: 80 },
   // ListEmptyComponent는 리스트 셀과 달리 자동으로 뒤집히지 않으므로 직접 역상쇄한다.
   invertedFlip: { transform: [{ scaleY: -1 }] },
-  emptyText: { fontSize: 14, color: '#8B95A1', textAlign: 'center' },
+  emptyText: { fontSize: 14, color: '#5C7A6E', textAlign: 'center' },
 
   typingBar: {
     paddingHorizontal: 16,
     paddingVertical: 4,
     backgroundColor: '#FFFFFF',
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: '#F2F4F6',
+    borderTopColor: '#F4F5F6',
   },
   typingText: { fontSize: 12, color: '#A9B1BA', fontStyle: 'italic' },
 })

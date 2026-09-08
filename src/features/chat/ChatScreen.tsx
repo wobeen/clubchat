@@ -212,7 +212,7 @@ export function ChatScreen({
 
   // ── 로딩 / 에러 ────────────────────────────────────────────────────────────
   if (status === 'loading') {
-    return <View style={styles.centered}><ActivityIndicator size="large" color="#3B7DD8" /></View>
+    return <View style={styles.centered}><ActivityIndicator size="large" color="#417029" /></View>
   }
   if (status === 'error') {
     return (
@@ -320,9 +320,9 @@ export function ChatScreen({
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F7F8FA' },
+  container: { flex: 1, backgroundColor: '#F8F7FA' },
   flexOne: { flex: 1 },
-  centered: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#F7F8FA' },
+  centered: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#F8F7FA' },
 
   header: {
     flexDirection: 'row',
@@ -332,19 +332,19 @@ const styles = StyleSheet.create({
     paddingBottom: 10,
     backgroundColor: '#FFFFFF',
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#EDEFF2',
+    borderBottomColor: '#EBF0F0',
   },
   headerLeft: { flexDirection: 'row', alignItems: 'center', flexShrink: 1, gap: 2 },
   backButton: { paddingHorizontal: 8, paddingVertical: 4 },
-  backButtonText: { fontSize: 28, color: '#3B7DD8', fontWeight: '400', marginTop: -2 },
+  backButtonText: { fontSize: 28, color: '#417029', fontWeight: '400', marginTop: -2 },
   headerTitle: { fontSize: 17, fontWeight: '700', color: '#191F28', flexShrink: 1 },
   headerActions: { flexDirection: 'row', alignItems: 'center' },
   headerIconButton: { paddingHorizontal: 10, paddingVertical: 8 },
   headerIconText: { fontSize: 18 },
   headerEventsButton: { paddingHorizontal: 12, paddingVertical: 8 },
-  headerEventsText: { color: '#3B7DD8', fontSize: 15, fontWeight: '600' },
+  headerEventsText: { color: '#417029', fontSize: 15, fontWeight: '600' },
 
   errorText: { fontSize: 15, color: '#E5484D', textAlign: 'center', paddingHorizontal: 24, marginBottom: 20 },
-  retryButton: { paddingVertical: 10, paddingHorizontal: 24, borderRadius: 10, backgroundColor: '#3B7DD8' },
+  retryButton: { paddingVertical: 10, paddingHorizontal: 24, borderRadius: 10, backgroundColor: '#417029' },
   retryButtonText: { fontSize: 14, fontWeight: '600', color: '#FFFFFF' },
 })

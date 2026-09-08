@@ -13,6 +13,7 @@ import { colors } from '../ui/theme'
 import { useWorkspaceData, WorkspaceClub } from './useWorkspaceData'
 import { useWorkspaceNavigation } from './useWorkspaceNavigation'
 import { getClubColor, getInitials } from './shellUtils'
+import { EntityAvatar } from './EntityAvatar'
 import { ProfileEditSheet } from './ProfileEditSheet'
 import { JoinByCodeSheet } from './JoinByCodeSheet'
 
@@ -112,9 +113,7 @@ function ClubAvatarButton({
       accessibilityRole="button"
       accessibilityLabel={`${club.name} 열기`}
     >
-      <View style={[styles.clubAvatar, { backgroundColor: color.bg }]}>
-        <Text style={[styles.clubAvatarText, { color: color.text }]}>{firstChar}</Text>
-      </View>
+      <EntityAvatar label={firstChar} color={color} size={44} radius={14} textStyle={styles.clubAvatarText} />
       {club.unreadCount > 0 && <View style={styles.dot} />}
     </Pressable>
   )
@@ -166,8 +165,7 @@ const styles = StyleSheet.create({
   loader: { marginTop: 8 },
 
   clubBtn: { width: 52, height: 52, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
-  clubBtnActive: { backgroundColor: '#E7EFFF' },
-  clubAvatar: { width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
+  clubBtnActive: { backgroundColor: '#BAE2FE' },
   clubAvatarText: { fontSize: 18, fontWeight: '800' },
   dot: {
     position: 'absolute',

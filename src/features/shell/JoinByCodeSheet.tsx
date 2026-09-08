@@ -76,7 +76,7 @@ export function JoinByCodeSheet({ visible, onClose, onJoined }: JoinByCodeSheetP
                 <Text style={styles.joinSuccessIconText}>✓</Text>
               </View>
               <Text style={styles.joinSuccessText}>{joinState.clubName} 동아리에{'\n'}가입했어요!</Text>
-              <ActivityIndicator size="small" color="#3B7DD8" style={{ marginTop: 16 }} />
+              <ActivityIndicator size="small" color="#417029" style={{ marginTop: 16 }} />
             </View>
           ) : (
             <View style={styles.joinContent}>
@@ -135,15 +135,15 @@ const styles = StyleSheet.create({
     paddingBottom: Platform.OS === 'ios' ? 40 : 24,
     maxHeight: '85%',
   },
-  sheetHandle: { width: 40, height: 4, borderRadius: 2, backgroundColor: '#E5E8EB', alignSelf: 'center', marginTop: 12, marginBottom: 4 },
+  sheetHandle: { width: 40, height: 4, borderRadius: 2, backgroundColor: '#E9EFE8', alignSelf: 'center', marginTop: 12, marginBottom: 4 },
   sheetTitle: { fontSize: 19, fontWeight: '800', color: '#191F28' },
   sheetActions: { flexDirection: 'row', gap: 10 },
-  cancelBtn: { flex: 1, height: 52, borderRadius: 16, backgroundColor: '#F2F4F6', alignItems: 'center', justifyContent: 'center' },
+  cancelBtn: { flex: 1, height: 52, borderRadius: 16, backgroundColor: '#F4F5F6', alignItems: 'center', justifyContent: 'center' },
   cancelBtnText: { fontSize: 15, fontWeight: '700', color: '#6B7684' },
   saveBtn: {
-    flex: 2, height: 52, borderRadius: 16, backgroundColor: '#3B7DD8',
+    flex: 2, height: 52, borderRadius: 16, backgroundColor: '#417029',
     alignItems: 'center', justifyContent: 'center',
-    shadowColor: '#3B7DD8', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.28, shadowRadius: 12,
+    shadowColor: '#417029', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.28, shadowRadius: 12,
   },
   saveBtnDisabled: { backgroundColor: '#A8C4ED' },
   saveBtnText: { fontSize: 15, fontWeight: '700', color: '#FFFFFF' },
@@ -151,16 +151,16 @@ const styles = StyleSheet.create({
   pressed: { opacity: 0.7, transform: [{ scale: 0.97 }] },
 
   joinContent: { padding: 24, gap: 12 },
-  joinSubtitle: { fontSize: 13, color: '#8B95A1', lineHeight: 18 },
+  joinSubtitle: { fontSize: 13, color: '#5C7A6E', lineHeight: 18 },
   joinErrorText: { fontSize: 13, color: '#E5484D', textAlign: 'center' },
   joinCodeInput: {
-    height: 56, backgroundColor: '#F2F4F6', borderRadius: 14,
+    height: 56, backgroundColor: '#F4F5F6', borderRadius: 14,
     paddingHorizontal: 16, fontSize: 24, fontWeight: '700', color: '#191F28',
     letterSpacing: 6, textAlign: 'center',
     ...(Platform.OS === 'web' ? ({ outlineStyle: 'none' } as object) : {}),
   },
   joinSuccess: { padding: 40, alignItems: 'center', gap: 12 },
-  joinSuccessIcon: { width: 64, height: 64, borderRadius: 32, backgroundColor: '#3B7DD8', alignItems: 'center', justifyContent: 'center' },
+  joinSuccessIcon: { width: 64, height: 64, borderRadius: 32, backgroundColor: '#417029', alignItems: 'center', justifyContent: 'center' },
   joinSuccessIconText: { fontSize: 28, fontWeight: '800', color: '#FFFFFF' },
   joinSuccessText: { fontSize: 18, fontWeight: '700', color: '#191F28', textAlign: 'center', lineHeight: 28 },
 })

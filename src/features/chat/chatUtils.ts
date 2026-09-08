@@ -8,12 +8,11 @@ export function getInitials(name: string): string {
 }
 
 export const AVATAR_COLORS = [
-  { bg: '#E8F7EE', text: '#1FA65A' },
-  { bg: '#FDF0E7', text: '#E07A2E' },
-  { bg: '#F0EAFB', text: '#7B5CD6' },
-  { bg: '#E7F5FB', text: '#2493C6' },
-  { bg: '#FBEFF3', text: '#D6588A' },
-  { bg: '#EDEFF2', text: '#6B7684' },
+  { bg: '#95E4F3', text: '#1EA8C4' },
+  { bg: '#42F2F2', text: '#0F9797' },
+  { bg: '#24F8AE', text: '#0FA876' },
+  { bg: '#63AB3F', text: '#191F28' },
+  { bg: '#EBF0F0', text: '#6B7684' },
 ]
 
 export function getAvatarColor(name: string) {

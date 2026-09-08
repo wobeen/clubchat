@@ -23,6 +23,7 @@ import { WikiEditor } from '@/features/wiki/WikiEditor'
 import { useEvents, EventPreviewRow } from '@/features/schedule'
 import {
   ClubListPane,
+  EntityAvatar,
   IconRail,
   JoinByCodeSheet,
   Pane,
@@ -113,9 +114,7 @@ export default function WorkspaceClubScreen() {
     <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
       {/* ── 동아리 정보 카드 ─────────────────────────────────────────────── */}
       <View style={[styles.card, styles.rowCard]}>
-        <View style={[styles.clubBadge, { backgroundColor: color.bg }]}>
-          <Text style={[styles.clubBadgeText, { color: color.text }]}>{firstChar}</Text>
-        </View>
+        <EntityAvatar label={firstChar} color={color} size={54} radius={18} textStyle={styles.clubBadgeText} />
         <View style={styles.clubInfoBlock}>
           <Text style={styles.clubNameLarge}>{activeClub.name}</Text>
           <Pressable
@@ -291,7 +290,6 @@ const styles = StyleSheet.create({
   rowCard: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   colCard: { flexDirection: 'column', gap: 0 },
 
-  clubBadge: { width: 54, height: 54, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
   clubBadgeText: { fontSize: 24, fontWeight: '800' },
   clubInfoBlock: { gap: 3 },
   clubNameLarge: { fontSize: 17, fontWeight: '800', color: colors.text },
@@ -299,7 +297,7 @@ const styles = StyleSheet.create({
   clubMetaLink: { color: colors.primary, fontWeight: '600', textDecorationLine: 'underline' },
   inviteCodeBtn: {
     height: 34, paddingHorizontal: 14, borderRadius: 12,
-    backgroundColor: '#F2F4F6', alignItems: 'center', justifyContent: 'center',
+    backgroundColor: colors.surfaceSecondary, alignItems: 'center', justifyContent: 'center',
     flexDirection: 'row', gap: 5,
   },
   inviteCodeBtnText: { fontSize: 13, fontWeight: '700', color: '#4E5968' },

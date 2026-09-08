@@ -1,0 +1,1 @@
+{"nodes": [{"id": "claude_agents_tester", "label": "tester Agent", "file_type": "rationale", "source_file": ".claude/agents/tester.md", "rationale": "Agent responsible for quality assurance and RLS verification."}], "edges": [], "hyperedges": []}

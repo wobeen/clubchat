@@ -40,12 +40,11 @@ type LoadState =
   | { status: 'ready'; club: ClubInfo; requests: JoinRequest[] }
 
 const AVATAR_COLORS = [
-  { bg: '#E7EFFF', text: '#3B7DD8' },
-  { bg: '#E8F7EE', text: '#1FA65A' },
-  { bg: '#FDF0E7', text: '#E07A2E' },
-  { bg: '#F0EAFB', text: '#7B5CD6' },
-  { bg: '#E7F5FB', text: '#2493C6' },
-  { bg: '#FBEFF3', text: '#D6588A' },
+  { bg: '#BAE2FE', text: '#2F8FD1' },
+  { bg: '#95E4F3', text: '#1EA8C4' },
+  { bg: '#42F2F2', text: '#0F9797' },
+  { bg: '#24F8AE', text: '#0FA876' },
+  { bg: '#63AB3F', text: '#191F28' },
 ]
 
 function getAvatarColor(name: string) {
@@ -206,7 +205,7 @@ function ManageClubScreenContent() {
   }
 
   if (state.status === 'loading') {
-    return <View style={styles.centered}><ActivityIndicator size="large" color="#3B7DD8" /></View>
+    return <View style={styles.centered}><ActivityIndicator size="large" color="#417029" /></View>
   }
 
   if (state.status === 'error') {
@@ -240,9 +239,9 @@ function ManageClubScreenContent() {
             value={club.is_public}
             onValueChange={handleTogglePublic}
             disabled={toggling}
-            trackColor={{ false: '#EDEFF2', true: '#3B7DD8' }}
+            trackColor={{ false: '#EBF0F0', true: '#417029' }}
             thumbColor="#FFFFFF"
-            ios_backgroundColor="#EDEFF2"
+            ios_backgroundColor="#EBF0F0"
           />
         </View>
         {club.is_public && (
@@ -294,7 +293,7 @@ function ManageClubScreenContent() {
                   </View>
                   <View style={styles.reqActions}>
                     {isProcessing ? (
-                      <ActivityIndicator size="small" color="#3B7DD8" style={{ flex: 1 }} />
+                      <ActivityIndicator size="small" color="#417029" style={{ flex: 1 }} />
                     ) : (
                       <>
                         <Pressable
@@ -358,9 +357,9 @@ export default function ManageClubScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F7F8FA' },
+  container: { flex: 1, backgroundColor: '#F8F7FA' },
   content: { padding: 16, paddingBottom: 48, gap: 12 },
-  centered: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#F7F8FA', paddingHorizontal: 24 },
+  centered: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#F8F7FA', paddingHorizontal: 24 },
 
   card: {
     backgroundColor: '#FFFFFF', borderRadius: 20, padding: 18,
@@ -373,22 +372,22 @@ const styles = StyleSheet.create({
   publicRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   publicInfo: { flex: 1, gap: 3 },
   publicTitle: { fontSize: 15, fontWeight: '800', color: '#191F28' },
-  publicDesc: { fontSize: 13, color: '#8B95A1', lineHeight: 18 },
+  publicDesc: { fontSize: 13, color: '#5C7A6E', lineHeight: 18 },
   publicPill: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
-    backgroundColor: '#E7EFFF', borderRadius: 12, paddingVertical: 10, paddingHorizontal: 14,
+    backgroundColor: '#BAE2FE', borderRadius: 12, paddingVertical: 10, paddingHorizontal: 14,
   },
-  publicDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#3B7DD8' },
-  publicPillText: { fontSize: 13, fontWeight: '600', color: '#3B7DD8' },
+  publicDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#417029' },
+  publicPillText: { fontSize: 13, fontWeight: '600', color: '#417029' },
 
   // 섹션 헤더
   sectionHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 4 },
-  sectionLabel: { fontSize: 13, fontWeight: '600', color: '#8B95A1' },
+  sectionLabel: { fontSize: 13, fontWeight: '600', color: '#5C7A6E' },
 
   // 신청 없음
   emptyRequests: { backgroundColor: '#FFFFFF', borderRadius: 20, padding: 28, alignItems: 'center',
     shadowColor: 'rgba(25,31,40,1)', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 6, elevation: 2 },
-  emptyText: { fontSize: 14, color: '#8B95A1' },
+  emptyText: { fontSize: 14, color: '#5C7A6E' },
 
   // 가입 신청 카드
   requestHeader: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
@@ -397,17 +396,17 @@ const styles = StyleSheet.create({
   reqMeta: { flex: 1, gap: 4 },
   reqNameRow: { flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' },
   reqName: { fontSize: 15, fontWeight: '700', color: '#191F28' },
-  reqTime: { fontSize: 12, color: '#8B95A1' },
-  reqMessage: { backgroundColor: '#F7F8FA', borderRadius: 10, padding: 10 },
+  reqTime: { fontSize: 12, color: '#5C7A6E' },
+  reqMessage: { backgroundColor: '#F8F7FA', borderRadius: 10, padding: 10 },
   reqMessageText: { fontSize: 13, color: '#4E5968', lineHeight: 18 },
   reqActions: { flexDirection: 'row', gap: 8, paddingLeft: 54 },
   approveBtn: {
-    flex: 1, height: 40, borderRadius: 12, backgroundColor: '#3B7DD8',
+    flex: 1, height: 40, borderRadius: 12, backgroundColor: '#417029',
     alignItems: 'center', justifyContent: 'center',
   },
   approveBtnText: { fontSize: 14, fontWeight: '700', color: '#FFFFFF' },
   rejectBtn: {
-    flex: 1, height: 40, borderRadius: 12, backgroundColor: '#F2F4F6',
+    flex: 1, height: 40, borderRadius: 12, backgroundColor: '#F4F5F6',
     alignItems: 'center', justifyContent: 'center',
   },
   rejectBtnText: { fontSize: 14, fontWeight: '700', color: '#6B7684' },
@@ -416,9 +415,9 @@ const styles = StyleSheet.create({
   codeCard: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   codeInfo: { flex: 1, gap: 2 },
   codeLabel: { fontSize: 14, fontWeight: '700', color: '#191F28' },
-  codeValue: { fontSize: 16, fontWeight: '800', color: '#3B7DD8', letterSpacing: 2 },
+  codeValue: { fontSize: 16, fontWeight: '800', color: '#417029', letterSpacing: 2 },
   codeBtn: {
-    height: 34, paddingHorizontal: 14, borderRadius: 12, backgroundColor: '#F2F4F6',
+    height: 34, paddingHorizontal: 14, borderRadius: 12, backgroundColor: '#F4F5F6',
     alignItems: 'center', justifyContent: 'center',
   },
   codeBtnText: { fontSize: 13, fontWeight: '700', color: '#4E5968' },
@@ -426,6 +425,6 @@ const styles = StyleSheet.create({
 
   pressed: { opacity: 0.7, transform: [{ scale: 0.97 }] },
   errorText: { fontSize: 15, color: '#E5484D', textAlign: 'center', marginBottom: 20 },
-  retryBtn: { paddingVertical: 10, paddingHorizontal: 24, borderRadius: 10, backgroundColor: '#3B7DD8' },
+  retryBtn: { paddingVertical: 10, paddingHorizontal: 24, borderRadius: 10, backgroundColor: '#417029' },
   retryBtnText: { fontSize: 14, fontWeight: '600', color: '#FFFFFF' },
 })
