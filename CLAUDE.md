@@ -31,9 +31,10 @@
 
 | 테이블 | 주요 컬럼 | 비고 |
 |---|---|---|
-| `profiles` | id(PK, ↔auth.users), display_name, avatar_url, created_at | 사용자 프로필 |
-| `clubs` | id(PK), name, owner_id(↔profiles), invite_code(unique, 8자 대문자 hex), created_at | 동아리/소모임 |
-| `memberships` | id, club_id, user_id, role('owner'\|'admin'\|'member'), created_at, **unique(club_id,user_id)** | 동아리 멤버십 |
+| `profiles` | id(PK, ↔auth.users), display_name, avatar_url, avatar_emoji(nullable), **grade, birth_year, gender('female'\|'male'\|'private') — 민감정보, §4 참고**, created_at | 사용자 프로필 |
+| `clubs` | id(PK), name, owner_id(↔profiles), invite_code(unique, 8자 대문자 hex), is_public(default false), description(nullable), created_at | 동아리/소모임 |
+| `memberships` | id, club_id, user_id, role('owner'\|'admin'\|'member'), member_type('active'\|'ob', default 'active'), graduation_year(nullable), created_at, **unique(club_id,user_id)** | 동아리 멤버십 |
+| `join_requests` | id, club_id, user_id, message(nullable), status('pending'\|'approved'\|'rejected'), reviewed_by(nullable), reviewed_at(nullable), created_at, **부분 unique(club_id,user_id) WHERE status='pending'** | 공개 동아리 가입 신청 |
 | `channels` | id(PK), club_id(nullable=DM), name, type('group'\|'dm'), owner_id(방장), join_password_hash(nullable), is_password_protected(generated, boolean), created_at | 방 |
 | `channel_members` | id, channel_id, user_id, joined_at, **unique(channel_id,user_id)** | 방 참여자 |
 | `invites` | id, channel_id, token(unique), created_by, expires_at(nullable), max_uses(nullable), use_count(default 0), created_at | QR·링크 초대 |
@@ -41,17 +42,20 @@
 | `attachments` | id, message_id, storage_path, mime_type, size_bytes, width(nullable), height(nullable) | 파일·이미지 |
 | `channel_reads` | id, channel_id, user_id, last_read_at, **unique(channel_id,user_id)** | 읽음표시(포인터 방식) |
 | `push_tokens` | id, user_id, expo_push_token, device_info, updated_at | 푸시 토큰 |
-| `events` | id(PK), channel_id(↔channels), title, description(nullable), starts_at, ends_at(nullable), location(nullable), created_by(↔profiles), created_at, updated_at | 일정 |
+| `events` | id(PK), channel_id(↔channels, nullable), club_id(↔clubs, nullable — **channel_id XOR club_id** CHECK), title, description(nullable), starts_at, ends_at(nullable), location(nullable), created_by(↔profiles), created_at, updated_at | 일정 |
 | `event_responses` | id(PK), event_id(↔events), user_id(↔profiles), status('going'\|'not_going'\|'maybe'), responded_at, **unique(event_id,user_id)** | 참석 응답 |
-| `pages` | id(PK), owner_type('club'\|'channel'), owner_id(uuid), title(nullable), blocks(jsonb, 블록 배열), created_by(↔profiles), created_at, updated_at, **unique(owner_type,owner_id)** | 동아리·방 홈페이지 위키 |
+| `pages` | id(PK), club_id(↔clubs), room_id(↔channels, nullable=동아리 레벨), title(nullable), content(text, **마크다운 원문**), is_home(boolean), created_by(↔profiles), updated_by(nullable), created_at, updated_at | 동아리·방 홈페이지 위키 |
 
 **읽음표시**는 메시지마다 행을 만들지 않고 `channel_reads.last_read_at` 포인터 1개로 처리한다(소규모 효율).
 
-**일정**: `events(channel_id, starts_at)` 인덱스로 방별 시간순 조회. 일정 삭제 시 `event_responses`는 ON DELETE CASCADE로 함께 삭제.
+**일정**: 방 일정은 `events(channel_id, starts_at)`, 동아리 전체 일정은 `events(club_id, starts_at)` 인덱스로 시간순 조회. 일정 삭제 시 `event_responses`는 ON DELETE CASCADE로 함께 삭제.
 
-**위키 페이지**: 동아리당·방당 1개 페이지(unique). `blocks` 배열은 `{ type, content, ... }` 형태의 JSON 블록을 순서대로 저장한다.
-블록 타입: `heading1`, `heading2`, `paragraph`, `image`(storage_path·caption), `link`(url·title·description), `divider`.
-페이지가 없으면 빈 상태로 "편집 시작" CTA를 표시하고, 첫 편집 시 INSERT 한다.
+**위키 페이지** (2026-10 결정: **마크다운 유지**, 블록 JSON 방식은 채택하지 않는다):
+- 동아리 홈 = `room_id IS NULL AND is_home`, 방 홈 = `room_id = <channel> AND is_home`. 각각 부분 unique 인덱스로 1개 보장. 스키마는 다중 페이지로 확장 가능하나 현재는 홈 1장만 사용.
+- 본문은 `content`에 마크다운 원문으로 저장하고 `react-native-markdown-display`로 렌더링. 이미지는 마크다운 이미지 문법(외부 URL)만 지원 — Storage 업로드 이미지는 현재 범위 밖.
+- 저장 시 `updated_at`으로 낙관적 충돌을 확인하고 `updated_by`를 기록.
+- 페이지가 없으면 빈 상태 "편집 시작" CTA, 첫 편집 시 INSERT.
+- 링크는 `http`/`https`(및 `mailto`)만 허용한다(`javascript:` 등 차단). **목표 규칙 — 현재 렌더러에서 강제되는지 미검증, 안정화 단계에서 확인·구현.**
 
 ## 4. 보안 모델 (계약)
 
@@ -62,49 +66,53 @@
 - **전송/저장**: 모든 통신 TLS. Storage 버킷은 비공개 + 서명 URL. 셀프호스팅 시 디스크 암호화 권장.
 - **금지**: 개인정보를 URL 쿼리스트링에 넣지 않기. 클라이언트 측 권한 판단에 의존하지 않기.
 
+**프로필 민감정보 RLS (2026-10 결정: 제한)**
+- `grade`, `birth_year`, `gender`는 **본인과 해당 사용자가 속한 동아리의 owner/admin에게만** 보인다. 같은 방·같은 동아리의 일반 멤버에게는 노출하지 않는다.
+- 공개 컬럼(`id`, `display_name`, `avatar_url`, `avatar_emoji`)은 기존대로 같은 방(`shares_channel_with`) 또는 같은 동아리(`shares_club_with`) 멤버에게 허용.
+- 구현 방식은 db-schema 에이전트가 결정(컬럼 분리 테이블 `profile_private` 또는 공개 뷰 + 컬럼 권한). 클라이언트의 `select('*')`나 임베드 조인으로 민감 컬럼이 새지 않아야 한다.
+- 현재 구현은 이 규칙을 **아직 만족하지 않는다**(profiles SELECT가 컬럼 단위 제한 없음) → 안정화 단계 필수 작업.
+
+**가입 신청 RLS** (`join_requests`)
+- SELECT: 본인 신청 또는 해당 동아리 owner/admin. INSERT: 본인 명의만(`user_id = auth.uid()`), 공개 동아리(`is_public`)에 한함. 승인/거절(UPDATE)은 owner/admin만, 승인 시 `memberships` 등록.
+
 **일정 RLS**
-- `events` SELECT: 요청자가 해당 `channel_id`의 `channel_members`에 속한 경우만.
-- `events` INSERT: 해당 방의 멤버만. `created_by`는 `auth.uid()`로 강제.
+- `events` SELECT: 방 일정은 해당 `channel_id`의 `channel_members`, 동아리 전체 일정(`club_id`)은 해당 동아리 `memberships`에 속한 경우만.
+- `events` INSERT: 해당 방(또는 동아리)의 멤버만. `created_by`는 `auth.uid()`로 강제.
 - `events` UPDATE/DELETE: 작성자 본인(`created_by = auth.uid()`)만.
 - `event_responses` SELECT: 그 일정이 속한 방의 멤버 또는(club 스코프 일정이면) 그 동아리 멤버.
 - `event_responses` INSERT/UPDATE/DELETE: 본인 응답만(`user_id = auth.uid()`). 타인의 응답 변경 불가.
 
-**위키 페이지 RLS**
+**위키 페이지 RLS** (SECURITY DEFINER 헬퍼 `is_club_member`/`is_club_admin`/`is_channel_member` 사용)
 - `pages` SELECT:
-  - `owner_type='club'` → 해당 club의 `memberships`에 속한 사용자만.
-  - `owner_type='channel'` → 해당 channel의 `channel_members`에 속한 사용자만.
-- `pages` INSERT: owner_type별 멤버만. `created_by`는 `auth.uid()`로 강제.
-- `pages` UPDATE: 동아리 페이지는 `memberships.role IN ('owner','admin')`만. 방 페이지는 `channels.owner_id = auth.uid()` 또는 방 소속 admin만.
+  - `room_id IS NULL`(동아리 페이지) → 해당 `club_id`의 `memberships`에 속한 사용자만.
+  - `room_id` 지정(방 페이지) → 해당 channel의 `channel_members`에 속한 사용자만.
+- `pages` INSERT: 위 범위의 멤버만. `created_by`는 `auth.uid()`로 강제.
+- `pages` UPDATE: 동아리 페이지는 `memberships.role IN ('owner','admin')`만. 방 페이지는 `channels.owner_id = auth.uid()`(방장)만.
 - `pages` DELETE: UPDATE와 동일 조건.
 
 ## 5. 기능 범위
 
-**화면 흐름 (네비게이션 구조)**
+**화면 흐름 (네비게이션 구조)** — 실제 라우트 기준
 ```
 로그인
-  └─ 마이 페이지 (/(app)/index)
-       ├─ 내 동아리 카드 목록
-       ├─ "+" 버튼 → 초대 코드 입력 → 동아리 가입
-       └─ 동아리 카드 탭 → 동아리 홈페이지 (/(app)/clubs/[id]/home)
-            ├─ 동아리 위키 (블록 에디터, admin/owner만 편집)
-            ├─ 스터디 방 목록 (기존 channels)
+  └─ 마이 페이지 (/(app)/index) — 프로필 인라인 편집, 내 동아리 카드 그리드, "+" 모달(초대 코드 입력)
+       ├─ 동아리 가입 신청 (/(app)/clubs/apply) — 공개 동아리
+       ├─ 초대 링크·QR (/(app)/join, /(app)/scan, 딥링크 clubchat://join?token=…)
+       └─ 동아리 카드 탭 → 동아리 홈페이지 (/(app)/clubs/[id])
+            ├─ 동아리 위키 (마크다운 에디터, admin/owner만 편집) + 일정 미리보기
+            ├─ 멤버(/clubs/members)·관리(/clubs/manage)·동아리 전체 일정(/clubs/events*)·동아리 탈퇴
+            ├─ 스터디 방 목록 (channels)
             └─ 스터디 방 탭 → 스터디 방 홈페이지 (/(app)/channels/[id]/home)
-                 ├─ 방 위키 (블록 에디터, 방장만 편집)
-                 ├─ "채팅" 버튼 → 채팅 화면 (/(app)/channels/[id]/chat)
-                 └─ "일정" 버튼 → 일정 목록 (/(app)/channels/[id]/events/list)
+                 ├─ 방 위키 (마크다운 에디터, 방장만 편집), 방 퇴장
+                 ├─ "채팅" → /(app)/channels/[id]/chat (검색 /search, 관리 /manage, 초대 /invite)
+                 └─ "일정" → /(app)/channels/[id]/events/list
 ```
 
-**완료된 기능**: 구글 로그인, 동아리 생성/가입, 방 생성, 초대 링크·QR·비밀번호 입장, 실시간 텍스트 채팅, 파일·이미지 공유, 읽음표시, 입력중 표시(Presence), 메시지 검색, 일정 CRUD + 참석 응답, PWA 설정.
+**완료된 기능**: 구글 로그인, 동아리 생성/가입(초대 코드·공개 동아리 가입 신청), 방 생성, 초대 링크·QR·딥링크·비밀번호 입장(비밀번호 설정/해제 RPC 포함), 실시간 텍스트 채팅, 메시지 수정·삭제, 파일·이미지 공유, 읽음표시, 입력중 표시(Presence), 메시지 검색, 방 일정 + 동아리 전체 일정 CRUD + 참석 응답(참석자별 현황), 마크다운 위키 홈(동아리·방), 프로필 편집(이름·이모지 아바타·학년·출생연도·성별), 방 퇴장·동아리 탈퇴, 스켈레톤/토스트/확인 다이얼로그, PWA 설정. (6·7단계 기능은 구현 완료, 품질 검증은 안정화 단계에서.)
 
-**구현 예정 (6단계)**:
-- 마이 페이지 UX 개편: 동아리 카드 그리드, "+" 버튼 → 초대 코드 입력 모달(현재 별도 화면 → 인라인)
-- 동아리 홈페이지(`clubs/[id]/home`): 블록 에디터 위키 + 하단 스터디 방 목록
-- 스터디 방 홈페이지(`channels/[id]/home`): 블록 에디터 위키 + 채팅·일정 바로가기 버튼
-- 블록 에디터: H1/H2/본문 텍스트, 이미지(Storage), 링크 카드, 구분선. 인라인 툴바.
-
-**구현 예정 (7단계)**:
-- 메시지 수정·삭제 UI, 프로필 편집(이름·아바타), 방 퇴장·동아리 탈퇴
-- 앱 전반 UX 완성도: 빈 상태, 에러 처리, 로딩 스켈레톤
+**진행 예정 (안정화)**:
+- 프로필 민감정보 RLS 제한(§4), 생성 타입 재생성 및 `as any` 제거, RLS 회귀 테스트, 위키 링크 스킴 제한, 불필요 권한(`RECORD_AUDIO`) 제거
+- 대형 화면 파일 분리(`chat.tsx`, `index.tsx`, `clubs/[id].tsx` → `src/features/…`), 마이그레이션 정리본
 
 **2차(이후)**: 일정 시작 전 푸시 알림, 반복 일정, 캘린더 뷰(월/주), 외부 캘린더(iCal) 내보내기, 온라인 표시.
 **범위 밖(현재)**: E2EE, 일정별 첨부파일, 화상회의 링크 자동 생성.
@@ -136,12 +144,19 @@
 3. **읽음·파일** ✅: `channel_reads` 포인터, Storage 버킷·업로드·서명 URL
 4. **일정** ✅: 일정 CRUD, 참석 응답 집계, 일정 RLS
 5. **프레즌스·검색·PWA** ✅: 입력중 표시(Realtime Presence), 메시지 전문 검색, 데스크톱 PWA 패키징
-6. **위키 홈페이지**: `pages` 테이블 + RLS, 블록 에디터 컴포넌트(H1/H2/본문/이미지/링크/구분선), 동아리 홈(`clubs/[id]/home`) + 스터디 방 홈(`channels/[id]/home`), 마이 페이지 UX 개편(카드 그리드 + "+" 모달)
-7. **배포 전 필수기능**: 메시지 수정·삭제 UI, 프로필 편집(이름·아바타), 방 퇴장·동아리 탈퇴, 앱 전반 UX 완성도(빈 상태·에러 처리·로딩 스켈레톤)
+6. **위키 홈페이지** ✅: `pages` 테이블 + RLS, 마크다운 에디터/뷰어, 동아리 홈(`clubs/[id]`) + 스터디 방 홈(`channels/[id]/home`), 마이 페이지 카드 그리드 + "+" 모달
+7. **배포 전 필수기능** ✅: 메시지 수정·삭제 UI, 프로필 편집(이름·아바타), 방 퇴장·동아리 탈퇴, 앱 전반 UX 완성도(빈 상태·에러 처리·로딩 스켈레톤)
+7a. **안정화** (다음 작업, 8단계 전 필수):
+   1. 생성 타입 재생성(`src/types/supabase.ts`) 후 `as any` 제거 — `npx tsc --noEmit` 0건 유지 (2026-10-14 앱 코드 기준 0건 달성)
+   2. `profiles` 민감정보(grade/birth_year/gender) RLS 제한 (§4) — db-schema 담당
+   3. RLS 회귀 테스트: pages, events/event_responses(방·동아리), storage attachments, profiles, join_requests — tester 담당
+   4. `package.json`에 `typecheck`(및 test) 스크립트 추가, `.claude/test-command` 연결 → Stop 훅 실효화
+   5. 위키 링크 스킴 제한 검증/구현, `RECORD_AUDIO` 권한 제거
+   6. 대형 화면 파일 분리, 마이그레이션 정리본(운영 이전용)
 8. **운영 이전**: OCI A1에 Supabase 셀프호스팅 마이그레이션, TLS·백업·방화벽 하드닝
 9. **모바일 배포 + 푸시**: EAS Build로 TestFlight(iOS)/APK(Android) 배포, Expo Push 알림 Edge Function 연동, 딥링크 처리
 
-## 9. OCI 셀프호스팅 메모 (6단계용)
+## 9. OCI 셀프호스팅 메모 (8단계용)
 
 - 인스턴스: Ubuntu(aarch64), Ampere A1, **On-demand capacity** 선택(선점 방지).
 - 무료 한도는 콘솔에서 직접 확인(4 OCPU/24GB ↔ 2 OCPU/12GB 변경 보고 있음). 둘 다 소규모엔 충분.
