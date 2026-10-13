@@ -68,7 +68,7 @@ export default function CreateChannelScreen() {
     const { data, error } = await supabase.rpc('create_channel', {
       p_club_id: clubId,
       p_name: trimmedName,
-      p_password: usePassword ? password.trim() : null,
+      p_password: usePassword ? password.trim() : undefined,
     })
 
     if (error) {

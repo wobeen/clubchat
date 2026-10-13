@@ -43,7 +43,7 @@ export default function InviteScreen() {
     if (clubId) {
       router.replace({ pathname: '/(app)/clubs/[id]', params: { id: clubId } })
     } else {
-      router.replace('/(app)/')
+      router.replace('/(app)')
     }
   }
 

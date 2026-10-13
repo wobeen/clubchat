@@ -127,7 +127,7 @@ export default function JoinByLinkScreen() {
         <Text style={styles.errorText}>{state.message}</Text>
         <Pressable
           style={({ pressed }) => [styles.secondaryButton, pressed && styles.pressedOpacity]}
-          onPress={() => router.replace('/(app)/')}
+          onPress={() => router.replace('/(app)')}
           accessibilityRole="button"
           accessibilityLabel="마이 페이지로"
         >
