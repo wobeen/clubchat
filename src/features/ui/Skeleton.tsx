@@ -18,36 +18,7 @@ function SkeletonBlock({ style }: { style?: ViewStyle }) {
   return <Animated.View style={[styles.block, style, { opacity }]} />
 }
 
-// ── 마이 페이지 (index.tsx) 스켈레톤 ─────────────────────────────────────────
-
-export function ClubListSkeleton() {
-  return (
-    <View style={styles.container}>
-      {/* 헤더 */}
-      <View style={styles.header}>
-        <View style={styles.headerLeft}>
-          <SkeletonBlock style={styles.avatarCircle} />
-          <SkeletonBlock style={styles.headerName} />
-        </View>
-        <SkeletonBlock style={styles.headerBtn} />
-      </View>
-      {/* 카드 3개 */}
-      <View style={styles.list}>
-        {[0, 1, 2].map((i) => (
-          <View key={i} style={styles.card}>
-            <SkeletonBlock style={styles.cardAvatar} />
-            <View style={{ flex: 1, gap: 8 }}>
-              <SkeletonBlock style={{ height: 14, borderRadius: 6, width: '60%' }} />
-              <SkeletonBlock style={{ height: 11, borderRadius: 5, width: '35%' }} />
-            </View>
-          </View>
-        ))}
-      </View>
-    </View>
-  )
-}
-
-// ── 동아리 홈 (clubs/[id].tsx) 스켈레톤 ─────────────────────────────────────
+// ── 동아리 홈 (w/[clubId]/index.tsx) 스켈레톤 ────────────────────────────────
 
 export function ClubDetailSkeleton() {
   return (
@@ -100,21 +71,6 @@ export function ChannelHomeSkeleton() {
 const styles = StyleSheet.create({
   block: { backgroundColor: '#D1D5DB', borderRadius: 6 },
   container: { flex: 1, backgroundColor: '#F3F4F6' },
-  header: {
-    backgroundColor: '#FFFFFF',
-    paddingTop: 40,
-    paddingBottom: 16,
-    paddingHorizontal: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#E5E7EB',
-  },
-  headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 },
-  avatarCircle: { width: 40, height: 40, borderRadius: 20 },
-  headerName: { height: 16, width: 100, borderRadius: 6 },
-  headerBtn: { height: 32, width: 72, borderRadius: 8 },
   list: { padding: 16, gap: 10 },
   card: {
     backgroundColor: '#FFFFFF',

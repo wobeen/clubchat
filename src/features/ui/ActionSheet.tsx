@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Modal, Pressable, StyleSheet, Text, View } from 'react-native'
+import { Modal, StyleSheet, Text, View } from 'react-native'
+import { Pressable } from './Pressable'
 
 interface ActionSheetOption {
   label: string
@@ -29,8 +30,8 @@ export function useActionSheet() {
     if (!sheet) return null
     return (
       <Modal transparent visible animationType="fade" onRequestClose={close}>
-        <Pressable style={styles.backdrop} onPress={close}>
-          <Pressable style={styles.sheet} onPress={(e) => e.stopPropagation()}>
+        <Pressable style={styles.backdrop} onPress={close} animated={false}>
+          <Pressable style={styles.sheet} onPress={(e) => e.stopPropagation()} animated={false}>
             {sheet.title && (
               <View style={styles.titleWrap}>
                 <Text style={styles.title}>{sheet.title}</Text>
@@ -85,15 +86,15 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   titleWrap: { paddingVertical: 14, paddingHorizontal: 16, alignItems: 'center' },
-  title: { fontSize: 13, color: '#8B95A1' },
+  title: { fontSize: 13, color: '#5C7A6E' },
   option: {
     paddingVertical: 16,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  optionBorder: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: '#EDEFF2' },
-  optionPressed: { backgroundColor: '#F7F8FA' },
+  optionBorder: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: '#EBF0F0' },
+  optionPressed: { backgroundColor: '#F8F7FA' },
   optionText: { fontSize: 16, fontWeight: '500', color: '#191F28' },
   destructiveText: { color: '#E5484D' },
-  cancelText: { color: '#8B95A1' },
+  cancelText: { color: '#5C7A6E' },
 })

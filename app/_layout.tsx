@@ -2,12 +2,21 @@ import { ActivityIndicator, View, StyleSheet } from 'react-native'
 import { Stack, useRouter, useSegments } from 'expo-router'
 import * as Linking from 'expo-linking'
 import { useEffect } from 'react'
+import { AuthProvider } from '../src/features/auth/AuthProvider'
 import { useAuth } from '../src/features/auth/useAuth'
 import { usePushToken } from '../src/features/notifications/usePushToken'
 import { parseInviteToken } from '../src/features/deeplink/parseInviteLink'
 import { setPendingDeepLink, consumePendingDeepLink } from '../src/features/deeplink/pendingDeepLink'
 
 export default function RootLayout() {
+  return (
+    <AuthProvider>
+      <RootLayoutNav />
+    </AuthProvider>
+  )
+}
+
+function RootLayoutNav() {
   const { session, loading } = useAuth()
   const segments = useSegments()
   const router = useRouter()

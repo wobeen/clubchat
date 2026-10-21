@@ -15,6 +15,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { supabase } from '../../../src/lib/supabase'
 import { useAuth } from '../../../src/features/auth/useAuth'
 import { useToast } from '../../../src/features/ui/Toast'
+import { getClubColor } from '../../../src/features/shell/shellUtils'
+import { EntityAvatar } from '../../../src/features/shell/EntityAvatar'
 
 interface ClubInfo {
   id: string
@@ -22,21 +24,6 @@ interface ClubInfo {
   description: string | null
   is_public: boolean
   memberCount: number
-}
-
-const CLUB_COLORS = [
-  { bg: '#E7EFFF', text: '#3B7DD8' },
-  { bg: '#E8F7EE', text: '#1FA65A' },
-  { bg: '#FDF0E7', text: '#E07A2E' },
-  { bg: '#F0EAFB', text: '#7B5CD6' },
-  { bg: '#E7F5FB', text: '#2493C6' },
-  { bg: '#FBEFF3', text: '#D6588A' },
-]
-
-function getClubColor(id: string) {
-  let hash = 0
-  for (const c of id) hash = (hash * 31 + c.charCodeAt(0)) & 0xffff
-  return CLUB_COLORS[hash % CLUB_COLORS.length]
 }
 
 export default function ApplyScreen() {
@@ -127,7 +114,7 @@ export default function ApplyScreen() {
   }
 
   if (loading) {
-    return <View style={styles.centered}><ActivityIndicator size="large" color="#3B7DD8" /></View>
+    return <View style={styles.centered}><ActivityIndicator size="large" color="#417029" /></View>
   }
 
   if (!club) {
@@ -152,9 +139,7 @@ export default function ApplyScreen() {
 
         {/* 동아리 소개 카드 */}
         <View style={styles.clubCard}>
-          <View style={[styles.clubBadge, { backgroundColor: color.bg }]}>
-            <Text style={[styles.clubBadgeText, { color: color.text }]}>{firstChar}</Text>
-          </View>
+          <EntityAvatar label={firstChar} color={color} size={68} radius={22} textStyle={styles.clubBadgeText} />
           <Text style={styles.clubName}>{club.name}</Text>
           <Text style={styles.clubMeta}>멤버 {club.memberCount}명</Text>
           {club.is_public && (
@@ -223,8 +208,8 @@ export default function ApplyScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F7F8FA' },
-  centered: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#F7F8FA' },
+  container: { flex: 1, backgroundColor: '#F8F7FA' },
+  centered: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#F8F7FA' },
   content: { padding: 16, gap: 12, paddingBottom: 100 },
 
   clubCard: {
@@ -233,19 +218,15 @@ const styles = StyleSheet.create({
     shadowColor: 'rgba(25,31,40,1)', shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05, shadowRadius: 6, elevation: 2,
   },
-  clubBadge: {
-    width: 68, height: 68, borderRadius: 22,
-    alignItems: 'center', justifyContent: 'center',
-  },
   clubBadgeText: { fontSize: 30, fontWeight: '800' },
   clubName: { fontSize: 20, fontWeight: '800', color: '#191F28' },
-  clubMeta: { fontSize: 13, color: '#8B95A1' },
+  clubMeta: { fontSize: 13, color: '#5C7A6E' },
   recruitPill: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
-    backgroundColor: '#E8F7EE', borderRadius: 12, paddingVertical: 6, paddingHorizontal: 14,
+    backgroundColor: '#95E4F3', borderRadius: 12, paddingVertical: 6, paddingHorizontal: 14,
   },
-  recruitDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: '#1FA65A' },
-  recruitText: { fontSize: 13, fontWeight: '700', color: '#1FA65A' },
+  recruitDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: '#0FA876' },
+  recruitText: { fontSize: 13, fontWeight: '700', color: '#0FA876' },
   clubDesc: { fontSize: 14, color: '#4E5968', lineHeight: 22, textAlign: 'center' },
 
   messageCard: {
@@ -255,7 +236,7 @@ const styles = StyleSheet.create({
   },
   messageTitle: { fontSize: 14, fontWeight: '700', color: '#191F28' },
   messageInput: {
-    minHeight: 88, backgroundColor: '#F2F4F6', borderRadius: 14,
+    minHeight: 88, backgroundColor: '#F4F5F6', borderRadius: 14,
     padding: 14, fontSize: 14, color: '#191F28', lineHeight: 21,
     ...(Platform.OS === 'web' ? ({ outlineStyle: 'none' } as object) : {}),
   },
@@ -266,24 +247,24 @@ const styles = StyleSheet.create({
     shadowColor: 'rgba(25,31,40,1)', shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05, shadowRadius: 6, elevation: 2,
   },
-  appliedIcon: { fontSize: 32, color: '#1FA65A' },
+  appliedIcon: { fontSize: 32, color: '#0FA876' },
   appliedTitle: { fontSize: 17, fontWeight: '700', color: '#191F28' },
-  appliedDesc: { fontSize: 14, color: '#8B95A1', textAlign: 'center' },
+  appliedDesc: { fontSize: 14, color: '#5C7A6E', textAlign: 'center' },
 
   infoRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 6, paddingHorizontal: 4 },
-  infoIcon: { fontSize: 13, color: '#8B95A1' },
-  infoText: { flex: 1, fontSize: 12, color: '#8B95A1', lineHeight: 17 },
+  infoIcon: { fontSize: 13, color: '#5C7A6E' },
+  infoText: { flex: 1, fontSize: 12, color: '#5C7A6E', lineHeight: 17 },
 
   bottomBar: {
     position: 'absolute', bottom: 0, left: 0, right: 0,
     paddingHorizontal: 20, paddingTop: 12,
-    backgroundColor: '#F7F8FA',
-    borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: '#EDEFF2',
+    backgroundColor: '#F8F7FA',
+    borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: '#EBF0F0',
   },
   submitBtn: {
-    height: 54, borderRadius: 18, backgroundColor: '#3B7DD8',
+    height: 54, borderRadius: 18, backgroundColor: '#417029',
     alignItems: 'center', justifyContent: 'center',
-    shadowColor: '#3B7DD8', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 14, elevation: 6,
+    shadowColor: '#417029', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 14, elevation: 6,
   },
   submitBtnDisabled: { backgroundColor: '#A8C4ED' },
   submitBtnPressed: {

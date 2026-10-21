@@ -10,20 +10,23 @@ import {
   TextInput,
   View,
 } from 'react-native'
-import { useFocusEffect, useLocalSearchParams } from 'expo-router'
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router'
 import QRCode from 'react-native-qrcode-svg'
 import * as Clipboard from 'expo-clipboard'
 import { supabase } from '../../../../src/lib/supabase'
 import { useToast } from '../../../../src/features/ui/Toast'
 import { useConfirm } from '../../../../src/features/ui/ConfirmDialog'
 import { buildInviteLink } from '../../../../src/features/deeplink/parseInviteLink'
+import { ScreenOverlay } from '../../../../src/features/shell'
 
 type LoadState =
   | { status: 'loading' }
   | { status: 'error'; message: string }
   | { status: 'ready'; token: string; hasPassword: boolean }
 
-export default function ManageChannelScreen() {
+// Phase 4: 넓은 화면에서는 아래 default export의 ScreenOverlay가 이 컴포넌트를
+// 다이얼로그 카드로 감싼다. 컴팩트 화면에서는 기존과 동일한 풀스크린 라우트.
+function ManageChannelScreenContent() {
   const { id, channelName } = useLocalSearchParams<{
     id: string
     channelName: string
@@ -353,6 +356,17 @@ export default function ManageChannelScreen() {
         </Pressable>
       )}
     </ScrollView>
+  )
+}
+
+export default function ManageChannelScreen() {
+  const { channelName } = useLocalSearchParams<{ channelName: string }>()
+  const router = useRouter()
+
+  return (
+    <ScreenOverlay title={`${channelName ?? '방'} 관리`} onClose={() => router.back()}>
+      <ManageChannelScreenContent />
+    </ScreenOverlay>
   )
 }
 

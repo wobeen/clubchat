@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
-import { Platform, Pressable, StyleSheet, Text, View } from 'react-native'
+import { Platform, StyleSheet, Text, View } from 'react-native'
+import { Pressable } from '../ui/Pressable'
 import DateTimePicker from '@react-native-community/datetimepicker'
 import { colors, formatDateDisplay, radius, spacing } from './scheduleUtils'
 

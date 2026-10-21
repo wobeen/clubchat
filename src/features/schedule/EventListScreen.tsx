@@ -3,11 +3,11 @@ import {
   ActivityIndicator,
   FlatList,
   Platform,
-  Pressable,
   StyleSheet,
   Text,
   View,
 } from 'react-native'
+import { Pressable } from '../ui/Pressable'
 import { colors, formatDatetime, radius, spacing, STATUS_COLOR, STATUS_LABEL } from './scheduleUtils'
 import type { EventWithMyResponse } from './types'
 

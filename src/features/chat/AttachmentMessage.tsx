@@ -4,11 +4,11 @@ import {
   Image,
   Linking,
   Platform,
-  Pressable,
   StyleSheet,
   Text,
   View,
 } from 'react-native'
+import { Pressable } from '../ui/Pressable'
 import { supabase } from '../../lib/supabase'
 
 interface Attachment {
