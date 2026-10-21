@@ -32,8 +32,7 @@
       "permissions": [
         "android.permission.RECEIVE_BOOT_COMPLETED",
         "android.permission.VIBRATE",
-        "android.permission.POST_NOTIFICATIONS",
-        "android.permission.RECORD_AUDIO"
+        "android.permission.POST_NOTIFICATIONS"
       ]
     },
     "web": {
@@ -69,7 +68,8 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "ClubChat가 초대 QR코드를 스캔하려면 카메라 접근이 필요합니다."
+          "cameraPermission": "ClubChat가 초대 QR코드를 스캔하려면 카메라 접근이 필요합니다.",
+          "recordAudioAndroid": false
         }
       ]
     ],

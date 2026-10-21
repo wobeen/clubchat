@@ -1,6 +1,16 @@
 import React from 'react'
-import { StyleSheet, Text, View } from 'react-native'
+import { Linking, StyleSheet, Text, View } from 'react-native'
 import Markdown from 'react-native-markdown-display'
+
+const SAFE_LINK = /^(https?:|mailto:)/i
+
+function handleLinkPress(url: string): boolean {
+  const u = url.trim()
+  if (SAFE_LINK.test(u)) {
+    Linking.openURL(u).catch(() => {})
+  }
+  return false
+}
 
 interface WikiViewerProps {
   content: string
@@ -15,7 +25,7 @@ export function WikiViewer({ content }: WikiViewerProps) {
     )
   }
 
-  return <Markdown style={mdStyles}>{content}</Markdown>
+  return <Markdown style={mdStyles} onLinkPress={handleLinkPress}>{content}</Markdown>
 }
 
 const styles = StyleSheet.create({

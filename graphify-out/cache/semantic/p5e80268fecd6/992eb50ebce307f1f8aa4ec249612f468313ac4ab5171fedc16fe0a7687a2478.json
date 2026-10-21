@@ -1,0 +1,1 @@
+{"nodes": [{"id": "claude_agents_realtime_chat", "label": "realtime-chat Agent", "file_type": "rationale", "source_file": ".claude/agents/realtime-chat.md", "rationale": "Agent responsible for real-time synchronization, presence, and push notifications."}], "edges": [], "hyperedges": []}

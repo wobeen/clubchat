@@ -1,0 +1,1 @@
+{"nodes": [{"id": "claude_agents_db_schema", "label": "db-schema Agent", "file_type": "rationale", "source_file": ".claude/agents/db-schema.md", "rationale": "Agent responsible for Supabase/Postgres schema, migrations, and RLS policies."}], "edges": [], "hyperedges": []}

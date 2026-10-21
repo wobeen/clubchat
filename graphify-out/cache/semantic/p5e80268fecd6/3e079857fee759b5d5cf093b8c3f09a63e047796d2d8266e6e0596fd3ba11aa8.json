@@ -1,0 +1,1 @@
+{"nodes": [{"id": "claude_agents_ui_builder", "label": "ui-builder Agent", "file_type": "rationale", "source_file": ".claude/agents/ui-builder.md", "rationale": "Agent responsible for Expo/React Native UI components and screens."}], "edges": [], "hyperedges": []}
