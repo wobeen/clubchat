@@ -30,13 +30,13 @@
   src: url("./fonts/Pretendard-Bold.woff2") format("woff2");
 }
 
-/* Achromatic, light only. Three pigments: paper #FFFFFF, ink #1A1A1A, accent #4A4A4A.
-   Every other tone is a mix or opacity of those three. No hue. */
+/* Light Liquid Glass. Paper #FFFFFF, ink #1A1A1A, one blue #0863BF
+   (same hue as iOS #0A84FF, deepened so white labels pass WCAG AA). */
 :root,
 [data-theme="light"] {
   --bg: #ffffff;
   --text: #1a1a1a;
-  --accent: #4a4a4a;
+  --accent: #0863bf;
   --chrome: color-mix(in srgb, var(--text) 4%, var(--bg));
   --surface: var(--bg);
   --surface-2: color-mix(in srgb, var(--text) 5%, var(--bg));
@@ -45,7 +45,7 @@
   --border-strong: color-mix(in srgb, var(--text) 18%, var(--bg));
   --text-2: color-mix(in srgb, var(--text) 72%, var(--bg));
   --text-3: color-mix(in srgb, var(--text) 60%, var(--bg));
-  --accent-soft: color-mix(in srgb, var(--accent) 12%, var(--bg));
+  --accent-soft: color-mix(in srgb, var(--accent) 16%, var(--bg));
   --accent-text: var(--accent);
   --on-accent: var(--bg);
   --shadow: 0 16px 48px color-mix(in srgb, var(--text) 16%, transparent);
@@ -366,7 +366,7 @@ h1, h2, h3 { margin: 0; font-weight: 600; letter-spacing: -0.02em; }
 }
 .av.sm { width: 28px; height: 28px; }
 .av.lg { width: 56px; height: 56px; font-size: 16px; }
-.av, .mark { background: var(--accent-soft); color: var(--accent); }
+.av, .mark { background: color-mix(in srgb, var(--text) 8%, var(--bg)); color: var(--text); }
 .msg-body { min-width: 0; flex: 1; }
 .msg-meta { display: flex; align-items: baseline; gap: 8px; }
 .msg-name { font-size: 14px; font-weight: 600; }
@@ -381,7 +381,7 @@ h1, h2, h3 { margin: 0; font-weight: 600; letter-spacing: -0.02em; }
   font-size: 12px;
   color: var(--text-2);
 }
-.react.on { border-color: transparent; background: var(--accent-soft); color: var(--accent-text); }
+.react.on { border-color: transparent; background: color-mix(in srgb, var(--text) 8%, var(--bg)); color: var(--text); }
 .photo {
   margin-top: 8px;
   width: 240px;
@@ -389,7 +389,7 @@ h1, h2, h3 { margin: 0; font-weight: 600; letter-spacing: -0.02em; }
   border-radius: 8px;
   background:
     linear-gradient(180deg, transparent 46%, color-mix(in srgb, var(--text) 16%, transparent) 100%),
-    linear-gradient(160deg, var(--bg), var(--accent-soft) 48%, color-mix(in srgb, var(--accent) 42%, var(--bg)));
+    linear-gradient(160deg, var(--bg), color-mix(in srgb, var(--text) 8%, var(--bg)) 48%, color-mix(in srgb, var(--text) 28%, var(--bg)));
   border: 1px solid var(--border);
   position: relative;
 }
@@ -425,7 +425,7 @@ h1, h2, h3 { margin: 0; font-weight: 600; letter-spacing: -0.02em; }
 .file-name { font-size: 13px; font-weight: 600; }
 .file-meta { font-size: 12px; color: var(--text-3); }
 .typing { font-size: 12px; color: var(--text-3); padding: 0 28px 8px; }
-.typing i { color: var(--accent-text); font-style: normal; font-weight: 600; }
+.typing i { color: var(--text); font-style: normal; font-weight: 600; }
 .composer-wrap { border-top: 1px solid var(--border); padding: 10px 16px 14px; background: var(--surface); }
 .editbar {
   display: flex;
@@ -434,8 +434,8 @@ h1, h2, h3 { margin: 0; font-weight: 600; letter-spacing: -0.02em; }
   margin-bottom: 8px;
   padding: 8px 10px;
   border-radius: 8px;
-  background: var(--accent-soft);
-  color: var(--accent-text);
+  background: color-mix(in srgb, var(--text) 6%, var(--bg));
+  color: var(--text);
   font-size: 12px;
 }
 .editbar b { display: block; font-size: 12px; }
@@ -477,7 +477,7 @@ h1, h2, h3 { margin: 0; font-weight: 600; letter-spacing: -0.02em; }
   margin-left: auto;
   flex: none;
 }
-.presence.on { background: var(--accent); }
+.presence.on { background: #4a4a4a; }
 .detail-body { padding: 16px; }
 .detail h3 { font-size: 13px; color: var(--text-2); margin-bottom: 8px; }
 .detail .card { padding: 12px 14px; margin-bottom: 12px; background: var(--surface); }
@@ -543,7 +543,7 @@ h1, h2, h3 { margin: 0; font-weight: 600; letter-spacing: -0.02em; }
 .dialog-head h1 { font-size: 15px; }
 .dialog-body { padding: 16px 18px 18px; }
 .field-label { display: block; font-size: 12px; font-weight: 600; color: var(--text-2); margin-bottom: 6px; }
-.field-label .req { color: var(--accent); }
+.field-label .req { color: var(--text); }
 .input, .area {
   width: 100%;
   border: 1px solid var(--border-strong);
@@ -650,7 +650,7 @@ h1, h2, h3 { margin: 0; font-weight: 600; letter-spacing: -0.02em; }
 }
 .search-hit { padding: 10px 0; border-top: 1px solid var(--border); }
 .search-hit:first-child { border-top: 0; }
-.search-hit mark { background: var(--accent-soft); color: inherit; padding: 0 2px; border-radius: 2px; }
+.search-hit mark { background: color-mix(in srgb, var(--text) 12%, var(--bg)); color: inherit; padding: 0 2px; border-radius: 2px; }
 .finder {
   height: 100%;
   background: var(--text);
@@ -672,7 +672,7 @@ h1, h2, h3 { margin: 0; font-weight: 600; letter-spacing: -0.02em; }
   position: absolute;
   width: 28px;
   height: 28px;
-  border: 3px solid var(--accent);
+  border: 3px solid rgba(255, 255, 255, 0.92);
 }
 .finder-frame::before { top: -2px; left: -2px; border-right: 0; border-bottom: 0; border-radius: 12px 0 0 0; }
 .finder-frame::after { right: -2px; bottom: -2px; border-left: 0; border-top: 0; border-radius: 0 0 12px 0; }
@@ -747,7 +747,7 @@ h1, h2, h3 { margin: 0; font-weight: 600; letter-spacing: -0.02em; }
 .type-row { margin-bottom: 10px; }
 .type-row small { display: block; color: var(--text-3); font-size: 11px; }
 .space-row { display: flex; align-items: flex-end; gap: 8px; }
-.space-row i { background: var(--accent); display: block; width: 16px; border-radius: 2px; }
+.space-row i { background: var(--text); display: block; width: 16px; border-radius: 2px; }
 
 .chat-bar {
   padding: 12px 16px 16px;
@@ -772,8 +772,8 @@ h1, h2, h3 { margin: 0; font-weight: 600; letter-spacing: -0.02em; }
   gap: 8px;
   align-items: center;
   padding: 8px 10px;
-  background: var(--accent-soft);
-  color: var(--accent);
+  background: color-mix(in srgb, var(--text) 6%, var(--bg));
+  color: var(--text);
   border-radius: 8px;
   font-size: 12px;
   margin-bottom: 12px;
@@ -849,7 +849,14 @@ h1, h2, h3 { margin: 0; font-weight: 600; letter-spacing: -0.02em; }
   color: var(--text);
   box-shadow: inset 0 1px 0 #ffffff, 0 6px 16px rgba(26, 26, 26, 0.12);
 }
-.rail-btn.active::before, .nav-item.active::before { display: none; }
+.rail-btn.active { box-shadow: inset 0 1px 0 #ffffff, 0 0 0 2px var(--accent); }
+.rail-btn.active::before { display: none; }
+.nav-item.active::before {
+  display: block;
+  background: var(--accent);
+  left: 8px;
+}
+.nav-item.active .nav-name { color: var(--text); }
 .rail-me { background: #ffffff; color: var(--text); }
 .nav-item { border-radius: 999px; }
 .nav-item.active {
@@ -872,12 +879,13 @@ h1, h2, h3 { margin: 0; font-weight: 600; letter-spacing: -0.02em; }
 .btn, .gbtn, .rsvp button, .seg, .input, .pill, .react, .count {
   border-radius: 999px;
 }
-.btn-primary, .send.on, .rsvp button.on, .switch, .gmono {
-  background: var(--text);
-  color: var(--bg);
+.btn-primary, .send.on, .rsvp button.on, .switch {
+  background: var(--accent);
+  color: #ffffff;
   border-color: transparent;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), 0 6px 14px rgba(26, 26, 26, 0.14);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 6px 14px rgba(8, 99, 191, 0.28);
 }
+.gmono { background: var(--text); color: var(--bg); }
 .btn-secondary, .btn-danger, .gbtn, .rsvp button, .icon-btn.solid {
   background: var(--glass);
   color: var(--text);
@@ -944,3 +952,11 @@ h1, h2, h3 { margin: 0; font-weight: 600; letter-spacing: -0.02em; }
 .photo, .qr { border-radius: 22px; }
 .msg { border-radius: 18px; }
 .skel { border-radius: 16px; }
+.msg.mine { background: var(--accent-soft); }
+.link { color: var(--accent-text); }
+.count, .rail-btn .dot { background: var(--accent); color: #ffffff; }
+.input.is-focus, .area.is-focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 35%, transparent);
+}
+.pill { background: color-mix(in srgb, var(--text) 8%, var(--bg)); color: var(--text-2); }

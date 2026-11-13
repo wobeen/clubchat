@@ -216,8 +216,8 @@ function roomHomeMain() {
   <div class="chat-bar"><button class="btn btn-primary btn-block" style="height:40px">채팅 열기 <span class="count" style="margin-left:8px;background:rgba(255,255,255,.18)">4</span></button></div>`
 }
 
-function msg({ person, time, text, reacts, photo, file, hot }) {
-  return `<div class="msg${hot ? ' hot' : ''}">${av(person)}<div class="msg-body">
+function msg({ person, time, text, reacts, photo, file, hot, mine }) {
+  return `<div class="msg${hot ? ' hot' : ''}${mine ? ' mine' : ''}">${av(person)}<div class="msg-body">
     <div class="msg-meta"><span class="msg-name">${person.name}</span><span class="msg-time">${time}</span></div>
     <p>${text}</p>
     ${photo ? '<div class="photo" role="img" aria-label="한강 테스트 컷"></div>' : ''}
@@ -232,11 +232,11 @@ function thread(compact, hot) {
   const lee = people[2]
   const blocks = [
     `<div class="day"><span>11월 13일 금요일</span></div>`,
-    msg({ person: ha, time: '14:02', text: '이번 주 토요일 남산 야경, 삼각대 있는 사람 손?', reacts: '<span class="react on">좋아요 3</span>', hot }),
+    msg({ person: ha, time: '14:02', text: '이번 주 토요일 남산 야경, 삼각대 있는 사람 손?', reacts: '<span class="react on">좋아요 3</span>', hot, mine: true }),
     msg({ person: park, time: '14:06', text: '저 갈게요. 16:40에 3호선 충무로에서 만나면 될까요?' }),
   ]
   if (!compact) {
-    blocks.push(msg({ person: ha, time: '14:08', text: '좋아요. 공지에도 올려 둘게요. 지난주 한강 컷입니다.', photo: true }))
+    blocks.push(msg({ person: ha, time: '14:08', text: '좋아요. 공지에도 올려 둘게요. 지난주 한강 컷입니다.', photo: true, mine: true }))
     blocks.push(`<div class="sys">최도윤님이 방에 참여했습니다</div>`)
   }
   blocks.push(msg({ person: lee, time: '14:21', text: '저도요. 배터리 여분은 제가 챙길게요.' }))
@@ -620,11 +620,11 @@ function foundations() {
   const swatches = [
     ['종이 #FFFFFF', '--bg'],
     ['잉크 #1A1A1A', '--text'],
-    ['강조 #4A4A4A', '--accent'],
+    ['블루 #0863BF', '--accent'],
+    ['블루 16%', '--accent-soft'],
     ['잉크 4% 크롬', '--chrome'],
     ['잉크 10% 테두리', '--border'],
-    ['잉크 64% 보조 글자', '--text-2'],
-    ['강조 12% 선택 면', '--accent-soft'],
+    ['잉크 72% 보조 글자', '--text-2'],
   ]
   return `<div class="found">
     <section>
@@ -643,14 +643,14 @@ function foundations() {
       <div class="type-row"><small>12 / 600 메타</small><div class="faint" style="font-weight:600">토 17:00–20:00 · 남산서울타워</div></div>
       <h2 style="margin-top:20px">컨트롤</h2>
       <div class="row" style="gap:8px;margin-bottom:10px"><button class="btn btn-primary">저장</button><button class="btn btn-secondary">취소</button><button class="btn btn-danger">삭제</button><button class="btn btn-ghost">더 보기</button></div>
-      <div class="input" style="margin-bottom:8px">일정 제목</div>
+      <div class="input is-focus" style="margin-bottom:8px">포커스 링</div>
       <div class="seg" style="max-width:280px"><button class="on">참석</button><button>미정</button><button>불참</button></div>
       <h2 style="margin-top:20px">메시지</h2>
-      ${msg({ person: people[0], time: '14:02', text: '말풍선 대신, 이름과 시각이 있는 한 줄 그룹입니다.', reacts: '<span class="react on">좋아요 3</span>' })}
+      ${msg({ person: people[0], time: '14:02', text: '내 메시지는 블루 16% 면입니다.', mine: true, reacts: '<span class="react on">좋아요 3</span>' })}
     </section>
     <section style="border-right:0">
       <h2>원칙</h2>
-      <p>무채색 세 가지 위에 리퀴드 글래스입니다. 켜진 컨트롤은 불투명 채움, 꺼진 컨트롤은 유리입니다.</p>
+      <p>유리는 무채색입니다. 블루 #0863BF는 버튼, 링크, 선택 링, 안 읽음, 내 메시지에만 씁니다.</p><p style="margin-top:8px"><span class="link">링크 예시</span></p>
       <p style="margin-top:8px">삭제와 로그아웃은 빨간 색 없이 잉크 테두리와 라벨로 구분합니다.</p>
       <p style="margin-top:8px">한글 본문은 14px. 라이트만 제공합니다.</p>
       <div class="card" style="margin-top:16px"><div class="card-head"><h2>목록</h2><span class="count">3</span></div>
