@@ -1,0 +1,45 @@
+/* Monochrome glass: opaque text, translucent surfaces, layered edge reflections. */
+:root{--glass-edge:rgba(65,65,65,.48);--glass-face:linear-gradient(145deg,rgba(255,255,255,.98) 0%,rgba(255,255,255,.72) 38%,rgba(239,239,239,.54) 72%,rgba(255,255,255,.96) 100%);--glass-depth:inset 0 1px 0 #fff,inset 1px 0 0 rgba(255,255,255,.95),inset 0 -2px 3px rgba(85,85,85,.13),0 3px 0 rgba(100,100,100,.13),0 7px 16px rgba(0,0,0,.07)}
+:root body #app :is(.room-header,.capsule-navigation,.capsule-view-switch,.chat-bottom,.closed-bar,.minute-item,.child-card,.event-card,.archive-card,.member-card,.surface,.confirmation-banner,.change-summary,.policy-history),
+:root body :is(#modal,#toast,.tutorial-banner,.practice-entry,#storage-status){
+ background-color:rgba(255,255,255,.88)!important;
+ background-image:var(--glass-face)!important;
+ border:1.5px solid var(--glass-edge)!important;
+ box-shadow:var(--glass-depth)!important;
+ border-radius:16px;
+ backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+}
+:root body #app :is(.room-header,.capsule-navigation,.chat-bottom,.closed-bar){margin:8px 12px;flex-shrink:0}
+:root body #app .room-header{padding:12px 16px}
+:root body #app .capsule-navigation{padding:12px 16px 0;overflow:visible}
+:root body #app .capsule-view-switch{padding:0 12px;margin:8px 0 10px;border-radius:12px;box-shadow:inset 0 1px 0 #fff,0 2px 0 #ddd!important;backdrop-filter:none}
+:root body #app .chat-bottom{padding:0 14px 4px}
+:root body #app :is(.composer,.chat-hint,.chat-bottom-actions,.room-heading,.room-header-actions,.capsule-relations,.capsule-progress,.capsule-next-action,.message-content,.message-meta,.minute-item-content,.item-meta,.evidence-row,.review-footer>div){background-color:transparent!important}
+:root body #app :is(.message-bubble,.primary,.send-button,.capsule-next-action button,.current-capsule,.capsule-relations button,.room-list-row,.avatar,.group-avatar i),
+:root body :is(.tutorial-actions>button:first-child,#modal .primary){
+ background-color:rgba(255,255,255,.9)!important;background-image:var(--glass-face)!important;
+ border:1.5px solid rgba(55,55,55,.6)!important;
+ box-shadow:inset 0 1px 1px #fff,inset 0 -2px 2px rgba(90,90,90,.12),0 3px 0 rgba(80,80,80,.14),0 5px 9px rgba(0,0,0,.06)!important;
+}
+:root body #app .room-list-row{margin:8px 12px;width:calc(100% - 24px);border-color:#bbb!important}
+:root body #app .room-list-row.selected{border-color:#333!important;box-shadow:inset 3px 0 #333,var(--glass-depth)!important}
+:root body #app :is(.message-content,.message-meta,.message-content>div:not(.message-bubble)){background-image:none!important}
+:root body #app .message-bubble{padding:11px 14px}
+:root body #app :is(.message-bubble,.primary,.send-button,.capsule-next-action button){transition:box-shadow .15s,transform .15s}
+:root body #app :is(.primary,.send-button,.capsule-next-action button):active{transform:translateY(2px);box-shadow:inset 0 1px 3px #ccc,0 1px 0 #ccc!important}
+:root body #modal :is(.modal-header,.modal-body,.modal-footer),:root body .tutorial-banner :is(p,strong,.tutorial-actions,.tutorial-heading){background:transparent!important}
+:root body #app :is(.messages,.talk-main,.chat-room){background-color:#fff!important}
+:root body #app :is(.room-list-row,.room-header,.capsule-navigation,.minute-item,.child-card,.event-card,.archive-card,.confirmation-banner) :is(span,p,h1,h2,h3,strong,small,time,li,div){background-color:transparent!important}
+:root body #app .chat-hint{height:auto;min-height:20px;margin:5px 0;font-size:11px}
+:root body #app .chat-hint>.icon{display:inline-block}
+@media(max-width:700px){
+ :root body #app :is(.room-header,.capsule-navigation,.chat-bottom,.closed-bar){margin:5px 8px;border-radius:14px}
+ :root body #app .room-header{padding:6px 9px;min-height:60px}
+ :root body #app .capsule-navigation{padding:7px 10px 0}
+ :root body #app .capsule-view-switch{margin:5px 0 6px;min-height:40px}
+ :root body #app .capsule-view-switch button{min-height:40px}
+ :root body #app .capsule-progress{margin:5px 0}
+ :root body #app .capsule-next-action{padding:3px 0 5px}
+}
+@supports not (backdrop-filter:blur(1px)){:root body #app :is(.room-header,.capsule-navigation,.chat-bottom,.minute-item),:root body #modal{background-color:#fff!important}}
+@media(prefers-reduced-transparency:reduce){:root body #app *,:root body #modal{backdrop-filter:none!important;-webkit-backdrop-filter:none!important;background-color:#fff!important}}

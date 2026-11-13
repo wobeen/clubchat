@@ -1,0 +1,73 @@
+/* ITDA capsule notebook: loaded after the existing demo styles. */
+:root{--blue:#17665e;--blue-hover:#104e49;--pale-blue:#e1f0e9;--light-blue:#f1f7f3;--ink:#223b39;--muted:#64746e;--line:#dce4dc;--bg:#f5f4ed}
+html{height:100%;overflow:hidden}
+body{background:var(--bg);height:100dvh;min-height:0;display:flex;flex-direction:column;overflow:hidden}
+#tutorial-host,#storage-status{flex:0 0 auto}
+#tutorial-host:empty{display:none}
+#tutorial-host{max-height:38dvh;overflow:auto}
+#storage-status{max-height:25dvh;overflow:auto}
+#app{flex:1 1 auto;min-height:0;min-width:0;overflow:hidden}
+#app>.messenger-shell,#app>.android-ui{height:100%;min-height:0;width:100%}
+#app .talk-main,#app .talk-list{min-height:0}
+.messenger-shell .talk-rail{background:#193c37;color:#e0ede5;border:0}
+.talk-rail .rail-logo,.talk-rail .rail-main>button.active{color:#d9f5dc;background:#31574c}
+.talk-rail .rail-main>button,.talk-rail .rail-bottom>button{color:#c1d4c9}
+.talk-list,.android-content,.android-list{background:#faf9f3}
+.list-title h1{color:#223b39;letter-spacing:-1px}.itda-label{color:#17665e}
+.capsule-list-intro{font-size:12px;color:#526d64;margin:-10px 0 18px}
+.list-filters>button.active{background:#dcece1;color:#164b40}
+.list-filters>button{min-height:40px;font-size:12px}
+.room-list-row{border-bottom:1px solid #e8e9df;margin:0 10px;border-radius:12px;width:calc(100% - 20px)}
+.room-list-row.selected,.android-ui .room-list-row.selected{background:#e4eee5;box-shadow:inset 3px 0 #277864}
+.room-list-tag,.android-ui .room-list-tag{font-size:11px;color:#276654}
+.room-list-tag.review{color:#785b22;background:#f4ead1}.room-list-title{color:#203c35}
+.room-list-meta time,.android-ui .room-list-meta time{font-size:11px;color:#687568}
+.list-bottom{background:#f0f0e5!important;border-color:#e0e4d6!important}
+.chat-room.chat-view,.android-ui .chat-room.chat-view{background:#f5f4ed}
+.chat-room .room-header{background:#faf9f3;border-bottom:1px solid #dde5db}
+.chat-room .room-heading h1{color:#223b39}.chat-room .room-heading p{color:#65766a}
+.chat-room .message-bubble{background:#fffefa;border:1px solid #e0e5d9;border-radius:4px 16px 16px 16px;color:#243c34;box-shadow:none}
+.chat-room .message.own .message-bubble{background:#deece0;border-color:#c7dccb;color:#223b32;border-radius:16px 4px 16px 16px}
+.chat-room .message-bubble:before,.chat-room .message-bubble:after{display:none}
+.chat-room .chat-bottom,.chat-room .composer{background:#fffefa}
+.chat-room .send-button,.primary{background:#17665e;color:white}.primary:hover{background:#104e49}
+.chat-room .send-button:hover{background:#104e49}
+.message-choice:has(input:checked),.delegate-members>label:has(input:checked),.room-menu-views>button.active{background:#e1f0e9;border-color:#99bca6;color:#214e3d}
+.ai-input{border-color:#90b59e;background:#f1f7ee}.ai-input>.icon{color:#17665e}
+.child-card,.result-child{border-color:#b7cfc0;background:#edf4eb}.result-child{border-left:4px solid #2e7966}
+.capsule-navigation{flex-shrink:0;background:#faf9f3;border-bottom:1px solid #dce4dc;padding:12px 24px 0}
+.capsule-relations{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;color:#526c60}
+.capsule-relations button{padding:7px 10px;border:1px solid #cbdacc;border-radius:20px;text-align:left;max-width:100%;overflow-wrap:anywhere}
+.current-capsule{font-weight:700;background:#e3ebdd;border-radius:20px;padding:7px 10px;color:#234d3b}
+.capsule-branches summary{cursor:pointer;padding:7px}.capsule-branches>div{display:flex;gap:6px;flex-wrap:wrap;padding:8px;border-left:2px solid #8cba9d}
+.capsule-branches>div>span{padding:7px}
+.capsule-progress{display:flex;gap:0;list-style:none;padding:0;margin:12px 0 8px;font-size:12px;color:#667468}
+.capsule-progress li{display:flex;align-items:center;flex:1;gap:8px;white-space:nowrap}
+.capsule-progress li:not(:last-child):after{content:'';height:1px;flex:1;background:#ced7cc;margin-right:8px}
+.capsule-progress .current{color:#115b48;font-weight:750}.capsule-progress .done{color:#48765e}
+.capsule-next-action{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:6px 0 12px;font-size:12px;color:#425d4e}
+.capsule-next-action button,.tutorial-actions>button:first-child{background:#17665e;color:white;border-radius:8px;padding:9px 12px;min-height:40px;flex-shrink:0}
+.capsule-view-switch{display:flex;gap:18px}.capsule-view-switch button{min-height:42px;padding:8px 4px;font-size:13px;color:#5b6d60;border-bottom:3px solid transparent}
+.capsule-view-switch button[aria-current=page]{border-color:#17665e;color:#124d41;font-weight:700}
+.practice-entry{display:block;padding:14px 20px;color:#1a5c4c;background:#e5eee0;font-size:13px;font-weight:650}.practice-entry span{display:block;font-size:11px;font-weight:400;margin-top:4px}
+.tutorial-banner{padding:14px 24px;background:#e7efe0;border-bottom:1px solid #c5d6bf;flex-shrink:0;color:#284e39;font-size:13px}
+.tutorial-heading{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;font-size:11px}.tutorial-banner strong{font-size:15px}.tutorial-banner p{line-height:1.6;margin:5px 0 8px;max-width:850px}
+.tutorial-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.tutorial-actions button,.tutorial-heading button,.tutorial-banner.compact button,.tutorial-actions a,.tutorial-banner.compact a{padding:8px;border-radius:7px;min-height:36px;text-decoration:underline;text-underline-offset:3px}
+.tutorial-banner.compact{display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:8px 20px}
+.android-ui .capsule-navigation{padding:9px 16px 0}.android-ui .capsule-progress{margin:8px 0 4px;font-size:11px}.android-ui .capsule-relations{font-size:11px}
+.android-ui .capsule-next-action{font-size:12px;gap:8px;padding-bottom:6px}.android-ui .capsule-next-action button{font-size:12px;min-height:42px;padding:8px 10px}
+.android-ui .capsule-view-switch button{min-height:44px}.android-ui .tutorial-banner{padding:10px 16px;font-size:12px}
+.android-ui .capsule-list-intro{margin:-10px 0 14px}.android-ui .capsule-pin>.status-badge{font-size:11px}
+.android-ui .review-footer .quiet{display:inline-flex;min-height:42px}.android-ui .confirmation-banner p,.android-ui .item-meta{font-size:12px}
+.chat-room .conversation-header strong{font-size:11px}.chat-room .chat-hint{font-size:11px;color:#526959}.android-ui .message-meta strong{font-size:12px}.android-ui .message-meta time{font-size:10px}
+.android-ui .valid-label,.android-ui .needs-label,.android-ui .evidence-button,.android-ui .minutes-policy,.android-ui .closed-bar>span,.android-ui .child-card small,.android-ui .result-footer>small{font-size:12px}
+.android-ui .send-button,.android-ui .composer-delegate,.android-ui .chat-bottom-actions>.text-button,.android-ui .event-actions .outline{min-height:44px}
+.android-ui .android-bottom-nav>button>span{font-size:11px}
+.status-badge.deferred,.room-list-tag.deferred{background:#f4ead1;color:#70521c}.status-badge.cancelled,.room-list-tag.cancelled{background:#e9e9e4;color:#575d57}
+.capsule-next-action p{margin:0;overflow-wrap:anywhere}
+.capsule-relations button:hover,.capsule-view-switch button:hover{background:#e6eee1}
+.tutorial-actions>button:first-child{text-decoration:none}.tutorial-actions a{color:#254f3d}
+.practice-entry{padding:9px 20px}.practice-entry span{display:inline;margin-left:12px}
+button:focus-visible,a:focus-visible,summary:focus-visible{outline:3px solid #578e6f;outline-offset:3px}
+@media(max-width:700px){.capsule-next-action p{line-height:1.5}.tutorial-banner{padding:10px 16px}.tutorial-banner p{max-height:100px;overflow:auto}.capsule-relations{max-height:130px;overflow:auto}.capsule-navigation{padding:9px 16px 0}}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}

@@ -1,0 +1,25 @@
+#storage-status{background:#fff0cf;color:#493a18;padding:10px 18px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13px;max-height:35vh;overflow:auto}
+#storage-status[hidden]{display:none}
+.change-summary,.policy-history{padding:14px;margin:12px 0;background:#edf4ef;border:1px solid #c9dbd2;border-radius:12px;font-size:13px}
+.change-summary li,.policy-history p{margin:8px 0;line-height:1.6}
+.history-entry{padding:16px 0;border-bottom:1px solid #d8e1db}
+.history-entry p{margin:8px 0}
+.review-footer{gap:12px;flex-wrap:wrap}.review-footer>p{font-size:12px;flex:1;min-width:140px}
+.review-footer>div{display:flex;gap:8px;flex-wrap:wrap}
+.minute-item>div{min-width:0}.minute-item p{overflow-wrap:anywhere}
+.chat-room .chat-bottom-actions{display:flex;flex-wrap:wrap;gap:8px}
+.chat-room .chat-bottom-actions>span{font-size:11px}
+.settings-links .outline{justify-content:flex-start}
+.chat-room.chat-view .messages,.android-ui .chat-room.chat-view .messages{background:#f5f4ed}
+.chat-room.chat-view .empty-icon{background:#e2ece0;color:#47715e}
+.chat-room.chat-view .empty-state h3,.chat-room.chat-view .empty-state p{color:#567063}
+.chat-room .conversation-header strong,.chat-room .conversation-header,.chat-room .message-meta{color:#596d62}
+.chat-room .chat-date>span{background:#e4eadd;color:#506755}
+.chat-room .closed-bar .primary,.primary{border-color:#17665e}
+.itda-label{background:#e0ecde;color:#17665e}
+.split-toggle{padding:4px 24px;background:#faf9f3;flex-shrink:0}
+.capsule-split{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);min-height:0;flex:1}
+.split-conversation,.split-minutes{display:flex;flex-direction:column;min-height:0;min-width:0;overflow:hidden}
+.split-minutes{border-left:1px solid #dce4dc}.split-conversation .messages{background:#f5f4ed}
+.split-minutes .review-footer{flex-direction:column;align-items:stretch}
+@media(max-width:700px){.capsule-navigation{padding:8px 14px}.capsule-progress{margin:6px 0}.capsule-next-action{padding:8px 0}.capsule-next-action p{font-size:12px}.tutorial-banner p{max-height:4.5em;overflow:auto}.minutes-scroll{overflow-y:auto}.review-footer{padding:10px 14px}}
