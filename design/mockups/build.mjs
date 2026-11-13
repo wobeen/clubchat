@@ -620,7 +620,7 @@ function foundations() {
   const swatches = [
     ['종이 #FFFFFF', '--bg'],
     ['잉크 #1A1A1A', '--text'],
-    ['강조 #1F6A45', '--accent'],
+    ['강조 #4A4A4A', '--accent'],
     ['잉크 4% 크롬', '--chrome'],
     ['잉크 10% 테두리', '--border'],
     ['잉크 64% 보조 글자', '--text-2'],
@@ -650,7 +650,7 @@ function foundations() {
     </section>
     <section style="border-right:0">
       <h2>원칙</h2>
-      <p>색은 종이, 잉크, 강조 세 가지입니다. 테두리와 보조 글자는 잉크의 농도입니다.</p>
+      <p>색은 종이, 잉크, 중간 회색입니다. 채도는 없고, 강조는 채움과 굵기로 나눕니다.</p>
       <p style="margin-top:8px">삭제와 로그아웃은 빨간 색 없이 잉크 테두리와 라벨로 구분합니다.</p>
       <p style="margin-top:8px">한글 본문은 14px. 라이트만 제공합니다.</p>
       <div class="card" style="margin-top:16px"><div class="card-head"><h2>목록</h2><span class="count">3</span></div>

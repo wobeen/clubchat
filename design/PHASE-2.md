@@ -4,7 +4,7 @@
 
 ## 1. 토큰과 테마
 
-`src/features/ui/theme.ts`는 라이트 한 벌입니다. 안료는 종이 `#FFFFFF`, 잉크 `#1A1A1A`, 강조 `#1F6A45`이고, 테두리와 보조 글자는 잉크를 종이에 섞은 값입니다. 다크 맵은 만들지 않습니다. 일정 화면의 옛 키(`primaryDark`, `surfaceSecondary`, `textPrimary`, `error`)는 이 세 색과 그 농도를 가리키게 남겨 호출부가 한 번에 깨지지 않게 합니다. `error`도 빨강이 아니라 잉크입니다.
+`src/features/ui/theme.ts`는 라이트 한 벌입니다. 안료는 종이 `#FFFFFF`, 잉크 `#1A1A1A`, 강조 `#4A4A4A`이고, 테두리와 보조 글자는 잉크를 종이에 섞은 값입니다. 색상과 다크 맵은 만들지 않습니다. 일정 화면의 옛 키(`primaryDark`, `surfaceSecondary`, `textPrimary`, `error`)는 이 세 색과 그 농도를 가리키게 남겨 호출부가 한 번에 깨지지 않게 합니다. `error`도 빨강이 아니라 잉크입니다.
 
 웹은 `color-scheme: light`와 CSS 변수, 네이티브는 토큰 객체를 스타일에 넘깁니다. 하드코딩된 `#4A90D9`, `#417029`, `#F3F4F6`를 찾습니다. 루트 로딩 인디케이터와 로그인 화면이 여기에 해당합니다.
 

@@ -1,4 +1,4 @@
-import { mkdirSync } from 'node:fs'
+import { mkdirSync, readdirSync, rmSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { pathToFileURL, fileURLToPath } from 'node:url'
 import { readFileSync } from 'node:fs'
@@ -12,6 +12,21 @@ const outDir = join(root, 'png')
 const artifactDir = '/opt/cursor/artifacts'
 mkdirSync(outDir, { recursive: true })
 mkdirSync(artifactDir, { recursive: true })
+
+const artifactNames = new Set([
+  'foundations-desktop-light.png',
+  'login-desktop-light.png',
+  'clubs-desktop-light.png',
+  'clubs-mobile-light.png',
+  'club-home-desktop-light.png',
+  'club-home-mobile-light.png',
+  'room-home-desktop-light.png',
+  'chat-desktop-light.png',
+  'chat-mobile-light.png',
+  'events-desktop-light.png',
+  'event-detail-desktop-light.png',
+  'event-detail-mobile-light.png',
+])
 
 const browser = await chromium.launch({ headless: true })
 const failures = []
@@ -27,9 +42,17 @@ for (const job of manifest) {
   const name = `${job.id}-${job.device}-${job.theme}.png`
   const dest = join(outDir, name)
   await page.screenshot({ path: dest, type: 'png' })
-  await page.screenshot({ path: join(artifactDir, `clubchat-${name}`), type: 'png' })
+  if (artifactNames.has(name)) {
+    await page.screenshot({ path: join(artifactDir, `clubchat-${name}`), type: 'png' })
+  }
   await page.close()
   process.stdout.write(`ok ${name}\n`)
+}
+
+for (const file of readdirSync(artifactDir)) {
+  if (file.startsWith('clubchat-') && file.endsWith('.png') && !artifactNames.has(file.slice('clubchat-'.length))) {
+    rmSync(join(artifactDir, file))
+  }
 }
 
 await browser.close()
