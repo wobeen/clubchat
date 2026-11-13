@@ -67,12 +67,12 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#000000' },
   centered: {
     flex: 1, alignItems: 'center', justifyContent: 'center',
-    backgroundColor: '#F8F7FA', paddingHorizontal: 32, gap: 16,
+    backgroundColor: '#F2F2F2', paddingHorizontal: 32, gap: 16,
   },
-  permissionText: { fontSize: 15, color: '#4E5968', textAlign: 'center', lineHeight: 22 },
+  permissionText: { fontSize: 15, color: '#5A5A5A', textAlign: 'center', lineHeight: 22 },
   permissionButton: {
     height: 48, paddingHorizontal: 28, borderRadius: 12,
-    backgroundColor: '#417029', alignItems: 'center', justifyContent: 'center',
+    backgroundColor: '#0863BF', alignItems: 'center', justifyContent: 'center',
   },
   permissionButtonText: { fontSize: 15, fontWeight: '700', color: '#FFFFFF' },
   pressedOpacity: { opacity: 0.7 },

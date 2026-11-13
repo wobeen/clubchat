@@ -68,7 +68,7 @@ export default function CreateChannelScreen() {
     const { data, error } = await supabase.rpc('create_channel', {
       p_club_id: clubId,
       p_name: trimmedName,
-      p_password: usePassword ? password.trim() : null,
+      p_password: usePassword ? password.trim() : undefined,
     })
 
     if (error) {
@@ -120,7 +120,7 @@ export default function CreateChannelScreen() {
           <TextInput
             style={styles.input}
             placeholder="방 이름을 입력하세요"
-            placeholderTextColor="#9CA3AF"
+            placeholderTextColor="#5F5F5F"
             value={name}
             onChangeText={(v) => {
               setName(v)
@@ -147,8 +147,8 @@ export default function CreateChannelScreen() {
               if (!v) setPassword('')
               if (form.status === 'error') setForm({ status: 'idle' })
             }}
-            trackColor={{ false: '#E5E7EB', true: '#93C5FD' }}
-            thumbColor={usePassword ? '#4A90D9' : '#FFFFFF'}
+            trackColor={{ false: '#E8E8E8', true: '#93C5FD' }}
+            thumbColor={usePassword ? '#0863BF' : '#FFFFFF'}
             disabled={isLoading}
             accessibilityLabel="비밀번호 설정 토글"
           />
@@ -160,7 +160,7 @@ export default function CreateChannelScreen() {
             <TextInput
               style={styles.input}
               placeholder="비밀번호를 입력하세요"
-              placeholderTextColor="#9CA3AF"
+              placeholderTextColor="#5F5F5F"
               value={password}
               onChangeText={(v) => {
                 setPassword(v)
@@ -200,7 +200,7 @@ export default function CreateChannelScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F3F4F6',
+    backgroundColor: '#F2F2F2',
   },
   inner: {
     paddingHorizontal: 24,
@@ -209,7 +209,7 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 15,
-    color: '#6B7280',
+    color: '#5A5A5A',
     marginBottom: 28,
     lineHeight: 22,
   },
@@ -231,14 +231,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
     borderWidth: 1.5,
-    borderColor: '#E5E7EB',
+    borderColor: '#E8E8E8',
     paddingHorizontal: 16,
     fontSize: 16,
     color: '#1A1A1A',
   },
   charCount: {
     fontSize: 12,
-    color: '#9CA3AF',
+    color: '#5F5F5F',
     textAlign: 'right',
     marginTop: 4,
   },
@@ -252,7 +252,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     gap: 12,
     borderWidth: 1.5,
-    borderColor: '#E5E7EB',
+    borderColor: '#E8E8E8',
   },
   toggleLabelGroup: {
     flex: 1,
@@ -264,13 +264,13 @@ const styles = StyleSheet.create({
   },
   toggleSub: {
     fontSize: 12,
-    color: '#9CA3AF',
+    color: '#5F5F5F',
     marginTop: 2,
   },
   createButton: {
     height: 52,
     borderRadius: 14,
-    backgroundColor: '#4A90D9',
+    backgroundColor: '#0863BF',
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 8,
@@ -283,7 +283,7 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: 14,
-    color: '#DC2626',
+    color: '#1A1A1A',
     marginBottom: 16,
     textAlign: 'center',
   },

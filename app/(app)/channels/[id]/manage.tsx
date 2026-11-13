@@ -205,7 +205,7 @@ function ManageChannelScreenContent() {
   if (state.status === 'loading') {
     return (
       <View style={styles.centered}>
-        <ActivityIndicator size="large" color="#4A90D9" />
+        <ActivityIndicator size="large" color="#0863BF" />
       </View>
     )
   }
@@ -294,7 +294,7 @@ function ManageChannelScreenContent() {
         accessibilityLabel="새 초대 코드 발급"
       >
         {regenerating ? (
-          <ActivityIndicator size="small" color="#DC2626" />
+          <ActivityIndicator size="small" color="#1A1A1A" />
         ) : (
           <Text style={styles.regenerateButtonText}>새 코드 발급</Text>
         )}
@@ -315,7 +315,7 @@ function ManageChannelScreenContent() {
       <TextInput
         style={styles.input}
         placeholder="새 비밀번호 (4자 이상)"
-        placeholderTextColor="#9CA3AF"
+        placeholderTextColor="#5F5F5F"
         value={newPassword}
         onChangeText={setNewPassword}
         secureTextEntry
@@ -373,7 +373,7 @@ export default function ManageChannelScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F3F4F6',
+    backgroundColor: '#F2F2F2',
   },
   content: {
     padding: 24,
@@ -383,13 +383,13 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#F3F4F6',
+    backgroundColor: '#F2F2F2',
     paddingHorizontal: 24,
   },
   sectionLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#6B7280',
+    color: '#5A5A5A',
     marginBottom: 12,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
@@ -404,7 +404,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 16,
     borderWidth: 1.5,
-    borderColor: '#E5E7EB',
+    borderColor: '#E8E8E8',
     marginBottom: 16,
   },
   linkRow: {
@@ -417,7 +417,7 @@ const styles = StyleSheet.create({
     height: 44,
     borderRadius: 10,
     borderWidth: 1.5,
-    borderColor: '#4A90D9',
+    borderColor: '#0863BF',
     backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
@@ -426,16 +426,16 @@ const styles = StyleSheet.create({
   linkButtonText: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#4A90D9',
+    color: '#0863BF',
   },
   shareButton: {
     flex: 1,
     marginBottom: 0,
   },
   tokenBox: {
-    backgroundColor: '#EFF6FF',
+    backgroundColor: '#D7E6F5',
     borderWidth: 1.5,
-    borderColor: '#BFDBFE',
+    borderColor: '#D7E6F5',
     borderRadius: 12,
     paddingVertical: 14,
     paddingHorizontal: 16,
@@ -444,7 +444,7 @@ const styles = StyleSheet.create({
   },
   tokenLabel: {
     fontSize: 11,
-    color: '#6B7280',
+    color: '#5A5A5A',
     marginBottom: 4,
   },
   tokenText: {
@@ -457,7 +457,7 @@ const styles = StyleSheet.create({
   copyButton: {
     height: 44,
     borderRadius: 10,
-    backgroundColor: '#4A90D9',
+    backgroundColor: '#0863BF',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 32,
@@ -470,14 +470,14 @@ const styles = StyleSheet.create({
   },
   divider: {
     height: 1,
-    backgroundColor: '#E5E7EB',
+    backgroundColor: '#E8E8E8',
     marginBottom: 32,
   },
   regenerateButton: {
     height: 44,
     borderRadius: 10,
     borderWidth: 1.5,
-    borderColor: '#DC2626',
+    borderColor: '#1A1A1A',
     backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
@@ -487,19 +487,19 @@ const styles = StyleSheet.create({
   regenerateButtonText: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#DC2626',
+    color: '#1A1A1A',
   },
   disabledButton: {
     opacity: 0.5,
   },
   warningText: {
     fontSize: 13,
-    color: '#6B7280',
+    color: '#5A5A5A',
     textAlign: 'center',
   },
   errorText: {
     fontSize: 15,
-    color: '#DC2626',
+    color: '#1A1A1A',
     textAlign: 'center',
     marginBottom: 20,
   },
@@ -507,7 +507,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 24,
     borderRadius: 10,
-    backgroundColor: '#4A90D9',
+    backgroundColor: '#0863BF',
   },
   retryButtonText: {
     fontSize: 14,
@@ -518,7 +518,7 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   passwordStatusPill: {
-    backgroundColor: '#F3F4F6',
+    backgroundColor: '#F2F2F2',
     borderRadius: 10,
     paddingVertical: 12,
     paddingHorizontal: 16,
@@ -535,7 +535,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F9FAFB',
     borderRadius: 10,
     borderWidth: 1.5,
-    borderColor: '#E5E7EB',
+    borderColor: '#E8E8E8',
     paddingHorizontal: 16,
     fontSize: 15,
     color: '#1A1A1A',
@@ -543,7 +543,7 @@ const styles = StyleSheet.create({
   },
   removePasswordText: {
     fontSize: 13,
-    color: '#DC2626',
+    color: '#1A1A1A',
     textAlign: 'center',
     marginTop: 14,
     fontWeight: '500',

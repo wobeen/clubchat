@@ -182,7 +182,7 @@ export default function JoinChannelScreen() {
             <TextInput
               style={styles.input}
               placeholder="초대 코드 입력"
-              placeholderTextColor="#9CA3AF"
+              placeholderTextColor="#5F5F5F"
               value={inviteToken}
               onChangeText={(v) => {
                 setInviteToken(v)
@@ -246,7 +246,7 @@ export default function JoinChannelScreen() {
                 <TextInput
                   style={styles.input}
                   placeholder="비밀번호 입력"
-                  placeholderTextColor="#9CA3AF"
+                  placeholderTextColor="#5F5F5F"
                   value={channelPassword}
                   onChangeText={(v) => {
                     setChannelPassword(v)
@@ -273,7 +273,7 @@ export default function JoinChannelScreen() {
                 accessibilityState={{ disabled: passwordLoading }}
               >
                 {passwordLoading
-                  ? <ActivityIndicator color="#4A90D9" size="small" />
+                  ? <ActivityIndicator color="#0863BF" size="small" />
                   : <Text style={styles.secondaryButtonText}>비밀번호로 입장</Text>
                 }
               </Pressable>
@@ -288,7 +288,7 @@ export default function JoinChannelScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F3F4F6',
+    backgroundColor: '#F2F2F2',
   },
   inner: {
     paddingHorizontal: 24,
@@ -297,7 +297,7 @@ const styles = StyleSheet.create({
   },
   screenTitle: {
     fontSize: 18,
-    color: '#6B7280',
+    color: '#5A5A5A',
     marginBottom: 28,
     lineHeight: 26,
   },
@@ -323,7 +323,7 @@ const styles = StyleSheet.create({
   },
   sectionSubtitle: {
     fontSize: 13,
-    color: '#9CA3AF',
+    color: '#5F5F5F',
     marginBottom: 16,
   },
   fieldGroup: {
@@ -334,7 +334,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F9FAFB',
     borderRadius: 12,
     borderWidth: 1.5,
-    borderColor: '#E5E7EB',
+    borderColor: '#E8E8E8',
     paddingHorizontal: 16,
     fontSize: 16,
     color: '#1A1A1A',
@@ -342,7 +342,7 @@ const styles = StyleSheet.create({
   primaryButton: {
     height: 50,
     borderRadius: 12,
-    backgroundColor: '#4A90D9',
+    backgroundColor: '#0863BF',
     alignItems: 'center',
     justifyContent: 'center',
     ...(Platform.OS === 'web' ? ({ cursor: 'pointer' } as object) : {}),
@@ -357,7 +357,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     backgroundColor: '#FFFFFF',
     borderWidth: 1.5,
-    borderColor: '#4A90D9',
+    borderColor: '#0863BF',
     alignItems: 'center',
     justifyContent: 'center',
     ...(Platform.OS === 'web' ? ({ cursor: 'pointer' } as object) : {}),
@@ -365,7 +365,7 @@ const styles = StyleSheet.create({
   secondaryButtonText: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#4A90D9',
+    color: '#0863BF',
   },
   scanButton: {
     height: 44,
@@ -376,7 +376,7 @@ const styles = StyleSheet.create({
   scanButtonText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#6B7280',
+    color: '#5A5A5A',
   },
   divider: {
     flexDirection: 'row',
@@ -387,16 +387,16 @@ const styles = StyleSheet.create({
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: '#E5E7EB',
+    backgroundColor: '#E8E8E8',
   },
   dividerText: {
     fontSize: 13,
-    color: '#9CA3AF',
+    color: '#5F5F5F',
     fontWeight: '500',
   },
   errorText: {
     fontSize: 13,
-    color: '#DC2626',
+    color: '#1A1A1A',
     marginBottom: 12,
     textAlign: 'center',
   },

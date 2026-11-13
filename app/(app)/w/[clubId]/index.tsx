@@ -300,12 +300,12 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surfaceSecondary, alignItems: 'center', justifyContent: 'center',
     flexDirection: 'row', gap: 5,
   },
-  inviteCodeBtnText: { fontSize: 13, fontWeight: '700', color: '#4E5968' },
+  inviteCodeBtnText: { fontSize: 13, fontWeight: '700', color: '#5A5A5A' },
 
   cardHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 },
   cardTitle: { fontSize: 15, fontWeight: '800', color: colors.text },
   editLink: { fontSize: 13, fontWeight: '600', color: colors.primary },
-  wikiEmpty: { fontSize: 13, color: '#A9B1BA', lineHeight: 20 },
+  wikiEmpty: { fontSize: 13, color: '#5F5F5F', lineHeight: 20 },
   wikiError: { fontSize: 13, color: colors.danger, lineHeight: 20 },
 
   sectionRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 4 },
@@ -322,7 +322,7 @@ const styles = StyleSheet.create({
   },
   eventsLoader: { marginVertical: 4 },
   eventsEmpty: { paddingVertical: 16, alignItems: 'center' },
-  eventsEmptyText: { fontSize: 13, color: '#A9B1BA' },
+  eventsEmptyText: { fontSize: 13, color: '#5F5F5F' },
   extraMore: { alignItems: 'center', paddingVertical: 2 },
   extraMoreText: { fontSize: 13, color: colors.primary, fontWeight: '500' },
 

@@ -124,7 +124,7 @@ function ClubAvatarButton({
 export function UserAvatarMark({ profile }: { profile: ProfileRow | null }) {
   if (profile?.avatar_emoji) {
     return (
-      <View style={[styles.userAvatar, { backgroundColor: '#FFF3E0' }]}>
+      <View style={[styles.userAvatar, { backgroundColor: '#EBEBEB' }]}>
         <Text style={{ fontSize: 18 }}>{profile.avatar_emoji}</Text>
       </View>
     )
@@ -142,7 +142,7 @@ const styles = StyleSheet.create({
     width: RAIL_WIDTH,
     flexGrow: 0,
     flexShrink: 0,
-    backgroundColor: colors.background,
+    backgroundColor: colors.glass,
     alignItems: 'center',
     paddingTop: 16,
     paddingBottom: 12,
@@ -152,8 +152,8 @@ const styles = StyleSheet.create({
   logoMark: {
     width: 40,
     height: 40,
-    borderRadius: 12,
-    backgroundColor: colors.primary,
+    borderRadius: 999,
+    backgroundColor: colors.ink,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 16,
@@ -165,7 +165,7 @@ const styles = StyleSheet.create({
   loader: { marginTop: 8 },
 
   clubBtn: { width: 52, height: 52, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
-  clubBtnActive: { backgroundColor: '#BAE2FE' },
+  clubBtnActive: { backgroundColor: '#FFFFFF' },
   clubAvatarText: { fontSize: 18, fontWeight: '800' },
   dot: {
     position: 'absolute',
@@ -174,7 +174,7 @@ const styles = StyleSheet.create({
     width: 9,
     height: 9,
     borderRadius: 5,
-    backgroundColor: colors.danger,
+    backgroundColor: colors.accent,
     borderWidth: 1.5,
     borderColor: colors.background,
   },

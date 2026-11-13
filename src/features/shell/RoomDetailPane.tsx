@@ -64,7 +64,7 @@ export function RoomDetailPane({
               const color = getAvatarColor(m.display_name)
               return (
                 <View key={m.id} style={styles.memberRow}>
-                  <View style={[styles.memberAvatar, { backgroundColor: m.avatar_emoji ? '#FFF3E0' : color.bg }]}>
+                  <View style={[styles.memberAvatar, { backgroundColor: m.avatar_emoji ? '#EBEBEB' : color.bg }]}>
                     {m.avatar_emoji
                       ? <Text style={styles.memberAvatarEmoji}>{m.avatar_emoji}</Text>
                       : <Text style={[styles.memberAvatarText, { color: color.text }]}>{getInitials(m.display_name)}</Text>}
@@ -132,7 +132,7 @@ const styles = StyleSheet.create({
   cardHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   cardTitle: { fontSize: 14, fontWeight: '800', color: colors.text },
   cardLink: { fontSize: 12, fontWeight: '600', color: colors.primary },
-  emptyText: { fontSize: 13, color: '#A9B1BA', lineHeight: 20 },
+  emptyText: { fontSize: 13, color: '#5F5F5F', lineHeight: 20 },
   wikiPreview: { fontSize: 13, color: colors.text, lineHeight: 20 },
 
   memberList: { gap: 10 },

@@ -21,7 +21,7 @@ export default function EventDetailPage() {
   }, [eventId])
 
   if (!eventId || !UUID_RE.test(eventId) || !session?.user) {
-    return <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}><ActivityIndicator size="large" color="#4A90D9" /></View>
+    return <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}><ActivityIndicator size="large" color="#0863BF" /></View>
   }
 
   return (

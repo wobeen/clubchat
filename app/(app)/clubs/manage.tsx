@@ -40,11 +40,11 @@ type LoadState =
   | { status: 'ready'; club: ClubInfo; requests: JoinRequest[] }
 
 const AVATAR_COLORS = [
-  { bg: '#BAE2FE', text: '#2F8FD1' },
-  { bg: '#95E4F3', text: '#1EA8C4' },
-  { bg: '#42F2F2', text: '#0F9797' },
-  { bg: '#24F8AE', text: '#0FA876' },
-  { bg: '#63AB3F', text: '#191F28' },
+  { bg: '#FFFFFF', text: '#0863BF' },
+  { bg: '#EBEBEB', text: '#1A1A1A' },
+  { bg: '#EBEBEB', text: '#1A1A1A' },
+  { bg: '#EBEBEB', text: '#0863BF' },
+  { bg: '#5A5A5A', text: '#1A1A1A' },
 ]
 
 function getAvatarColor(name: string) {
@@ -205,7 +205,7 @@ function ManageClubScreenContent() {
   }
 
   if (state.status === 'loading') {
-    return <View style={styles.centered}><ActivityIndicator size="large" color="#417029" /></View>
+    return <View style={styles.centered}><ActivityIndicator size="large" color="#0863BF" /></View>
   }
 
   if (state.status === 'error') {
@@ -239,9 +239,9 @@ function ManageClubScreenContent() {
             value={club.is_public}
             onValueChange={handleTogglePublic}
             disabled={toggling}
-            trackColor={{ false: '#EBF0F0', true: '#417029' }}
+            trackColor={{ false: '#E8E8E8', true: '#0863BF' }}
             thumbColor="#FFFFFF"
-            ios_backgroundColor="#EBF0F0"
+            ios_backgroundColor="#E8E8E8"
           />
         </View>
         {club.is_public && (
@@ -272,7 +272,7 @@ function ManageClubScreenContent() {
               return (
                 <View key={req.id} style={styles.card}>
                   <View style={styles.requestHeader}>
-                    <View style={[styles.reqAvatar, { backgroundColor: req.profiles.avatar_emoji ? '#FFF3E0' : color.bg }]}>
+                    <View style={[styles.reqAvatar, { backgroundColor: req.profiles.avatar_emoji ? '#EBEBEB' : color.bg }]}>
                       {req.profiles.avatar_emoji
                         ? <Text style={{ fontSize: 18 }}>{req.profiles.avatar_emoji}</Text>
                         : <Text style={[styles.reqAvatarText, { color: color.text }]}>{initials}</Text>}
@@ -293,7 +293,7 @@ function ManageClubScreenContent() {
                   </View>
                   <View style={styles.reqActions}>
                     {isProcessing ? (
-                      <ActivityIndicator size="small" color="#417029" style={{ flex: 1 }} />
+                      <ActivityIndicator size="small" color="#0863BF" style={{ flex: 1 }} />
                     ) : (
                       <>
                         <Pressable
@@ -336,7 +336,7 @@ function ManageClubScreenContent() {
           disabled={regenerating}
         >
           {regenerating
-            ? <ActivityIndicator size="small" color="#4E5968" />
+            ? <ActivityIndicator size="small" color="#5A5A5A" />
             : <Text style={styles.codeBtnText}>재발급</Text>}
         </Pressable>
       </View>
@@ -357,9 +357,9 @@ export default function ManageClubScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F8F7FA' },
+  container: { flex: 1, backgroundColor: '#F2F2F2' },
   content: { padding: 16, paddingBottom: 48, gap: 12 },
-  centered: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#F8F7FA', paddingHorizontal: 24 },
+  centered: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#F2F2F2', paddingHorizontal: 24 },
 
   card: {
     backgroundColor: '#FFFFFF', borderRadius: 20, padding: 18,
@@ -371,23 +371,23 @@ const styles = StyleSheet.create({
   // 공개 토글
   publicRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   publicInfo: { flex: 1, gap: 3 },
-  publicTitle: { fontSize: 15, fontWeight: '800', color: '#191F28' },
-  publicDesc: { fontSize: 13, color: '#5C7A6E', lineHeight: 18 },
+  publicTitle: { fontSize: 15, fontWeight: '800', color: '#1A1A1A' },
+  publicDesc: { fontSize: 13, color: '#5A5A5A', lineHeight: 18 },
   publicPill: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
-    backgroundColor: '#BAE2FE', borderRadius: 12, paddingVertical: 10, paddingHorizontal: 14,
+    backgroundColor: '#FFFFFF', borderRadius: 12, paddingVertical: 10, paddingHorizontal: 14,
   },
-  publicDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#417029' },
-  publicPillText: { fontSize: 13, fontWeight: '600', color: '#417029' },
+  publicDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#0863BF' },
+  publicPillText: { fontSize: 13, fontWeight: '600', color: '#0863BF' },
 
   // 섹션 헤더
   sectionHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 4 },
-  sectionLabel: { fontSize: 13, fontWeight: '600', color: '#5C7A6E' },
+  sectionLabel: { fontSize: 13, fontWeight: '600', color: '#5A5A5A' },
 
   // 신청 없음
   emptyRequests: { backgroundColor: '#FFFFFF', borderRadius: 20, padding: 28, alignItems: 'center',
     shadowColor: 'rgba(25,31,40,1)', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 6, elevation: 2 },
-  emptyText: { fontSize: 14, color: '#5C7A6E' },
+  emptyText: { fontSize: 14, color: '#5A5A5A' },
 
   // 가입 신청 카드
   requestHeader: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
@@ -395,36 +395,36 @@ const styles = StyleSheet.create({
   reqAvatarText: { fontSize: 15, fontWeight: '700' },
   reqMeta: { flex: 1, gap: 4 },
   reqNameRow: { flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' },
-  reqName: { fontSize: 15, fontWeight: '700', color: '#191F28' },
-  reqTime: { fontSize: 12, color: '#5C7A6E' },
-  reqMessage: { backgroundColor: '#F8F7FA', borderRadius: 10, padding: 10 },
-  reqMessageText: { fontSize: 13, color: '#4E5968', lineHeight: 18 },
+  reqName: { fontSize: 15, fontWeight: '700', color: '#1A1A1A' },
+  reqTime: { fontSize: 12, color: '#5A5A5A' },
+  reqMessage: { backgroundColor: '#F2F2F2', borderRadius: 10, padding: 10 },
+  reqMessageText: { fontSize: 13, color: '#5A5A5A', lineHeight: 18 },
   reqActions: { flexDirection: 'row', gap: 8, paddingLeft: 54 },
   approveBtn: {
-    flex: 1, height: 40, borderRadius: 12, backgroundColor: '#417029',
+    flex: 1, height: 40, borderRadius: 12, backgroundColor: '#0863BF',
     alignItems: 'center', justifyContent: 'center',
   },
   approveBtnText: { fontSize: 14, fontWeight: '700', color: '#FFFFFF' },
   rejectBtn: {
-    flex: 1, height: 40, borderRadius: 12, backgroundColor: '#F4F5F6',
+    flex: 1, height: 40, borderRadius: 12, backgroundColor: '#F4F4F4',
     alignItems: 'center', justifyContent: 'center',
   },
-  rejectBtnText: { fontSize: 14, fontWeight: '700', color: '#6B7684' },
+  rejectBtnText: { fontSize: 14, fontWeight: '700', color: '#5F5F5F' },
 
   // 초대 코드
   codeCard: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   codeInfo: { flex: 1, gap: 2 },
-  codeLabel: { fontSize: 14, fontWeight: '700', color: '#191F28' },
-  codeValue: { fontSize: 16, fontWeight: '800', color: '#417029', letterSpacing: 2 },
+  codeLabel: { fontSize: 14, fontWeight: '700', color: '#1A1A1A' },
+  codeValue: { fontSize: 16, fontWeight: '800', color: '#0863BF', letterSpacing: 2 },
   codeBtn: {
-    height: 34, paddingHorizontal: 14, borderRadius: 12, backgroundColor: '#F4F5F6',
+    height: 34, paddingHorizontal: 14, borderRadius: 12, backgroundColor: '#F4F4F4',
     alignItems: 'center', justifyContent: 'center',
   },
-  codeBtnText: { fontSize: 13, fontWeight: '700', color: '#4E5968' },
+  codeBtnText: { fontSize: 13, fontWeight: '700', color: '#5A5A5A' },
   codeBtnDisabled: { opacity: 0.5 },
 
   pressed: { opacity: 0.7, transform: [{ scale: 0.97 }] },
-  errorText: { fontSize: 15, color: '#E5484D', textAlign: 'center', marginBottom: 20 },
-  retryBtn: { paddingVertical: 10, paddingHorizontal: 24, borderRadius: 10, backgroundColor: '#417029' },
+  errorText: { fontSize: 15, color: '#1A1A1A', textAlign: 'center', marginBottom: 20 },
+  retryBtn: { paddingVertical: 10, paddingHorizontal: 24, borderRadius: 10, backgroundColor: '#0863BF' },
   retryBtnText: { fontSize: 14, fontWeight: '600', color: '#FFFFFF' },
 })

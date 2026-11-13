@@ -66,7 +66,7 @@ function ImageAttachment({ fileName, attachment, tint }: Props) {
   if (!url) {
     return (
       <View style={[styles.imagePlaceholder, { width: displayWidth, height: Math.min(displayHeight, 300) }]}>
-        <ActivityIndicator size="small" color={tint === 'blue' ? '#fff' : '#9CA3AF'} />
+        <ActivityIndicator size="small" color={tint === 'blue' ? '#fff' : '#5F5F5F'} />
       </View>
     )
   }
@@ -89,8 +89,8 @@ function ImageAttachment({ fileName, attachment, tint }: Props) {
 function FileAttachment({ fileName, attachment, tint }: Props) {
   const { url, error } = useSignedUrl(attachment.storagePath, 300)
   const textColor = tint === 'blue' ? '#fff' : '#1A1A1A'
-  const subColor = tint === 'blue' ? 'rgba(255,255,255,0.7)' : '#9CA3AF'
-  const iconBg = tint === 'blue' ? 'rgba(255,255,255,0.2)' : '#F3F4F6'
+  const subColor = tint === 'blue' ? 'rgba(255,255,255,0.7)' : '#5F5F5F'
+  const iconBg = tint === 'blue' ? 'rgba(255,255,255,0.2)' : '#F2F2F2'
 
   const handleOpen = () => {
     if (url) Linking.openURL(url)
@@ -138,7 +138,7 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: 13,
-    color: '#9CA3AF',
+    color: '#5F5F5F',
     fontStyle: 'italic',
   },
   errorTextBlue: {

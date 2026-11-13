@@ -267,11 +267,11 @@ const styles = StyleSheet.create({
   cardHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   cardTitle: { fontSize: 15, fontWeight: '800', color: colors.text },
   editLink: { fontSize: 13, fontWeight: '600', color: colors.primary },
-  wikiEmpty: { fontSize: 13, color: '#A9B1BA', lineHeight: 20 },
+  wikiEmpty: { fontSize: 13, color: '#5F5F5F', lineHeight: 20 },
   wikiError: { fontSize: 13, color: colors.danger, lineHeight: 20 },
 
   eventsLoader: { marginVertical: 8 },
-  eventsEmpty: { fontSize: 13, color: '#A9B1BA', textAlign: 'center', paddingVertical: 8 },
+  eventsEmpty: { fontSize: 13, color: '#5F5F5F', textAlign: 'center', paddingVertical: 8 },
   extraMore: { alignItems: 'center', paddingVertical: 4 },
   extraMoreText: { fontSize: 13, color: colors.primary, fontWeight: '500' },
   addEventBtn: {

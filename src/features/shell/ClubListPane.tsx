@@ -22,9 +22,9 @@ type MemberRole = WorkspaceClub['role']
 
 const ROLE_LABEL: Record<MemberRole, string> = { owner: '방장', admin: '관리자', member: '멤버' }
 const ROLE_COLOR: Record<MemberRole, { bg: string; text: string }> = {
-  owner: { bg: '#BAE2FE', text: '#2F8FD1' },
-  admin: { bg: '#95E4F3', text: '#1EA8C4' },
-  member: { bg: '#F4F5F6', text: '#6B7684' },
+  owner: { bg: '#FFFFFF', text: '#0863BF' },
+  admin: { bg: '#EBEBEB', text: '#1A1A1A' },
+  member: { bg: '#F4F4F4', text: '#5F5F5F' },
 }
 
 function RoleBadge({ role }: { role: MemberRole }) {
@@ -203,7 +203,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6, alignItems: 'center', justifyContent: 'center',
   },
   unreadBadgeText: { fontSize: 12, fontWeight: '700', color: '#FFFFFF' },
-  chevron: { fontSize: 18, color: '#C4CAD2', fontWeight: '300' },
+  chevron: { fontSize: 18, color: '#5F5F5F', fontWeight: '300' },
 
   loadingIndicator: { marginTop: 60 },
   emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32, paddingTop: 80 },
@@ -221,7 +221,7 @@ const styles = StyleSheet.create({
     borderTopColor: colors.borderLight,
   },
   primaryBtn: {
-    flex: 1, height: 50, borderRadius: radius.md, backgroundColor: colors.primary,
+    flex: 1, height: 44, borderRadius: radius.full, backgroundColor: colors.primary,
     alignItems: 'center', justifyContent: 'center',
     shadowColor: colors.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.28, shadowRadius: 12, elevation: 6,
   },
@@ -235,7 +235,7 @@ const styles = StyleSheet.create({
   },
   primaryBtnText: { fontSize: 15, fontWeight: '700', color: '#FFFFFF' },
   outlineBtn: {
-    flex: 1, height: 50, borderRadius: radius.md, backgroundColor: colors.surface,
+    flex: 1, height: 44, borderRadius: radius.full, backgroundColor: colors.glassText,
     borderWidth: 1, borderColor: colors.border, alignItems: 'center', justifyContent: 'center',
   },
   outlineBtnText: { fontSize: 15, fontWeight: '700', color: colors.primary },

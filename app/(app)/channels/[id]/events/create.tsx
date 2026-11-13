@@ -9,7 +9,7 @@ export default function EventCreatePage() {
   const { session } = useAuth()
 
   if (!channelId || !session?.user) {
-    return <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}><ActivityIndicator size="large" color="#4A90D9" /></View>
+    return <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}><ActivityIndicator size="large" color="#0863BF" /></View>
   }
 
   return (

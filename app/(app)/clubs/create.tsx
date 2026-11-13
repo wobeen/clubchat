@@ -146,7 +146,7 @@ export default function CreateClubScreen() {
           <TextInput
             style={styles.input}
             placeholder="동아리 이름을 입력하세요"
-            placeholderTextColor="#9CA3AF"
+            placeholderTextColor="#5F5F5F"
             value={name}
             onChangeText={(v) => {
               setName(v)
@@ -185,7 +185,7 @@ export default function CreateClubScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F3F4F6',
+    backgroundColor: '#F2F2F2',
   },
   inner: {
     flex: 1,
@@ -200,7 +200,7 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 14,
-    color: '#6B7280',
+    color: '#5A5A5A',
     marginBottom: 32,
     lineHeight: 20,
   },
@@ -218,7 +218,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
     borderWidth: 1.5,
-    borderColor: '#E5E7EB',
+    borderColor: '#E8E8E8',
     paddingHorizontal: 16,
     fontSize: 16,
     color: '#1A1A1A',
@@ -226,7 +226,7 @@ const styles = StyleSheet.create({
   createButton: {
     height: 52,
     borderRadius: 14,
-    backgroundColor: '#4A90D9',
+    backgroundColor: '#0863BF',
     alignItems: 'center',
     justifyContent: 'center',
     ...(Platform.OS === 'web' ? ({ cursor: 'pointer' } as object) : {}),
@@ -238,7 +238,7 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: 14,
-    color: '#DC2626',
+    color: '#1A1A1A',
     marginBottom: 16,
     textAlign: 'center',
   },
@@ -257,7 +257,7 @@ const styles = StyleSheet.create({
     width: 72,
     height: 72,
     borderRadius: 36,
-    backgroundColor: '#4A90D9',
+    backgroundColor: '#0863BF',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 20,
@@ -276,7 +276,7 @@ const styles = StyleSheet.create({
   },
   successClubName: {
     fontSize: 16,
-    color: '#6B7280',
+    color: '#5A5A5A',
     marginBottom: 32,
     textAlign: 'center',
   },
@@ -289,13 +289,13 @@ const styles = StyleSheet.create({
   codeLabel: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#6B7280',
+    color: '#5A5A5A',
     marginBottom: 10,
     textTransform: 'uppercase',
     letterSpacing: 1,
   },
   codeBox: {
-    backgroundColor: '#EFF6FF',
+    backgroundColor: '#D7E6F5',
     borderRadius: 12,
     paddingVertical: 16,
     paddingHorizontal: 24,
@@ -303,7 +303,7 @@ const styles = StyleSheet.create({
     width: '100%',
     alignItems: 'center',
     borderWidth: 1.5,
-    borderColor: '#BFDBFE',
+    borderColor: '#D7E6F5',
   },
   codeText: {
     fontSize: 28,
@@ -313,7 +313,7 @@ const styles = StyleSheet.create({
   },
   codeHint: {
     fontSize: 13,
-    color: '#6B7280',
+    color: '#5A5A5A',
     textAlign: 'center',
     marginBottom: 14,
     lineHeight: 18,
@@ -322,7 +322,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 24,
     borderRadius: 10,
-    backgroundColor: '#4A90D9',
+    backgroundColor: '#0863BF',
     ...(Platform.OS === 'web' ? ({ cursor: 'pointer' } as object) : {}),
   },
   copyButtonText: {
@@ -335,7 +335,7 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 320,
     borderRadius: 14,
-    backgroundColor: '#4A90D9',
+    backgroundColor: '#0863BF',
     alignItems: 'center',
     justifyContent: 'center',
     ...(Platform.OS === 'web' ? ({ cursor: 'pointer' } as object) : {}),

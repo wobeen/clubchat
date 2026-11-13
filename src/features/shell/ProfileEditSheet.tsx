@@ -107,7 +107,7 @@ export function ProfileEditSheet({ visible, profile, onClose, onSaved }: Profile
             </View>
 
             <View style={styles.previewRow}>
-              <View style={[styles.previewCircle, { backgroundColor: editEmoji ? '#FFF3E0' : '#417029' }]}>
+              <View style={[styles.previewCircle, { backgroundColor: editEmoji ? '#EBEBEB' : '#0863BF' }]}>
                 {editEmoji
                   ? <Text style={{ fontSize: 38 }}>{editEmoji}</Text>
                   : <Text style={styles.previewInitials}>{getInitials(editName || '?')}</Text>}
@@ -137,7 +137,7 @@ export function ProfileEditSheet({ visible, profile, onClose, onSaved }: Profile
                 value={editName}
                 onChangeText={setEditName}
                 placeholder="표시 이름"
-                placeholderTextColor="#A9B1BA"
+                placeholderTextColor="#5F5F5F"
                 maxLength={30}
                 returnKeyType="next"
               />
@@ -151,7 +151,7 @@ export function ProfileEditSheet({ visible, profile, onClose, onSaved }: Profile
                   value={editGrade}
                   onChangeText={setEditGrade}
                   placeholder="예: 21학번"
-                  placeholderTextColor="#A9B1BA"
+                  placeholderTextColor="#5F5F5F"
                   maxLength={10}
                   returnKeyType="next"
                 />
@@ -163,7 +163,7 @@ export function ProfileEditSheet({ visible, profile, onClose, onSaved }: Profile
                   value={editBirthYear}
                   onChangeText={(v) => setEditBirthYear(v.replace(/[^0-9]/g, ''))}
                   placeholder="예: 2002"
-                  placeholderTextColor="#A9B1BA"
+                  placeholderTextColor="#5F5F5F"
                   maxLength={4}
                   keyboardType="number-pad"
                   returnKeyType="done"
@@ -216,7 +216,7 @@ export function ProfileEditSheet({ visible, profile, onClose, onSaved }: Profile
               disabled={signingOut}
             >
               {signingOut
-                ? <ActivityIndicator size="small" color="#5C7A6E" />
+                ? <ActivityIndicator size="small" color="#5A5A5A" />
                 : <Text style={styles.signOutInSheetText}>로그아웃</Text>}
             </Pressable>
           </ScrollView>
@@ -237,31 +237,31 @@ const styles = StyleSheet.create({
     paddingBottom: Platform.OS === 'ios' ? 40 : 24,
     maxHeight: '85%',
   },
-  sheetHandle: { width: 40, height: 4, borderRadius: 2, backgroundColor: '#E9EFE8', alignSelf: 'center', marginTop: 12, marginBottom: 4 },
+  sheetHandle: { width: 40, height: 4, borderRadius: 2, backgroundColor: '#E8E8E8', alignSelf: 'center', marginTop: 12, marginBottom: 4 },
   sheetScroll: { padding: 24, gap: 16 },
   sheetHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  sheetTitle: { fontSize: 19, fontWeight: '800', color: '#191F28' },
-  sheetClose: { fontSize: 15, color: '#5C7A6E', padding: 4 },
+  sheetTitle: { fontSize: 19, fontWeight: '800', color: '#1A1A1A' },
+  sheetClose: { fontSize: 15, color: '#5A5A5A', padding: 4 },
 
   previewRow: { flexDirection: 'row', alignItems: 'center', gap: 16 },
   previewCircle: { width: 72, height: 72, borderRadius: 36, alignItems: 'center', justifyContent: 'center' },
   previewInitials: { fontSize: 28, fontWeight: '700', color: '#FFFFFF' },
-  previewName: { fontSize: 16, fontWeight: '700', color: '#191F28' },
-  previewHint: { fontSize: 13, color: '#5C7A6E', marginTop: 2 },
+  previewName: { fontSize: 16, fontWeight: '700', color: '#1A1A1A' },
+  previewHint: { fontSize: 13, color: '#5A5A5A', marginTop: 2 },
   emojiRow: { flexDirection: 'row', gap: 8 },
-  emojiCell: { width: 46, height: 46, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: '#F4F5F6' },
-  emojiCellSelected: { backgroundColor: '#BAE2FE', borderWidth: 2, borderColor: '#2F8FD1' },
+  emojiCell: { width: 46, height: 46, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: '#F4F4F4' },
+  emojiCellSelected: { backgroundColor: '#FFFFFF', borderWidth: 2, borderColor: '#0863BF' },
   emojiCellText: { fontSize: 23 },
   fieldGroup: { gap: 6 },
   fieldRow: { flexDirection: 'row', gap: 10 },
-  fieldLabel: { fontSize: 13, fontWeight: '600', color: '#5C7A6E' },
+  fieldLabel: { fontSize: 13, fontWeight: '600', color: '#5A5A5A' },
   fieldInput: {
-    height: 48, backgroundColor: '#F4F5F6', borderRadius: 14,
-    paddingHorizontal: 16, fontSize: 15, fontWeight: '600', color: '#191F28',
+    height: 48, backgroundColor: '#F4F4F4', borderRadius: 14,
+    paddingHorizontal: 16, fontSize: 15, fontWeight: '600', color: '#1A1A1A',
     ...(Platform.OS === 'web' ? ({ outlineStyle: 'none' } as object) : {}),
   },
   genderPicker: {
-    height: 48, backgroundColor: '#F4F5F6', borderRadius: 14,
+    height: 48, backgroundColor: '#F4F4F4', borderRadius: 14,
     padding: 4, flexDirection: 'row', gap: 4,
   },
   genderOption: { flex: 1, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
@@ -270,20 +270,20 @@ const styles = StyleSheet.create({
     shadowColor: 'rgba(25,31,40,1)', shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.08, shadowRadius: 4, elevation: 2,
   },
-  genderOptionText: { fontSize: 14, fontWeight: '600', color: '#5C7A6E' },
-  genderOptionTextSelected: { fontWeight: '700', color: '#191F28' },
+  genderOptionText: { fontSize: 14, fontWeight: '600', color: '#5A5A5A' },
+  genderOptionTextSelected: { fontWeight: '700', color: '#1A1A1A' },
   sheetActions: { flexDirection: 'row', gap: 10 },
-  cancelBtn: { flex: 1, height: 52, borderRadius: 16, backgroundColor: '#F4F5F6', alignItems: 'center', justifyContent: 'center' },
-  cancelBtnText: { fontSize: 15, fontWeight: '700', color: '#6B7684' },
+  cancelBtn: { flex: 1, height: 52, borderRadius: 16, backgroundColor: '#F4F4F4', alignItems: 'center', justifyContent: 'center' },
+  cancelBtnText: { fontSize: 15, fontWeight: '700', color: '#5F5F5F' },
   saveBtn: {
-    flex: 2, height: 52, borderRadius: 16, backgroundColor: '#417029',
+    flex: 2, height: 52, borderRadius: 16, backgroundColor: '#0863BF',
     alignItems: 'center', justifyContent: 'center',
-    shadowColor: '#417029', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.28, shadowRadius: 12,
+    shadowColor: '#0863BF', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.28, shadowRadius: 12,
   },
-  saveBtnDisabled: { backgroundColor: '#A8C4ED' },
+  saveBtnDisabled: { backgroundColor: '#D7E6F5' },
   saveBtnText: { fontSize: 15, fontWeight: '700', color: '#FFFFFF' },
   signOutInSheet: { alignSelf: 'center', paddingVertical: 8, paddingHorizontal: 20 },
-  signOutInSheetText: { fontSize: 13, color: '#5C7A6E', fontWeight: '600' },
+  signOutInSheetText: { fontSize: 13, color: '#5A5A5A', fontWeight: '600' },
 
   pressed: { opacity: 0.7, transform: [{ scale: 0.97 }] },
 })

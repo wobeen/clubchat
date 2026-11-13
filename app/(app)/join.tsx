@@ -203,8 +203,8 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center', marginBottom: 18,
   },
   iconText: { fontSize: 26 },
-  cardTitle: { fontSize: 20, fontWeight: '800', color: '#191F28', marginBottom: 8, textAlign: 'center' },
-  cardSubtitle: { fontSize: 14, color: '#4E5968', textAlign: 'center', lineHeight: 20, marginBottom: 24 },
+  cardTitle: { fontSize: 20, fontWeight: '800', color: '#1A1A1A', marginBottom: 8, textAlign: 'center' },
+  cardSubtitle: { fontSize: 14, color: '#5A5A5A', textAlign: 'center', lineHeight: 20, marginBottom: 24 },
   primaryButton: {
     height: 50, width: '100%', borderRadius: 12, backgroundColor: '#3B7DD8',
     alignItems: 'center', justifyContent: 'center',
@@ -215,6 +215,6 @@ const styles = StyleSheet.create({
     borderWidth: 1.5, borderColor: '#3B7DD8', alignItems: 'center', justifyContent: 'center',
   },
   secondaryButtonText: { fontSize: 15, fontWeight: '700', color: '#3B7DD8' },
-  errorText: { fontSize: 15, color: '#E5484D', textAlign: 'center' },
+  errorText: { fontSize: 15, color: '#1A1A1A', textAlign: 'center' },
   pressedOpacity: { opacity: 0.7 },
 })

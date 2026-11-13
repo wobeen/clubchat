@@ -1,5 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native'
 import { Pressable } from '../ui/Pressable'
+import { colors, radius } from '../ui/theme'
 import { AttachmentMessage } from './AttachmentMessage'
 import { AvatarPlaceholder } from './Avatar'
 import { formatTime } from './chatUtils'
@@ -11,7 +12,7 @@ export function MyMessageBubble({ msg, onLongPress }: { msg: ChatMessage; onLong
   if (msg.deletedAt) {
     return (
       <View style={styles.myRow}>
-        <View style={[styles.myBubble, styles.deletedBubble]}>
+        <View style={styles.deletedBubble}>
           <Text style={styles.deletedText}>삭제된 메시지입니다</Text>
         </View>
       </View>
@@ -19,21 +20,18 @@ export function MyMessageBubble({ msg, onLongPress }: { msg: ChatMessage; onLong
   }
 
   return (
-    <View style={styles.myRow}>
-      <Text style={styles.myTime}>{formatTime(msg.createdAt)}</Text>
-      <Pressable
-        onLongPress={onLongPress}
-        delayLongPress={300}
-        style={[styles.myBubble, hasAttachment && styles.mediaBubble]}
-      >
+    <View style={styles.mineRow}>
+      <Pressable onLongPress={onLongPress} delayLongPress={300} style={styles.mineBody}>
+        <Text style={styles.senderName}>
+          {msg.sender.display_name}
+          <Text style={styles.time}>  {formatTime(msg.createdAt)}</Text>
+        </Text>
         {hasAttachment ? (
-          <AttachmentMessage fileName={msg.content} attachment={msg.attachment!} tint="blue" />
+          <AttachmentMessage fileName={msg.content} attachment={msg.attachment!} tint="white" />
         ) : (
-          <>
-            <Text style={styles.myText}>{msg.content}</Text>
-            {msg.editedAt && <Text style={styles.editedMark}>(수정됨)</Text>}
-          </>
+          <Text style={styles.bodyText}>{msg.content}</Text>
         )}
+        {msg.editedAt ? <Text style={styles.edited}>수정됨</Text> : null}
       </Pressable>
     </View>
   )
@@ -74,7 +72,7 @@ export function OtherMessageBubble({ msg, onAvatarPress }: { msg: ChatMessage; o
           ) : (
             <>
               <Text style={styles.otherText}>{msg.content}</Text>
-              {msg.editedAt && <Text style={styles.editedMarkOther}>(수정됨)</Text>}
+              {msg.editedAt && <Text style={styles.edited}>(수정됨)</Text>}
             </>
           )}
         </View>
@@ -84,41 +82,23 @@ export function OtherMessageBubble({ msg, onAvatarPress }: { msg: ChatMessage; o
 }
 
 const styles = StyleSheet.create({
-  myRow: { flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'flex-end', gap: 6 },
-  myTime: { fontSize: 11, color: '#A9B1BA', marginBottom: 2 },
-  myBubble: {
-    backgroundColor: '#417029',
-    borderRadius: 18,
-    borderTopRightRadius: 4,
-    paddingVertical: 11,
-    paddingHorizontal: 15,
-    maxWidth: '75%',
-  },
-  myText: { fontSize: 15, color: '#FFFFFF', lineHeight: 22 },
-  editedMark: { fontSize: 11, color: 'rgba(255,255,255,0.65)', marginTop: 2, textAlign: 'right' },
-  editedMarkOther: { fontSize: 11, color: '#A9B1BA', marginTop: 2 },
+  myRow: { flexDirection: 'row', justifyContent: 'flex-end' },
+  mineRow: { borderRadius: 18, backgroundColor: colors.mine, paddingHorizontal: 8, paddingVertical: 6 },
+  mineBody: { flex: 1, gap: 2 },
+  bodyText: { fontSize: 14, color: colors.ink, lineHeight: 22 },
+  edited: { fontSize: 11, color: colors.textMuted, marginTop: 2 },
+  time: { fontSize: 12, fontWeight: '400', color: colors.textMuted },
 
-  deletedBubble: { backgroundColor: '#F4F5F6', borderWidth: StyleSheet.hairlineWidth, borderColor: '#EBF0F0' },
-  deletedText: { fontSize: 14, color: '#A9B1BA', fontStyle: 'italic' },
+  deletedBubble: { backgroundColor: colors.surfaceSecondary, borderRadius: radius.lg },
+  deletedText: { fontSize: 14, color: colors.textMuted, fontStyle: 'italic' },
 
-  otherRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 9 },
+  otherRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 9, paddingHorizontal: 8, paddingVertical: 4 },
   avatarPressable: { alignSelf: 'flex-start' },
-  otherContent: { maxWidth: '75%', gap: 4 },
-  senderName: { fontSize: 12, fontWeight: '600', color: '#4E5968' },
-  otherTime: { fontSize: 11, fontWeight: '400', color: '#A9B1BA' },
-  otherBubble: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 18,
-    borderTopLeftRadius: 4,
-    paddingVertical: 11,
-    paddingHorizontal: 15,
-    shadowColor: 'rgba(25,31,40,1)',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 1,
-  },
-  otherText: { fontSize: 15, color: '#191F28', lineHeight: 22 },
+  otherContent: { flex: 1, gap: 2 },
+  senderName: { fontSize: 14, fontWeight: '600', color: colors.ink },
+  otherTime: { fontSize: 12, fontWeight: '400', color: colors.textMuted },
+  otherBubble: { backgroundColor: 'transparent' },
+  otherText: { fontSize: 14, color: colors.ink, lineHeight: 22 },
 
   mediaBubble: { padding: 8 },
 })

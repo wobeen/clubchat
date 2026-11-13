@@ -12,6 +12,7 @@
 
 import { Children, ReactNode } from 'react'
 import { StyleSheet, View, ViewStyle } from 'react-native'
+import { GlassSurface } from '../ui/Glass'
 import { colors } from '../ui/theme'
 import { useBreakpoint } from './useBreakpoint'
 
@@ -45,21 +46,22 @@ export function Pane({ width, children, style }: PaneProps) {
   }
 
   return (
-    <View style={[styles.pane, width != null ? { width } : null, style]}>
+    <GlassSurface
+      tone="text"
+      style={StyleSheet.flatten([styles.pane, width != null ? { width } : null, style])}
+    >
       {children}
-    </View>
+    </GlassSurface>
   )
 }
 
 const styles = StyleSheet.create({
-  row: { flex: 1, flexDirection: 'row', backgroundColor: colors.background },
+  row: { flex: 1, flexDirection: 'row', gap: 12, padding: 12, backgroundColor: 'transparent' },
   compactGroup: { flex: 1 },
   pane: {
     flexGrow: 0,
     flexShrink: 0,
-    borderRightWidth: StyleSheet.hairlineWidth,
-    borderRightColor: colors.borderLight,
-    backgroundColor: colors.surface,
+    backgroundColor: 'transparent',
   },
   paneCompact: { flex: 1 },
 })

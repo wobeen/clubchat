@@ -24,7 +24,8 @@
 import { ReactNode } from 'react'
 import { Modal, StyleSheet, Text, View } from 'react-native'
 import { Pressable } from '../ui/Pressable'
-import { colors, radius, shadows } from '../ui/theme'
+import { GlassSurface } from '../ui/Glass'
+import { colors, radius } from '../ui/theme'
 import { useBreakpoint } from './useBreakpoint'
 
 interface ScreenOverlayProps {
@@ -42,14 +43,16 @@ export function ScreenOverlay({ title, onClose, children, maxWidth = 480 }: Scre
   return (
     <Modal transparent visible animationType="fade" onRequestClose={onClose}>
       <Pressable style={styles.backdrop} onPress={onClose} accessibilityLabel="배경을 눌러 닫기" animated={false}>
-        <Pressable style={[styles.card, { maxWidth }]} onPress={() => {}} animated={false}>
-          <View style={styles.header}>
-            <Text style={styles.title} numberOfLines={1}>{title}</Text>
-            <Pressable onPress={onClose} hitSlop={10} style={styles.closeBtn} accessibilityRole="button" accessibilityLabel="닫기">
-              <Text style={styles.closeText}>✕</Text>
-            </Pressable>
-          </View>
-          <View style={styles.body}>{children}</View>
+        <Pressable style={{ width: '100%', maxWidth }} onPress={() => {}} animated={false}>
+          <GlassSurface tone="text" style={styles.card}>
+            <View style={styles.header}>
+              <Text style={styles.title} numberOfLines={1}>{title}</Text>
+              <Pressable onPress={onClose} hitSlop={10} style={styles.closeBtn} accessibilityRole="button" accessibilityLabel="닫기">
+                <Text style={styles.closeText}>✕</Text>
+              </Pressable>
+            </View>
+            <View style={styles.body}>{children}</View>
+          </GlassSurface>
         </Pressable>
       </Pressable>
     </Modal>
@@ -67,10 +70,8 @@ const styles = StyleSheet.create({
   card: {
     width: '100%',
     maxHeight: '85%',
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    overflow: 'hidden',
-    ...shadows.card,
+    backgroundColor: 'transparent',
+    borderRadius: radius.panel,
   },
   header: {
     flexDirection: 'row',

@@ -2,6 +2,8 @@ import { ActivityIndicator, View, StyleSheet } from 'react-native'
 import { Stack, useRouter, useSegments } from 'expo-router'
 import * as Linking from 'expo-linking'
 import { useEffect } from 'react'
+import { AppWallpaper } from '../src/features/ui/AppWallpaper'
+import { colors } from '../src/features/ui/theme'
 import { AuthProvider } from '../src/features/auth/AuthProvider'
 import { useAuth } from '../src/features/auth/useAuth'
 import { usePushToken } from '../src/features/notifications/usePushToken'
@@ -50,18 +52,22 @@ function RootLayoutNav() {
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color="#4A90D9" />
+        <ActivityIndicator size="large" color={colors.accent} />
       </View>
     )
   }
 
-  return <Stack screenOptions={{ headerShown: false }} />
+  return (
+    <AppWallpaper>
+      <Stack screenOptions={{ headerShown: false }} />
+    </AppWallpaper>
+  )
 }
 
 const styles = StyleSheet.create({
   center: {
     flex: 1,
-    backgroundColor: '#F3F4F6',
+    backgroundColor: colors.wallpaper,
     alignItems: 'center',
     justifyContent: 'center',
   },

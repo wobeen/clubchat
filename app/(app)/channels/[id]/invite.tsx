@@ -60,7 +60,7 @@ function InviteScreenContent() {
           accessibilityRole="button"
           accessibilityLabel="뒤로"
         >
-          <Text style={{ fontSize: 16, color: '#4A90D9' }}>뒤로</Text>
+          <Text style={{ fontSize: 16, color: '#0863BF' }}>뒤로</Text>
         </Pressable>
       ),
     })
@@ -128,7 +128,7 @@ function InviteScreenContent() {
   if (state.status === 'loading') {
     return (
       <View style={styles.centered}>
-        <ActivityIndicator size="large" color="#4A90D9" />
+        <ActivityIndicator size="large" color="#0863BF" />
         <Text style={styles.loadingText}>초대 코드를 생성하는 중...</Text>
       </View>
     )
@@ -224,7 +224,7 @@ export default function InviteScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F3F4F6',
+    backgroundColor: '#F2F2F2',
   },
   inner: {
     paddingHorizontal: 24,
@@ -236,13 +236,13 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#F3F4F6',
+    backgroundColor: '#F2F2F2',
     paddingHorizontal: 24,
     gap: 16,
   },
   loadingText: {
     fontSize: 14,
-    color: '#6B7280',
+    color: '#5A5A5A',
     marginTop: 8,
   },
   card: {
@@ -264,7 +264,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 16,
     borderWidth: 1.5,
-    borderColor: '#E5E7EB',
+    borderColor: '#E8E8E8',
     marginBottom: 20,
   },
   linkRow: {
@@ -282,30 +282,30 @@ const styles = StyleSheet.create({
   },
   cardSubtitle: {
     fontSize: 14,
-    color: '#6B7280',
+    color: '#5A5A5A',
     textAlign: 'center',
     lineHeight: 20,
     marginBottom: 24,
   },
   tokenBox: {
-    backgroundColor: '#EFF6FF',
+    backgroundColor: '#D7E6F5',
     borderRadius: 12,
     paddingVertical: 14,
     paddingHorizontal: 20,
     width: '100%',
     alignItems: 'center',
     borderWidth: 1.5,
-    borderColor: '#BFDBFE',
+    borderColor: '#D7E6F5',
   },
   tokenLabel: {
     fontSize: 11,
-    color: '#6B7280',
+    color: '#5A5A5A',
     marginBottom: 4,
   },
   tokenText: {
     fontSize: 16,
     fontWeight: '800',
-    color: '#1D4ED8',
+    color: '#0863BF',
     letterSpacing: 1.5,
     textAlign: 'center',
   },
@@ -315,20 +315,20 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     backgroundColor: '#FFFFFF',
     borderWidth: 1.5,
-    borderColor: '#4A90D9',
+    borderColor: '#0863BF',
     alignItems: 'center',
     ...(Platform.OS === 'web' ? ({ cursor: 'pointer' } as object) : {}),
   },
   copyButtonText: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#4A90D9',
+    color: '#0863BF',
   },
   shareButton: {
     flex: 1,
     paddingVertical: 12,
     borderRadius: 10,
-    backgroundColor: '#4A90D9',
+    backgroundColor: '#0863BF',
     alignItems: 'center',
     ...(Platform.OS === 'web' ? ({ cursor: 'pointer' } as object) : {}),
   },
@@ -342,7 +342,7 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 400,
     borderRadius: 14,
-    backgroundColor: '#4A90D9',
+    backgroundColor: '#0863BF',
     alignItems: 'center',
     justifyContent: 'center',
     ...(Platform.OS === 'web' ? ({ cursor: 'pointer' } as object) : {}),
@@ -354,14 +354,14 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: 15,
-    color: '#DC2626',
+    color: '#1A1A1A',
     textAlign: 'center',
   },
   retryButton: {
     paddingVertical: 10,
     paddingHorizontal: 24,
     borderRadius: 10,
-    backgroundColor: '#4A90D9',
+    backgroundColor: '#0863BF',
     ...(Platform.OS === 'web' ? ({ cursor: 'pointer' } as object) : {}),
   },
   retryButtonText: {

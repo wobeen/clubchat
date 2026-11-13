@@ -83,7 +83,7 @@ export default function JoinClubScreen() {
           <Text style={styles.joinedIconText}>OK</Text>
         </View>
         <Text style={styles.joinedTitle}>{form.clubName} 동아리에{'\n'}가입했어요!</Text>
-        <ActivityIndicator size="small" color="#4A90D9" style={{ marginTop: 24 }} />
+        <ActivityIndicator size="small" color="#0863BF" style={{ marginTop: 24 }} />
       </View>
     )
   }
@@ -108,7 +108,7 @@ export default function JoinClubScreen() {
           <TextInput
             style={styles.input}
             placeholder="8자리 초대 코드"
-            placeholderTextColor="#9CA3AF"
+            placeholderTextColor="#5F5F5F"
             value={code}
             onChangeText={(v) => {
               setCode(v.toUpperCase())
@@ -149,7 +149,7 @@ export default function JoinClubScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F3F4F6',
+    backgroundColor: '#F2F2F2',
   },
   inner: {
     flex: 1,
@@ -158,7 +158,7 @@ const styles = StyleSheet.create({
   },
   centered: {
     flex: 1,
-    backgroundColor: '#F3F4F6',
+    backgroundColor: '#F2F2F2',
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 32,
@@ -171,7 +171,7 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 14,
-    color: '#6B7280',
+    color: '#5A5A5A',
     marginBottom: 32,
     lineHeight: 20,
   },
@@ -189,7 +189,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
     borderWidth: 1.5,
-    borderColor: '#E5E7EB',
+    borderColor: '#E8E8E8',
     paddingHorizontal: 16,
     fontSize: 22,
     fontWeight: '700',
@@ -200,7 +200,7 @@ const styles = StyleSheet.create({
   joinButton: {
     height: 52,
     borderRadius: 14,
-    backgroundColor: '#4A90D9',
+    backgroundColor: '#0863BF',
     alignItems: 'center',
     justifyContent: 'center',
     ...(Platform.OS === 'web' ? ({ cursor: 'pointer' } as object) : {}),
@@ -212,7 +212,7 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: 14,
-    color: '#DC2626',
+    color: '#1A1A1A',
     marginBottom: 16,
     textAlign: 'center',
   },
@@ -223,7 +223,7 @@ const styles = StyleSheet.create({
     width: 72,
     height: 72,
     borderRadius: 36,
-    backgroundColor: '#4A90D9',
+    backgroundColor: '#0863BF',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 20,

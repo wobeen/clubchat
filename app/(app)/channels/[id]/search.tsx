@@ -118,7 +118,7 @@ function SearchScreenContent() {
           value={query}
           onChangeText={handleChangeText}
           placeholder="메시지 검색..."
-          placeholderTextColor="#9CA3AF"
+          placeholderTextColor="#5F5F5F"
           returnKeyType="search"
           onSubmitEditing={() => doSearch(query)}
           autoFocus
@@ -139,7 +139,7 @@ function SearchScreenContent() {
       {/* 결과 */}
       {loading ? (
         <View style={styles.centered}>
-          <ActivityIndicator size="large" color="#4A90D9" />
+          <ActivityIndicator size="large" color="#0863BF" />
         </View>
       ) : error ? (
         <View style={styles.centered}>
@@ -198,18 +198,18 @@ export default function SearchScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F3F4F6' },
+  container: { flex: 1, backgroundColor: '#F2F2F2' },
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#E5E7EB',
+    borderBottomColor: '#E8E8E8',
     paddingHorizontal: 16,
     paddingVertical: 10,
     gap: 8,
   },
-  searchIcon: { fontSize: 16, color: '#9CA3AF' },
+  searchIcon: { fontSize: 16, color: '#5F5F5F' },
   input: {
     flex: 1,
     fontSize: 16,
@@ -217,18 +217,18 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     ...(Platform.OS === 'web' ? ({ outlineStyle: 'none' } as object) : {}),
   },
-  clearButton: { fontSize: 14, color: '#9CA3AF', padding: 4 },
+  clearButton: { fontSize: 14, color: '#5F5F5F', padding: 4 },
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: 80 },
-  emptyText: { fontSize: 14, color: '#9CA3AF', textAlign: 'center' },
+  emptyText: { fontSize: 14, color: '#5F5F5F', textAlign: 'center' },
   hintText: { fontSize: 14, color: '#CBD5E1', textAlign: 'center' },
   retryButton: {
     marginTop: 16,
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 8,
-    backgroundColor: '#F4F5F6',
+    backgroundColor: '#F4F4F4',
   },
-  retryButtonText: { fontSize: 14, color: '#417029', fontWeight: '600' },
+  retryButtonText: { fontSize: 14, color: '#0863BF', fontWeight: '600' },
   listContent: { flexGrow: 1, padding: 12 },
   resultItem: {
     backgroundColor: '#FFFFFF',
@@ -238,7 +238,7 @@ const styles = StyleSheet.create({
   },
   resultMeta: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   resultSender: { fontSize: 13, fontWeight: '700', color: '#374151' },
-  resultTime: { fontSize: 11, color: '#9CA3AF' },
+  resultTime: { fontSize: 11, color: '#5F5F5F' },
   resultContent: { fontSize: 14, color: '#1A1A1A', lineHeight: 20 },
   highlight: { backgroundColor: '#FEF08A', color: '#1A1A1A', fontWeight: '700' },
   separator: { height: 8 },

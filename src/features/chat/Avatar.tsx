@@ -5,7 +5,7 @@ export function AvatarPlaceholder({ name, emoji, size }: { name: string; emoji?:
   const circleStyle = { width: size, height: size, borderRadius: size / 2 }
   if (emoji) {
     return (
-      <View style={[styles.avatarPlaceholder, circleStyle, { backgroundColor: '#FFF3E0' }]}>
+      <View style={[styles.avatarPlaceholder, circleStyle, { backgroundColor: '#EBEBEB' }]}>
         <Text style={{ fontSize: size * 0.55 }}>{emoji}</Text>
       </View>
     )
@@ -20,7 +20,7 @@ export function AvatarPlaceholder({ name, emoji, size }: { name: string; emoji?:
 
 const styles = StyleSheet.create({
   avatarPlaceholder: {
-    backgroundColor: '#6B7684',
+    backgroundColor: '#5F5F5F',
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,

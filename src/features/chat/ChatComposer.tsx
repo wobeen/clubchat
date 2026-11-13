@@ -140,7 +140,7 @@ export function ChatComposer({
             accessibilityLabel="파일 첨부"
           >
             {uploading
-              ? <ActivityIndicator size="small" color="#4A90D9" />
+              ? <ActivityIndicator size="small" color="#0863BF" />
               : <Text style={styles.attachButtonText}>📎</Text>}
           </Pressable>
         )}
@@ -151,7 +151,7 @@ export function ChatComposer({
           value={value}
           onChangeText={onChangeText}
           placeholder="메시지를 입력하세요"
-          placeholderTextColor="#9CA3AF"
+          placeholderTextColor="#5F5F5F"
           multiline
           maxLength={2000}
           returnKeyType="default"
@@ -182,7 +182,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     backgroundColor: '#FFFFFF',
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: '#F4F5F6',
+    borderTopColor: '#F4F4F4',
     paddingHorizontal: 16,
     paddingVertical: 10,
     gap: 16,
@@ -193,10 +193,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 12,
-    backgroundColor: '#F4F5F6',
+    backgroundColor: '#F4F4F4',
   },
   attachMenuIcon: { fontSize: 24 },
-  attachMenuText: { fontSize: 11, color: '#4E5968', fontWeight: '600' },
+  attachMenuText: { fontSize: 11, color: '#5A5A5A', fontWeight: '600' },
 
   editBanner: {
     flexDirection: 'row',
@@ -204,13 +204,13 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 8,
-    backgroundColor: '#BAE2FE',
+    backgroundColor: '#FFFFFF',
     borderTopWidth: 1,
-    borderTopColor: '#B3CEED',
+    borderTopColor: '#D7E6F5',
     gap: 8,
   },
-  editBannerLabel: { flex: 1, fontSize: 13, color: '#417029' },
-  editBannerCancel: { fontSize: 16, color: '#5C7A6E', fontWeight: '600' },
+  editBannerLabel: { flex: 1, fontSize: 13, color: '#0863BF' },
+  editBannerCancel: { fontSize: 16, color: '#5A5A5A', fontWeight: '600' },
 
   inputBar: {
     flexDirection: 'row',
@@ -220,7 +220,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     backgroundColor: '#FFFFFF',
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: '#F4F5F6',
+    borderTopColor: '#F4F4F4',
   },
   attachButton: {
     width: 38,
@@ -228,30 +228,30 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 19,
-    backgroundColor: '#F4F5F6',
+    backgroundColor: '#F4F4F4',
   },
   attachButtonText: { fontSize: 18 },
   input: {
     flex: 1,
     minHeight: 40,
     maxHeight: 120,
-    backgroundColor: '#F4F5F6',
+    backgroundColor: '#F4F4F4',
     borderRadius: 20,
     paddingHorizontal: 16,
     paddingVertical: Platform.OS === 'ios' ? 10 : 8,
     fontSize: 15,
-    color: '#191F28',
+    color: '#1A1A1A',
     ...(Platform.OS === 'web' ? ({ outlineStyle: 'none' } as object) : {}),
   },
   sendButton: {
     width: 38,
     height: 38,
     borderRadius: 19,
-    backgroundColor: '#417029',
+    backgroundColor: '#0863BF',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  sendButtonDisabled: { backgroundColor: '#A8C4ED' },
+  sendButtonDisabled: { backgroundColor: '#D7E6F5' },
   sendButtonPressed: { opacity: 0.8 },
   sendButtonText: { fontSize: 16, fontWeight: '700', color: '#FFFFFF' },
 })

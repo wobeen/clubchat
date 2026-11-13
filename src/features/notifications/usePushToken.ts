@@ -9,6 +9,8 @@ import { supabase } from '../../lib/supabase'
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,
+    shouldShowBanner: true,
+    shouldShowList: true,
     shouldPlaySound: true,
     shouldSetBadge: true,
   }),
@@ -31,7 +33,7 @@ async function registerAndSave(userId: string) {
       name: 'ClubChat',
       importance: Notifications.AndroidImportance.MAX,
       vibrationPattern: [0, 250, 250, 250],
-      lightColor: '#4A90D9',
+      lightColor: '#0863BF',
     })
   }
 

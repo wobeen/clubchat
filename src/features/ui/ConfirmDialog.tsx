@@ -67,7 +67,7 @@ export function useConfirm() {
                 accessibilityLabel={options.confirmText ?? '확인'}
               >
                 {busy
-                  ? <ActivityIndicator size="small" color={options.destructive ? '#E5484D' : '#417029'} />
+                  ? <ActivityIndicator size="small" color={options.destructive ? '#1A1A1A' : '#0863BF'} />
                   : (
                       <Text style={options.destructive ? styles.confirmTextDestructive : styles.confirmText}>
                         {options.confirmText ?? '확인'}
@@ -101,8 +101,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 14,
   },
-  title: { fontSize: 16, fontWeight: '700', color: '#191F28', textAlign: 'center' },
-  message: { fontSize: 14, color: '#4E5968', textAlign: 'center', marginTop: 8, lineHeight: 20 },
+  title: { fontSize: 16, fontWeight: '700', color: '#1A1A1A', textAlign: 'center' },
+  message: { fontSize: 14, color: '#5A5A5A', textAlign: 'center', marginTop: 8, lineHeight: 20 },
   actions: { flexDirection: 'row', gap: 8, marginTop: 20 },
   btn: {
     flex: 1,
@@ -112,10 +112,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   btnPressed: { opacity: 0.7 },
-  cancelBtn: { backgroundColor: '#F4F5F6' },
-  cancelText: { fontSize: 15, fontWeight: '600', color: '#4E5968' },
-  confirmBtn: { backgroundColor: '#417029' },
+  cancelBtn: { backgroundColor: '#F4F4F4' },
+  cancelText: { fontSize: 15, fontWeight: '600', color: '#5A5A5A' },
+  confirmBtn: { backgroundColor: '#0863BF' },
   confirmText: { fontSize: 15, fontWeight: '600', color: '#FFFFFF' },
-  confirmBtnDestructive: { backgroundColor: '#FDEBEC' },
-  confirmTextDestructive: { fontSize: 15, fontWeight: '600', color: '#E5484D' },
+  confirmBtnDestructive: { backgroundColor: '#F4F4F4' },
+  confirmTextDestructive: { fontSize: 15, fontWeight: '600', color: '#1A1A1A' },
 })

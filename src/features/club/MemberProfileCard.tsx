@@ -19,11 +19,11 @@ interface Props {
 }
 
 const AVATAR_COLORS = [
-  { bg: '#BAE2FE', text: '#2F8FD1' },
-  { bg: '#95E4F3', text: '#1EA8C4' },
-  { bg: '#42F2F2', text: '#0F9797' },
-  { bg: '#24F8AE', text: '#0FA876' },
-  { bg: '#63AB3F', text: '#191F28' },
+  { bg: '#FFFFFF', text: '#0863BF' },
+  { bg: '#EBEBEB', text: '#1A1A1A' },
+  { bg: '#EBEBEB', text: '#1A1A1A' },
+  { bg: '#EBEBEB', text: '#0863BF' },
+  { bg: '#5A5A5A', text: '#1A1A1A' },
 ]
 
 function getAvatarColor(name: string) {
@@ -34,9 +34,9 @@ function getAvatarColor(name: string) {
 
 const ROLE_LABEL: Record<string, string> = { owner: '방장', admin: '관리자', member: '멤버' }
 const ROLE_COLOR: Record<string, { bg: string; text: string }> = {
-  owner: { bg: '#BAE2FE', text: '#2F8FD1' },
-  admin: { bg: '#95E4F3', text: '#1EA8C4' },
-  member: { bg: '#F4F5F6', text: '#6B7684' },
+  owner: { bg: '#FFFFFF', text: '#0863BF' },
+  admin: { bg: '#EBEBEB', text: '#1A1A1A' },
+  member: { bg: '#F4F4F4', text: '#5F5F5F' },
 }
 const GENDER_LABEL: Record<string, string> = { female: '여성', male: '남성', private: '비공개' }
 
@@ -62,7 +62,7 @@ export function MemberProfileCard({ profile, onClose }: Props) {
     <Modal visible transparent animationType="fade" onRequestClose={onClose}>
       <Pressable style={styles.backdrop} onPress={onClose} animated={false}>
         <Pressable style={styles.card} onPress={() => {}} animated={false}>
-          <View style={[styles.avatarLarge, { backgroundColor: profile.avatar_emoji ? '#FFF3E0' : color.bg }]}>
+          <View style={[styles.avatarLarge, { backgroundColor: profile.avatar_emoji ? '#EBEBEB' : color.bg }]}>
             {profile.avatar_emoji
               ? <Text style={styles.avatarEmoji}>{profile.avatar_emoji}</Text>
               : <Text style={[styles.avatarInitials, { color: color.text }]}>{initials}</Text>}
@@ -77,8 +77,8 @@ export function MemberProfileCard({ profile, onClose }: Props) {
               </View>
             )}
             {profile.channelName && (
-              <View style={[styles.badge, { backgroundColor: '#BAE2FE' }]}>
-                <Text style={[styles.badgeText, { color: '#2F8FD1' }]}>{profile.channelName}</Text>
+              <View style={[styles.badge, { backgroundColor: '#FFFFFF' }]}>
+                <Text style={[styles.badgeText, { color: '#0863BF' }]}>{profile.channelName}</Text>
               </View>
             )}
           </View>
@@ -148,13 +148,13 @@ const styles = StyleSheet.create({
   },
   avatarEmoji: { fontSize: 40 },
   avatarInitials: { fontSize: 30, fontWeight: '800' },
-  name: { fontSize: 20, fontWeight: '800', color: '#191F28' },
+  name: { fontSize: 20, fontWeight: '800', color: '#1A1A1A' },
   badgeRow: { flexDirection: 'row', gap: 6 },
   badge: { paddingHorizontal: 10, paddingVertical: 3, borderRadius: 10 },
   badgeText: { fontSize: 12, fontWeight: '700' },
   infoBox: {
     width: '100%',
-    backgroundColor: '#F8F7FA',
+    backgroundColor: '#F2F2F2',
     borderRadius: 16,
     paddingHorizontal: 16,
   },
@@ -164,17 +164,17 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 12,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#EBF0F0',
+    borderBottomColor: '#E8E8E8',
   },
-  infoLabel: { fontSize: 14, color: '#5C7A6E' },
-  infoValue: { fontSize: 14, fontWeight: '700', color: '#191F28' },
+  infoLabel: { fontSize: 14, color: '#5A5A5A' },
+  infoValue: { fontSize: 14, fontWeight: '700', color: '#1A1A1A' },
   closeBtn: {
     width: '100%',
     height: 48,
     borderRadius: 14,
-    backgroundColor: '#F4F5F6',
+    backgroundColor: '#F4F4F4',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  closeBtnText: { fontSize: 14, fontWeight: '700', color: '#6B7684' },
+  closeBtnText: { fontSize: 14, fontWeight: '700', color: '#5F5F5F' },
 })

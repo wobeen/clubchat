@@ -76,7 +76,7 @@ export function JoinByCodeSheet({ visible, onClose, onJoined }: JoinByCodeSheetP
                 <Text style={styles.joinSuccessIconText}>✓</Text>
               </View>
               <Text style={styles.joinSuccessText}>{joinState.clubName} 동아리에{'\n'}가입했어요!</Text>
-              <ActivityIndicator size="small" color="#417029" style={{ marginTop: 16 }} />
+              <ActivityIndicator size="small" color="#0863BF" style={{ marginTop: 16 }} />
             </View>
           ) : (
             <View style={styles.joinContent}>
@@ -90,7 +90,7 @@ export function JoinByCodeSheet({ visible, onClose, onJoined }: JoinByCodeSheetP
                 value={joinCode}
                 onChangeText={(v) => { setJoinCode(v.toUpperCase()); if (joinState.status === 'error') setJoinState({ status: 'idle' }) }}
                 placeholder="8자리 초대 코드"
-                placeholderTextColor="#A9B1BA"
+                placeholderTextColor="#5F5F5F"
                 maxLength={8}
                 autoCapitalize="characters"
                 autoCorrect={false}
@@ -135,32 +135,32 @@ const styles = StyleSheet.create({
     paddingBottom: Platform.OS === 'ios' ? 40 : 24,
     maxHeight: '85%',
   },
-  sheetHandle: { width: 40, height: 4, borderRadius: 2, backgroundColor: '#E9EFE8', alignSelf: 'center', marginTop: 12, marginBottom: 4 },
-  sheetTitle: { fontSize: 19, fontWeight: '800', color: '#191F28' },
+  sheetHandle: { width: 40, height: 4, borderRadius: 2, backgroundColor: '#E8E8E8', alignSelf: 'center', marginTop: 12, marginBottom: 4 },
+  sheetTitle: { fontSize: 19, fontWeight: '800', color: '#1A1A1A' },
   sheetActions: { flexDirection: 'row', gap: 10 },
-  cancelBtn: { flex: 1, height: 52, borderRadius: 16, backgroundColor: '#F4F5F6', alignItems: 'center', justifyContent: 'center' },
-  cancelBtnText: { fontSize: 15, fontWeight: '700', color: '#6B7684' },
+  cancelBtn: { flex: 1, height: 52, borderRadius: 16, backgroundColor: '#F4F4F4', alignItems: 'center', justifyContent: 'center' },
+  cancelBtnText: { fontSize: 15, fontWeight: '700', color: '#5F5F5F' },
   saveBtn: {
-    flex: 2, height: 52, borderRadius: 16, backgroundColor: '#417029',
+    flex: 2, height: 52, borderRadius: 16, backgroundColor: '#0863BF',
     alignItems: 'center', justifyContent: 'center',
-    shadowColor: '#417029', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.28, shadowRadius: 12,
+    shadowColor: '#0863BF', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.28, shadowRadius: 12,
   },
-  saveBtnDisabled: { backgroundColor: '#A8C4ED' },
+  saveBtnDisabled: { backgroundColor: '#D7E6F5' },
   saveBtnText: { fontSize: 15, fontWeight: '700', color: '#FFFFFF' },
 
   pressed: { opacity: 0.7, transform: [{ scale: 0.97 }] },
 
   joinContent: { padding: 24, gap: 12 },
-  joinSubtitle: { fontSize: 13, color: '#5C7A6E', lineHeight: 18 },
-  joinErrorText: { fontSize: 13, color: '#E5484D', textAlign: 'center' },
+  joinSubtitle: { fontSize: 13, color: '#5A5A5A', lineHeight: 18 },
+  joinErrorText: { fontSize: 13, color: '#1A1A1A', textAlign: 'center' },
   joinCodeInput: {
-    height: 56, backgroundColor: '#F4F5F6', borderRadius: 14,
-    paddingHorizontal: 16, fontSize: 24, fontWeight: '700', color: '#191F28',
+    height: 56, backgroundColor: '#F4F4F4', borderRadius: 14,
+    paddingHorizontal: 16, fontSize: 24, fontWeight: '700', color: '#1A1A1A',
     letterSpacing: 6, textAlign: 'center',
     ...(Platform.OS === 'web' ? ({ outlineStyle: 'none' } as object) : {}),
   },
   joinSuccess: { padding: 40, alignItems: 'center', gap: 12 },
-  joinSuccessIcon: { width: 64, height: 64, borderRadius: 32, backgroundColor: '#417029', alignItems: 'center', justifyContent: 'center' },
+  joinSuccessIcon: { width: 64, height: 64, borderRadius: 32, backgroundColor: '#0863BF', alignItems: 'center', justifyContent: 'center' },
   joinSuccessIconText: { fontSize: 28, fontWeight: '800', color: '#FFFFFF' },
-  joinSuccessText: { fontSize: 18, fontWeight: '700', color: '#191F28', textAlign: 'center', lineHeight: 28 },
+  joinSuccessText: { fontSize: 18, fontWeight: '700', color: '#1A1A1A', textAlign: 'center', lineHeight: 28 },
 })

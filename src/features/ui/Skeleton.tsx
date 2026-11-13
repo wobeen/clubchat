@@ -69,8 +69,8 @@ export function ChannelHomeSkeleton() {
 }
 
 const styles = StyleSheet.create({
-  block: { backgroundColor: '#D1D5DB', borderRadius: 6 },
-  container: { flex: 1, backgroundColor: '#F3F4F6' },
+  block: { backgroundColor: '#E8E8E8', borderRadius: 6 },
+  container: { flex: 1, backgroundColor: '#F2F2F2' },
   list: { padding: 16, gap: 10 },
   card: {
     backgroundColor: '#FFFFFF',

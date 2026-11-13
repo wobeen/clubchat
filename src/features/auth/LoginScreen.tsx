@@ -15,7 +15,9 @@ export function LoginScreen() {
     <View style={styles.container}>
       <View style={styles.hero}>
         {/* 로고 자리 — 추후 <Image> 교체 */}
-        <View style={styles.logoPlaceholder} />
+        <View style={styles.logoPlaceholder}>
+          <Text style={styles.logoLetter}>C</Text>
+        </View>
         <Text style={styles.appName}>ClubChat</Text>
         <Text style={styles.tagline}>동아리·소모임 업무용 메신저</Text>
       </View>
@@ -48,7 +50,7 @@ export function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: 'transparent',
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 32,
@@ -58,12 +60,15 @@ const styles = StyleSheet.create({
     marginBottom: 64,
   },
   logoPlaceholder: {
-    width: 80,
-    height: 80,
-    borderRadius: 20,
-    backgroundColor: '#4A90D9',
+    width: 64,
+    height: 64,
+    borderRadius: 999,
+    backgroundColor: '#1A1A1A',
+    alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 16,
   },
+  logoLetter: { color: '#FFFFFF', fontSize: 28, fontWeight: '700' },
   appName: {
     fontSize: 32,
     fontWeight: '700',
@@ -73,7 +78,7 @@ const styles = StyleSheet.create({
   tagline: {
     marginTop: 8,
     fontSize: 15,
-    color: '#6B7280',
+    color: '#5A5A5A',
   },
   actions: {
     width: '100%',
@@ -84,10 +89,10 @@ const styles = StyleSheet.create({
   googleButton: {
     width: '100%',
     height: 52,
-    borderRadius: 12,
     borderWidth: 1.5,
-    borderColor: '#D1D5DB',
-    backgroundColor: '#FFFFFF',
+    borderRadius: 999,
+    borderColor: 'rgba(26,26,26,0.14)',
+    backgroundColor: 'rgba(255,255,255,0.7)',
     alignItems: 'center',
     justifyContent: 'center',
     // Web에서 hover cursor
@@ -99,11 +104,11 @@ const styles = StyleSheet.create({
   googleButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#374151',
+    color: '#1A1A1A',
   },
   errorText: {
     fontSize: 14,
-    color: '#DC2626',
+    color: '#1A1A1A',
     textAlign: 'center',
   },
 })

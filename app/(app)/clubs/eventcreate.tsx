@@ -11,7 +11,7 @@ export default function ClubEventCreatePage() {
   if (!clubId || !session?.user) {
     return (
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-        <ActivityIndicator size="large" color="#417029" />
+        <ActivityIndicator size="large" color="#0863BF" />
       </View>
     )
   }
