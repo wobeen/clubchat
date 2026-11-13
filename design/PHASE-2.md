@@ -10,6 +10,8 @@
 
 Pretendard는 웹에서 `expo-font` 또는 전역 CSS로 불러옵니다. 네이티브는 같은 파일을 `useFonts`로 등록합니다. 굵기 400, 500, 600, 700만 넣습니다.
 
+유리 재질은 `design/DESIGN-SYSTEM.md`의 리퀴드 글래스 절을 따릅니다. 웹은 `backdrop-filter`, 네이티브는 `expo-blur`의 `BlurView`이고, 블러를 쓸 수 없으면 흰 88% 면으로 떨어집니다.
+
 ## 2. 셸
 
 순서대로 `IconRail`, `ClubListPane`, `RoomListPane`, `PaneHeader`, `panes.tsx`입니다.

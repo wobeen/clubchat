@@ -60,7 +60,12 @@ html, body { margin: 0; height: 100%; }
 body {
   height: 100%;
   overflow: hidden;
-  background: var(--bg);
+  background-color: #f2f2f2;
+  background-image:
+    radial-gradient(ellipse 56% 46% at 8% 10%, rgba(74, 74, 74, 0.30), transparent 64%),
+    radial-gradient(ellipse 46% 40% at 94% 6%, rgba(26, 26, 26, 0.14), transparent 60%),
+    radial-gradient(ellipse 52% 48% at 82% 94%, rgba(74, 74, 74, 0.24), transparent 62%),
+    radial-gradient(ellipse 34% 30% at 24% 86%, rgba(26, 26, 26, 0.12), transparent 58%);
   color: var(--text);
   font-family: Pretendard, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
   font-size: 14px;
@@ -792,3 +797,150 @@ h1, h2, h3 { margin: 0; font-weight: 600; letter-spacing: -0.02em; }
 .quote { font-size: 13px; color: var(--text-2); background: var(--surface-2); border-radius: 6px; padding: 8px 10px; margin-top: 6px; }
 .desktop-only { }
 @media (max-width: 700px) { .desktop-only { display: none; } }
+
+/* ── Liquid Glass (iOS 26). Grayscale only. ─────────────────────────────── */
+:root {
+  --glass: rgba(255, 255, 255, 0.62);
+  --glass-text: rgba(255, 255, 255, 0.88);
+  --glass-edge: rgba(255, 255, 255, 0.78);
+  --glass-blur: blur(28px) saturate(1.4);
+  --glass-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.92),
+    0 12px 32px rgba(26, 26, 26, 0.10);
+  --radius-panel: 28px;
+  --radius-card: 26px;
+}
+
+.app, .m-app, .login, .stage, .found, .m-body, .m-body.white, .status, .home-ind, .m-foot, .main.canvas {
+  background: transparent;
+}
+.app { padding: 12px; gap: 12px; }
+.rail, .side, .main, .detail {
+  background: var(--glass-text);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-edge);
+  border-radius: var(--radius-panel);
+  box-shadow: var(--glass-shadow);
+  overflow: hidden;
+}
+.rail { width: 68px; border-right: 1px solid var(--glass-edge); }
+.side { width: 268px; }
+.detail { border-left: 1px solid var(--glass-edge); }
+.side-head, .main-head, .dialog-head { border-bottom-color: rgba(26, 26, 26, 0.08); }
+.logo, .rail-btn, .rail-add, .av, .mark, .icon-btn, .send, .gmono, .datechip {
+  border-radius: 999px;
+}
+.logo {
+  background: var(--text);
+  color: var(--bg);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+.rail-btn, .rail-add, .icon-btn {
+  background: var(--glass);
+  -webkit-backdrop-filter: blur(16px) saturate(1.3);
+  backdrop-filter: blur(16px) saturate(1.3);
+  border: 1px solid var(--glass-edge);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85);
+  color: var(--text);
+}
+.rail-btn.active {
+  background: #ffffff;
+  color: var(--text);
+  box-shadow: inset 0 1px 0 #ffffff, 0 6px 16px rgba(26, 26, 26, 0.12);
+}
+.rail-btn.active::before, .nav-item.active::before { display: none; }
+.rail-me { background: #ffffff; color: var(--text); }
+.nav-item { border-radius: 999px; }
+.nav-item.active {
+  background: #ffffff;
+  box-shadow: inset 0 1px 0 #ffffff, 0 4px 12px rgba(26, 26, 26, 0.08);
+}
+.card, .file, .quote, .banner, .editbar {
+  background: var(--glass-text);
+  -webkit-backdrop-filter: blur(18px) saturate(1.3);
+  backdrop-filter: blur(18px) saturate(1.3);
+  border: 1px solid var(--glass-edge);
+  border-radius: var(--radius-card);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 8px 20px rgba(26, 26, 26, 0.06);
+}
+.room-row.on {
+  background: #ffffff;
+  border-radius: 18px;
+  box-shadow: inset 0 1px 0 #ffffff, 0 4px 12px rgba(26, 26, 26, 0.06);
+}
+.btn, .gbtn, .rsvp button, .seg, .input, .pill, .react, .count {
+  border-radius: 999px;
+}
+.btn-primary, .send.on, .rsvp button.on, .switch, .gmono {
+  background: var(--text);
+  color: var(--bg);
+  border-color: transparent;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), 0 6px 14px rgba(26, 26, 26, 0.14);
+}
+.btn-secondary, .btn-danger, .gbtn, .rsvp button, .icon-btn.solid {
+  background: var(--glass);
+  color: var(--text);
+  border: 1px solid rgba(26, 26, 26, 0.14);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.88);
+}
+.btn-ghost { background: transparent; border: 0; box-shadow: none; }
+.input, .area, .composer, .seg, .emoji-row .pick {
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85);
+}
+.input { border-radius: 999px; }
+.area { border-radius: 22px; }
+.seg { border-radius: 999px; padding: 3px; }
+.seg button { border-radius: 999px; }
+.seg button.on, .emoji-row .pick.on {
+  background: #ffffff;
+  color: var(--text);
+  outline: none;
+  box-shadow: inset 0 1px 0 #ffffff, 0 2px 8px rgba(26, 26, 26, 0.08);
+}
+.switch.off { background: var(--glass); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7); }
+.switch.off i { background: var(--text); }
+.composer-wrap, .chat-bar {
+  background: transparent;
+  border-top: 0;
+  padding: 8px 14px 14px;
+}
+.composer { border-radius: 999px; padding: 6px 6px 6px 14px; }
+.send { border-radius: 999px; }
+.dialog, .menu, .sheet, .login-card {
+  background: rgba(255, 255, 255, 0.90);
+  -webkit-backdrop-filter: blur(36px) saturate(1.45);
+  backdrop-filter: blur(36px) saturate(1.45);
+  border: 1px solid var(--glass-edge);
+  border-radius: var(--radius-panel);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), 0 24px 60px rgba(26, 26, 26, 0.16);
+}
+.login-card { padding: 28px 24px 24px; }
+.sheet { border-radius: 28px 28px 0 0; }
+.menu { border-radius: 22px; padding: 6px; }
+.menu button, .sheet button { border-radius: 999px; }
+.m-head {
+  margin: 8px 12px 0;
+  border: 1px solid var(--glass-edge);
+  border-radius: 22px;
+  background: var(--glass-text);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  box-shadow: var(--glass-shadow);
+  min-height: 52px;
+}
+.found { padding: 16px; gap: 16px; }
+.found section {
+  background: var(--glass-text);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-edge);
+  border-radius: var(--radius-panel);
+  box-shadow: var(--glass-shadow);
+}
+.datechip, .file-ico, .react, .pill, .banner { border-radius: 999px; }
+.photo, .qr { border-radius: 22px; }
+.msg { border-radius: 18px; }
+.skel { border-radius: 16px; }

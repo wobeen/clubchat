@@ -179,7 +179,7 @@ function eventRows(limit = 3) {
 function roomRows() {
   return `<div class="room-row"><span class="hash">#</span><span class="grow"><span class="event-title">공지</span><span class="event-meta">공지 · 안 읽음 1</span></span><span class="count">1</span></div>
   <div class="room-row"><span class="hash">#</span><span class="grow"><span class="event-title">자유</span><span class="event-meta">최근 메시지 14:21</span></span><span class="count">4</span></div>
-  <div class="room-row" style="background:var(--accent-soft);border-radius:6px"><span class="hash">#</span><span class="grow"><span class="event-title">주말출사</span><span class="event-meta">참여 중 · 8명</span></span></div>
+  <div class="room-row on"><span class="hash">#</span><span class="grow"><span class="event-title">주말출사</span><span class="event-meta">참여 중 · 8명</span></span></div>
   <div class="room-row"><span class="hash">${icon('lock', 14)}</span><span class="grow"><span class="event-title">장비</span><span class="event-meta">비밀번호가 필요해요</span></span><span class="link">입장</span></div>`
 }
 
@@ -296,7 +296,7 @@ function login(device) {
     <p class="fine">학교 계정으로 로그인합니다. 비밀번호는 저장하지 않습니다.</p>
   </div>`
   if (device === 'mobile') {
-    return `<div class="m-app" style="background:var(--bg)">${statusBar()}<div class="login" style="flex:1">${card}</div><div class="home-ind" style="background:var(--bg)"><span></span></div></div>`
+    return `<div class="m-app">${statusBar()}<div class="login" style="flex:1">${card}</div><div class="home-ind"><span></span></div></div>`
   }
   return `<div class="login">${card}</div>`
 }
@@ -379,7 +379,7 @@ function chat(device, { editing = false, menu = false } = {}) {
     })}${sheet}</div>`
   }
   const menuEl = menu
-    ? `<div class="menu" style="top:148px;left:248px"><button>수정</button><button>복사</button><button class="danger">삭제</button></div>`
+    ? `<div class="menu" style="top:108px;left:460px"><button>수정</button><button>복사</button><button class="danger">삭제</button></div>`
     : ''
   return workspace({
     main: `<div style="display:flex;flex-direction:column;height:100%;position:relative">${chatMain({ editing, hot: menu })}${menuEl}</div>`,
@@ -593,7 +593,7 @@ function invitePreview(device) {
     <button class="btn btn-primary btn-block" style="margin-top:16px">참여하기</button>
     <button class="btn btn-ghost btn-block">나중에</button>
   </div>`
-  if (device === 'mobile') return `<div class="m-app" style="background:var(--bg)">${statusBar()}<div class="login">${card}</div><div class="home-ind" style="background:var(--bg)"><span></span></div></div>`
+  if (device === 'mobile') return `<div class="m-app">${statusBar()}<div class="login">${card}</div><div class="home-ind"><span></span></div></div>`
   return `<div class="login">${card}</div>`
 }
 
@@ -650,7 +650,7 @@ function foundations() {
     </section>
     <section style="border-right:0">
       <h2>원칙</h2>
-      <p>색은 종이, 잉크, 중간 회색입니다. 채도는 없고, 강조는 채움과 굵기로 나눕니다.</p>
+      <p>무채색 세 가지 위에 리퀴드 글래스입니다. 켜진 컨트롤은 불투명 채움, 꺼진 컨트롤은 유리입니다.</p>
       <p style="margin-top:8px">삭제와 로그아웃은 빨간 색 없이 잉크 테두리와 라벨로 구분합니다.</p>
       <p style="margin-top:8px">한글 본문은 14px. 라이트만 제공합니다.</p>
       <div class="card" style="margin-top:16px"><div class="card-head"><h2>목록</h2><span class="count">3</span></div>

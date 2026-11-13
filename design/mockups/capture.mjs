@@ -23,7 +23,7 @@ const artifactNames = new Set([
   'room-home-desktop-light.png',
   'chat-desktop-light.png',
   'chat-mobile-light.png',
-  'events-desktop-light.png',
+  'message-menu-desktop-light.png',
   'event-detail-desktop-light.png',
   'event-detail-mobile-light.png',
 ])
