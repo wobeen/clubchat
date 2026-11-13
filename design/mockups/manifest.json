@@ -1,0 +1,320 @@
+[
+  {
+    "id": "login",
+    "device": "desktop",
+    "theme": "light",
+    "file": "login.desktop.light.html"
+  },
+  {
+    "id": "login",
+    "device": "mobile",
+    "theme": "light",
+    "file": "login.mobile.light.html"
+  },
+  {
+    "id": "clubs-empty",
+    "device": "desktop",
+    "theme": "light",
+    "file": "clubs-empty.desktop.light.html"
+  },
+  {
+    "id": "clubs-empty",
+    "device": "mobile",
+    "theme": "light",
+    "file": "clubs-empty.mobile.light.html"
+  },
+  {
+    "id": "clubs",
+    "device": "desktop",
+    "theme": "light",
+    "file": "clubs.desktop.light.html"
+  },
+  {
+    "id": "clubs",
+    "device": "mobile",
+    "theme": "light",
+    "file": "clubs.mobile.light.html"
+  },
+  {
+    "id": "club-home",
+    "device": "desktop",
+    "theme": "light",
+    "file": "club-home.desktop.light.html"
+  },
+  {
+    "id": "club-home",
+    "device": "mobile",
+    "theme": "light",
+    "file": "club-home.mobile.light.html"
+  },
+  {
+    "id": "room-home",
+    "device": "desktop",
+    "theme": "light",
+    "file": "room-home.desktop.light.html"
+  },
+  {
+    "id": "room-home",
+    "device": "mobile",
+    "theme": "light",
+    "file": "room-home.mobile.light.html"
+  },
+  {
+    "id": "chat",
+    "device": "desktop",
+    "theme": "light",
+    "file": "chat.desktop.light.html"
+  },
+  {
+    "id": "chat",
+    "device": "mobile",
+    "theme": "light",
+    "file": "chat.mobile.light.html"
+  },
+  {
+    "id": "chat-edit",
+    "device": "desktop",
+    "theme": "light",
+    "file": "chat-edit.desktop.light.html"
+  },
+  {
+    "id": "chat-edit",
+    "device": "mobile",
+    "theme": "light",
+    "file": "chat-edit.mobile.light.html"
+  },
+  {
+    "id": "message-menu",
+    "device": "desktop",
+    "theme": "light",
+    "file": "message-menu.desktop.light.html"
+  },
+  {
+    "id": "message-menu",
+    "device": "mobile",
+    "theme": "light",
+    "file": "message-menu.mobile.light.html"
+  },
+  {
+    "id": "search",
+    "device": "desktop",
+    "theme": "light",
+    "file": "search.desktop.light.html"
+  },
+  {
+    "id": "search",
+    "device": "mobile",
+    "theme": "light",
+    "file": "search.mobile.light.html"
+  },
+  {
+    "id": "events",
+    "device": "desktop",
+    "theme": "light",
+    "file": "events.desktop.light.html"
+  },
+  {
+    "id": "events",
+    "device": "mobile",
+    "theme": "light",
+    "file": "events.mobile.light.html"
+  },
+  {
+    "id": "event-detail",
+    "device": "desktop",
+    "theme": "light",
+    "file": "event-detail.desktop.light.html"
+  },
+  {
+    "id": "event-detail",
+    "device": "mobile",
+    "theme": "light",
+    "file": "event-detail.mobile.light.html"
+  },
+  {
+    "id": "event-form",
+    "device": "desktop",
+    "theme": "light",
+    "file": "event-form.desktop.light.html"
+  },
+  {
+    "id": "event-form",
+    "device": "mobile",
+    "theme": "light",
+    "file": "event-form.mobile.light.html"
+  },
+  {
+    "id": "profile",
+    "device": "desktop",
+    "theme": "light",
+    "file": "profile.desktop.light.html"
+  },
+  {
+    "id": "profile",
+    "device": "mobile",
+    "theme": "light",
+    "file": "profile.mobile.light.html"
+  },
+  {
+    "id": "join-code",
+    "device": "desktop",
+    "theme": "light",
+    "file": "join-code.desktop.light.html"
+  },
+  {
+    "id": "join-code",
+    "device": "mobile",
+    "theme": "light",
+    "file": "join-code.mobile.light.html"
+  },
+  {
+    "id": "create-club",
+    "device": "desktop",
+    "theme": "light",
+    "file": "create-club.desktop.light.html"
+  },
+  {
+    "id": "create-club",
+    "device": "mobile",
+    "theme": "light",
+    "file": "create-club.mobile.light.html"
+  },
+  {
+    "id": "create-room",
+    "device": "desktop",
+    "theme": "light",
+    "file": "create-room.desktop.light.html"
+  },
+  {
+    "id": "create-room",
+    "device": "mobile",
+    "theme": "light",
+    "file": "create-room.mobile.light.html"
+  },
+  {
+    "id": "invite",
+    "device": "desktop",
+    "theme": "light",
+    "file": "invite.desktop.light.html"
+  },
+  {
+    "id": "invite",
+    "device": "mobile",
+    "theme": "light",
+    "file": "invite.mobile.light.html"
+  },
+  {
+    "id": "room-manage",
+    "device": "desktop",
+    "theme": "light",
+    "file": "room-manage.desktop.light.html"
+  },
+  {
+    "id": "room-manage",
+    "device": "mobile",
+    "theme": "light",
+    "file": "room-manage.mobile.light.html"
+  },
+  {
+    "id": "club-manage",
+    "device": "desktop",
+    "theme": "light",
+    "file": "club-manage.desktop.light.html"
+  },
+  {
+    "id": "club-manage",
+    "device": "mobile",
+    "theme": "light",
+    "file": "club-manage.mobile.light.html"
+  },
+  {
+    "id": "members",
+    "device": "desktop",
+    "theme": "light",
+    "file": "members.desktop.light.html"
+  },
+  {
+    "id": "members",
+    "device": "mobile",
+    "theme": "light",
+    "file": "members.mobile.light.html"
+  },
+  {
+    "id": "room-join",
+    "device": "desktop",
+    "theme": "light",
+    "file": "room-join.desktop.light.html"
+  },
+  {
+    "id": "room-join",
+    "device": "mobile",
+    "theme": "light",
+    "file": "room-join.mobile.light.html"
+  },
+  {
+    "id": "apply",
+    "device": "desktop",
+    "theme": "light",
+    "file": "apply.desktop.light.html"
+  },
+  {
+    "id": "apply",
+    "device": "mobile",
+    "theme": "light",
+    "file": "apply.mobile.light.html"
+  },
+  {
+    "id": "wiki-editor",
+    "device": "desktop",
+    "theme": "light",
+    "file": "wiki-editor.desktop.light.html"
+  },
+  {
+    "id": "wiki-editor",
+    "device": "mobile",
+    "theme": "light",
+    "file": "wiki-editor.mobile.light.html"
+  },
+  {
+    "id": "invite-preview",
+    "device": "desktop",
+    "theme": "light",
+    "file": "invite-preview.desktop.light.html"
+  },
+  {
+    "id": "invite-preview",
+    "device": "mobile",
+    "theme": "light",
+    "file": "invite-preview.mobile.light.html"
+  },
+  {
+    "id": "qr-scan",
+    "device": "desktop",
+    "theme": "light",
+    "file": "qr-scan.desktop.light.html"
+  },
+  {
+    "id": "qr-scan",
+    "device": "mobile",
+    "theme": "light",
+    "file": "qr-scan.mobile.light.html"
+  },
+  {
+    "id": "skeleton",
+    "device": "desktop",
+    "theme": "light",
+    "file": "skeleton.desktop.light.html"
+  },
+  {
+    "id": "skeleton",
+    "device": "mobile",
+    "theme": "light",
+    "file": "skeleton.mobile.light.html"
+  },
+  {
+    "id": "foundations",
+    "device": "desktop",
+    "theme": "light",
+    "file": "foundations.desktop.light.html"
+  }
+]
