@@ -6,11 +6,11 @@
 |---|---|
 | [SCREEN-INVENTORY.md](./SCREEN-INVENTORY.md) | 라우트·컴포넌트·현재 스타일 |
 | [REFERENCES.md](./REFERENCES.md) | 참고한 제품과 가져올 점 |
-| [DESIGN-SYSTEM.md](./DESIGN-SYSTEM.md) | 라이트/다크 토큰, 글자, 간격, 컴포넌트 |
+| [DESIGN-SYSTEM.md](./DESIGN-SYSTEM.md) | 세 색 토큰, 글자, 간격, 컴포넌트 |
 | [PHASE-2.md](./PHASE-2.md) | 승인 후 구현 순서 |
 | [mockups/index.html](./mockups/index.html) | 정적 HTML 목업 목록 |
 
-PNG는 `design/mockups/png/`에 있습니다. 파일 이름은 `{화면}-{desktop|mobile}-{light|dark}.png`입니다.
+PNG는 `design/mockups/png/`에 있습니다. 파일 이름은 `{화면}-{desktop|mobile}-light.png`입니다. 다크 목업은 없습니다.
 
 목업을 다시 만들 때:
 

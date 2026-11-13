@@ -25,12 +25,7 @@ function icon(name, size = 16) {
 }
 
 function googleMark() {
-  return `<svg width="16" height="16" viewBox="0 0 18 18" aria-hidden="true">
-    <path fill="#4285F4" d="M17.6 9.2c0-.6-.1-1.2-.2-1.8H9v3.4h4.8a4.1 4.1 0 0 1-1.8 2.7v2.2h2.9c1.7-1.6 2.7-3.9 2.7-6.5z"/>
-    <path fill="#34A853" d="M9 18c2.4 0 4.5-.8 6-2.2l-2.9-2.2c-.8.6-1.9.9-3.1.9-2.4 0-4.4-1.6-5.1-3.8H.9v2.3A9 9 0 0 0 9 18z"/>
-    <path fill="#FBBC05" d="M3.9 10.7A5.4 5.4 0 0 1 3.6 9c0-.6.1-1.2.3-1.7V5H.9A9 9 0 0 0 0 9c0 1.4.3 2.8.9 4l3-2.3z"/>
-    <path fill="#EA4335" d="M9 3.6c1.3 0 2.5.5 3.4 1.3l2.6-2.6C13.5.9 11.4 0 9 0A9 9 0 0 0 .9 5l3 2.3C4.6 5.2 6.6 3.6 9 3.6z"/>
-  </svg>`
+  return `<span class="gmono" aria-hidden="true">G</span>`
 }
 
 function qrHtml() {
@@ -63,7 +58,7 @@ const people = [
 ]
 
 function av(p, size = '') {
-  return `<span class="av ${size} av-${p.tone}">${p.init}</span>`
+  return `<span class="av ${size}">${p.init}</span>`
 }
 
 function rail(active) {
@@ -78,7 +73,7 @@ function rail(active) {
       ${clubs.map((c) => `<button class="rail-btn${c.name === active ? ' active' : ''}" aria-label="${c.name}">${c.mark}${c.unread && c.name !== active ? `<span class="dot">${c.unread}</span>` : ''}</button>`).join('')}
       <button class="rail-add" aria-label="초대 코드로 가입">${icon('plus', 16)}</button>
     </div>
-    <button class="rail-btn rail-me av-a" aria-label="프로필">하</button>
+    <button class="rail-btn rail-me" aria-label="프로필">하</button>
   </aside>`
 }
 
@@ -309,7 +304,7 @@ function login(device) {
 function clubsEmpty(device) {
   if (device === 'mobile') {
     return mobileFrame({
-      head: `<h1 class="grow">동아리</h1><button class="rail-btn av-a" style="width:32px;height:32px">하</button>`,
+      head: `<h1 class="grow">동아리</h1><button class="rail-btn rail-me" style="width:32px;height:32px">하</button>`,
       body: `<div class="empty"><h2>아직 동아리가 없어요</h2><p>동아리를 만들거나, 받은 8자리 코드로 가입하세요.</p></div>`,
       foot: `<div class="m-foot"><button class="btn btn-primary btn-block">동아리 만들기</button><button class="btn btn-secondary btn-block">초대 코드로 가입</button></div>`,
     })
@@ -329,7 +324,7 @@ function clubs(device) {
       ['잔', '잔향', '밴드 · 안 읽음 1', '1'],
     ]
     return mobileFrame({
-      head: `<h1 class="grow">동아리</h1><button class="rail-btn av-a" style="width:32px;height:32px">하</button>`,
+      head: `<h1 class="grow">동아리</h1><button class="rail-btn rail-me" style="width:32px;height:32px">하</button>`,
       body: `<div class="m-pad"><div class="section-label" style="padding-left:4px">가입함 3</div>${items.map(([m, n, s, c]) => `<button class="nav-item" style="padding:10px 4px"><span class="mark">${m}</span><span class="nav-text grow"><span class="nav-name">${n}</span><span class="nav-sub">${s}</span></span>${c ? `<span class="count">${c}</span>` : ''}</button>`).join('')}</div>`,
       foot: `<div class="m-foot"><button class="btn btn-primary btn-block">동아리 만들기</button><button class="btn btn-secondary btn-block">초대 코드로 가입</button></div>`,
     })
@@ -457,7 +452,7 @@ function eventForm(device) {
 function profile(device) {
   const form = `<div class="profile-top">${av(people[0], 'lg')}<div><div class="event-title">김하은</div><div class="meta-line">frame@school.edu</div></div></div>
     <div class="field-label">아바타</div>
-    <div class="emoji-row" style="margin-bottom:14px"><span class="pick on" style="font-size:12px;font-weight:700">하은</span><span>📷</span><span>🌿</span><span>🌙</span><span>✏️</span></div>
+    <div class="emoji-row" style="margin-bottom:14px"><span class="pick on">하은</span><span class="pick">서</span><span class="pick">민</span><span class="pick">윤</span></div>
     <div class="form-gap">
       ${field('표시 이름', '<div class="input">김하은</div>')}
       <div class="pair">${field('학번', '<div class="input">23학번</div>')}${field('출생 연도', '<div class="input tabular">2002</div>')}</div>
@@ -543,7 +538,7 @@ function clubManage(device) {
     <div class="checkline"><div><div class="strong">동아리 공개</div><div class="help" style="margin:0">공개하면 검색되고, 가입 신청을 받을 수 있어요.</div></div><div class="switch"><i></i></div></div>
     <div class="card" style="padding:12px"><div class="faint" style="font-size:12px">초대 코드</div><div class="code" style="text-align:left;font-size:16px">A3F19C2B</div></div>
     <div><div class="card-head"><h2>가입 신청 2</h2></div>
-      ${requests.map(([n, i, t, s, q]) => `<div class="req"><div class="member"><span class="av sm av-${t}">${i}</span><span class="grow"><span class="event-title">${n}</span><span class="event-meta">${s}</span></span></div><div class="quote">${q}</div><div class="req-actions"><button class="btn btn-secondary" style="flex:1">거절</button><button class="btn btn-primary" style="flex:1">수락</button></div></div>`).join('')}
+      ${requests.map(([n, i, _t, s, q]) => `<div class="req"><div class="member"><span class="av sm">${i}</span><span class="grow"><span class="event-title">${n}</span><span class="event-meta">${s}</span></span></div><div class="quote">${q}</div><div class="req-actions"><button class="btn btn-secondary" style="flex:1">거절</button><button class="btn btn-primary" style="flex:1">수락</button></div></div>`).join('')}
     </div>
   </div>`
   if (device === 'mobile') return mobileFrame({ head: backHead('동아리 관리', '프레임'), body: `<div class="m-pad">${body.replace(/dialog-body" style="display:flex;flex-direction:column;gap:14px"/, '"')}</div>`, bodyClass: 'white' })
@@ -603,8 +598,8 @@ function invitePreview(device) {
 }
 
 function qrScan(device) {
-  const cam = `<div class="finder"><div style="padding:16px 18px;display:flex;align-items:center"><button style="color:#fff">${icon('close')}</button><span style="margin-left:8px;font-weight:600">QR 스캔</span></div><div class="finder-frame"></div><p style="text-align:center;padding:28px 32px 48px;color:#c8cbc4;font-size:14px">초대 QR을 네모 안에 맞춰 주세요.</p></div>`
-  if (device === 'mobile') return `<div class="m-app">${statusBar()}${cam}<div class="home-ind" style="background:#121412"><span style="background:#fff"></span></div></div>`
+  const cam = `<div class="finder"><div style="padding:16px 18px;display:flex;align-items:center;gap:8px"><button class="icon-btn" style="color:var(--bg)">${icon('close')}</button><span style="font-weight:600">QR 스캔</span></div><div class="finder-frame"></div><p style="text-align:center;padding:28px 32px 48px;font-size:14px">초대 QR을 네모 안에 맞춰 주세요.</p></div>`
+  if (device === 'mobile') return `<div class="m-app">${statusBar()}${cam}<div class="home-ind" style="background:var(--text)"><span style="background:var(--bg)"></span></div></div>`
   return workspace({
     main: roomHomeMain(),
     overlay: `<div class="scrim"><div class="dialog" style="overflow:hidden;height:520px">${cam}</div></div>`,
@@ -623,9 +618,13 @@ function skeleton(device) {
 
 function foundations() {
   const swatches = [
-    ['배경', '--bg'], ['크롬', '--chrome'], ['표면', '--surface'], ['테두리', '--border-strong'],
-    ['본문', '--text'], ['보조', '--text-2'], ['흐림', '--text-3'], ['강조', '--accent'],
-    ['강조 면', '--accent-soft'], ['위험', '--danger'], ['온라인', '--online'],
+    ['종이 #FFFFFF', '--bg'],
+    ['잉크 #1A1A1A', '--text'],
+    ['강조 #1F6A45', '--accent'],
+    ['잉크 4% 크롬', '--chrome'],
+    ['잉크 10% 테두리', '--border'],
+    ['잉크 64% 보조 글자', '--text-2'],
+    ['강조 12% 선택 면', '--accent-soft'],
   ]
   return `<div class="found">
     <section>
@@ -651,9 +650,9 @@ function foundations() {
     </section>
     <section style="border-right:0">
       <h2>원칙</h2>
-      <p>강조색은 한 가지. 상태 색은 데이터에만.</p>
-      <p style="margin-top:8px">크롬은 본문보다 한 단계 어둡고, 그림자는 다이얼로그에만.</p>
-      <p style="margin-top:8px">한글 본문은 14px. 영문 제품의 13px 밀도를 그대로 쓰지 않습니다.</p>
+      <p>색은 종이, 잉크, 강조 세 가지입니다. 테두리와 보조 글자는 잉크의 농도입니다.</p>
+      <p style="margin-top:8px">삭제와 로그아웃은 빨간 색 없이 잉크 테두리와 라벨로 구분합니다.</p>
+      <p style="margin-top:8px">한글 본문은 14px. 라이트만 제공합니다.</p>
       <div class="card" style="margin-top:16px"><div class="card-head"><h2>목록</h2><span class="count">3</span></div>
         <button class="nav-item active"><span class="hash">#</span><span class="nav-name">주말출사</span></button>
         <button class="nav-item unread"><span class="hash">#</span><span class="nav-name grow">자유</span><span class="count">4</span></button>
@@ -698,9 +697,6 @@ for (const id of both) {
   for (const device of ['desktop', 'mobile']) jobs.push({ id, device, theme: 'light' })
 }
 jobs.push({ id: 'foundations', device: 'desktop', theme: 'light' })
-for (const id of ['login', 'club-home', 'chat', 'foundations']) jobs.push({ id, device: 'desktop', theme: 'dark' })
-jobs.push({ id: 'chat', device: 'mobile', theme: 'dark' })
-jobs.push({ id: 'event-detail', device: 'mobile', theme: 'dark' })
 
 const manifest = []
 for (const job of jobs) {

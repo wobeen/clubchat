@@ -2,7 +2,9 @@ import { mkdirSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { pathToFileURL, fileURLToPath } from 'node:url'
 import { readFileSync } from 'node:fs'
-import { chromium } from 'playwright'
+const { chromium } = await import('playwright').catch(() =>
+  import('/tmp/pw/node_modules/playwright/index.mjs')
+)
 
 const root = dirname(fileURLToPath(import.meta.url))
 const manifest = JSON.parse(readFileSync(join(root, 'manifest.json'), 'utf8'))

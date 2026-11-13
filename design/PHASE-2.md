@@ -4,9 +4,9 @@
 
 ## 1. 토큰과 테마
 
-`src/features/ui/theme.ts`를 라이트/다크 맵으로 바꿉니다. 지금 일정 화면이 기대하는 별칭(`primaryDark`, `surfaceSecondary`, `textPrimary`, `error`)은 새 값을 가리키게 남겨 호출부가 한 번에 깨지지 않게 합니다.
+`src/features/ui/theme.ts`는 라이트 한 벌입니다. 안료는 종이 `#FFFFFF`, 잉크 `#1A1A1A`, 강조 `#1F6A45`이고, 테두리와 보조 글자는 잉크를 종이에 섞은 값입니다. 다크 맵은 만들지 않습니다. 일정 화면의 옛 키(`primaryDark`, `surfaceSecondary`, `textPrimary`, `error`)는 이 세 색과 그 농도를 가리키게 남겨 호출부가 한 번에 깨지지 않게 합니다. `error`도 빨강이 아니라 잉크입니다.
 
-`ThemeProvider`는 시스템 색 구성을 읽고, 프로필에는 아직 넣지 않습니다. 웹은 `color-scheme`과 CSS 변수, 네이티브는 토큰 객체를 스타일에 넘깁니다. 하드코딩된 `#4A90D9`, `#417029`, `#F3F4F6`를 찾습니다. 루트 로딩 인디케이터와 로그인 화면이 여기에 해당합니다.
+웹은 `color-scheme: light`와 CSS 변수, 네이티브는 토큰 객체를 스타일에 넘깁니다. 하드코딩된 `#4A90D9`, `#417029`, `#F3F4F6`를 찾습니다. 루트 로딩 인디케이터와 로그인 화면이 여기에 해당합니다.
 
 Pretendard는 웹에서 `expo-font` 또는 전역 CSS로 불러옵니다. 네이티브는 같은 파일을 `useFonts`로 등록합니다. 굵기 400, 500, 600, 700만 넣습니다.
 
@@ -14,7 +14,7 @@ Pretendard는 웹에서 `expo-font` 또는 전역 CSS로 불러옵니다. 네이
 
 순서대로 `IconRail`, `ClubListPane`, `RoomListPane`, `PaneHeader`, `panes.tsx`입니다.
 
-- 레일 72 → 64. 동아리 색은 `getClubColor`의 고정 페리윙클을 그만 쓰고 단색 마크를 씁니다. `EntityAvatar`의 `color`는 선택값이 됩니다.
+- 레일 72 → 64. 동아리 마크와 사람 아바타는 강조 12% 바탕 하나입니다. `getClubColor`와 `getAvatarColor`의 다른 색은 쓰지 않습니다.
 - 목록 너비 320/300 → 272.
 - 활성 행은 `accentSky` 배경 대신 `accent-soft`와 왼쪽 바.
 - 섹션 제목에서 이모지를 제거합니다. `w/[clubId]/index.tsx`, `w/[clubId]/[roomId].tsx`.
@@ -42,7 +42,7 @@ Pretendard는 웹에서 `expo-font` 또는 전역 CSS로 불러옵니다. 네이
 ## 5. 확인
 
 - 웹 1440과 390에서 깊이 0 → 동아리 → 방 홈 → 채팅 → 일정 상세.
-- 라이트와 다크에서 본문, 버튼, 플레이스홀더 대비.
+- 라이트에서 본문, 강조 버튼, 보조 글자 대비. 화면에 세 안료 밖의 색이 없는지.
 - 관리 오버레이가 넓은 화면에서 스택 헤더와 겹치지 않는지. 이 처리는 `_layout.tsx`에 이미 있습니다.
 - 네이티브 글꼴이 없을 때의 폴백이 한글을 깨지 않는지.
 

@@ -316,41 +316,5 @@
     "device": "desktop",
     "theme": "light",
     "file": "foundations.desktop.light.html"
-  },
-  {
-    "id": "login",
-    "device": "desktop",
-    "theme": "dark",
-    "file": "login.desktop.dark.html"
-  },
-  {
-    "id": "club-home",
-    "device": "desktop",
-    "theme": "dark",
-    "file": "club-home.desktop.dark.html"
-  },
-  {
-    "id": "chat",
-    "device": "desktop",
-    "theme": "dark",
-    "file": "chat.desktop.dark.html"
-  },
-  {
-    "id": "foundations",
-    "device": "desktop",
-    "theme": "dark",
-    "file": "foundations.desktop.dark.html"
-  },
-  {
-    "id": "chat",
-    "device": "mobile",
-    "theme": "dark",
-    "file": "chat.mobile.dark.html"
-  },
-  {
-    "id": "event-detail",
-    "device": "mobile",
-    "theme": "dark",
-    "file": "event-detail.mobile.dark.html"
   }
 ]
