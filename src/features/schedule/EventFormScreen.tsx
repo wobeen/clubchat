@@ -1,17 +1,17 @@
 import React, { useCallback, useState } from 'react'
 import {
-  ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Pressable } from '../ui/Pressable'
+import { GlassSurface } from '../ui/Glass'
+import { Button, Input } from '../ui/GlassControls'
 import { useSaveEvent } from './useEvents'
 import { colors, radius, spacing } from './scheduleUtils'
 import { DatePickerField } from './DatePickerField'
@@ -242,15 +242,14 @@ export default function EventFormScreen({ channelId, clubId, event, onSaved, onC
           </View>
         ) : null}
 
-        <View style={styles.form}>
+        <GlassSurface tone="text" radius={radius.lg} style={styles.form}>
           {/* 제목 */}
           <Field label="제목" required error={errors.title}>
-            <TextInput
-              style={[styles.input, errors.title && styles.inputError]}
+            <Input
+              style={errors.title ? styles.inputError : undefined}
               value={form.title}
               onChangeText={(v) => setField('title', v)}
               placeholder="일정 제목"
-              placeholderTextColor={colors.textSecondary}
               maxLength={100}
               returnKeyType="next"
               accessibilityLabel="일정 제목"
@@ -265,8 +264,8 @@ export default function EventFormScreen({ channelId, clubId, event, onSaved, onC
               placeholder="날짜 선택"
               hasError={!!errors.startsDate}
             />
-            <TextInput
-              style={[styles.input, errors.startsTime && styles.inputError]}
+            <Input
+              style={errors.startsTime ? styles.inputError : undefined}
               value={form.startsTime}
               onChangeText={(v) => setField('startsTime', v)}
               placeholder="시간 (예: 14:30)"
@@ -301,8 +300,8 @@ export default function EventFormScreen({ channelId, clubId, event, onSaved, onC
                   <Text style={styles.clearEndText}>✕</Text>
                 </Pressable>
               </View>
-              <TextInput
-                style={[styles.input, errors.endsTime && styles.inputError]}
+              <Input
+                style={errors.endsTime ? styles.inputError : undefined}
                 value={form.endsTime}
                 onChangeText={(v) => setField('endsTime', v)}
                 placeholder="시간 (예: 16:00)"
@@ -324,8 +323,7 @@ export default function EventFormScreen({ channelId, clubId, event, onSaved, onC
 
           {/* 장소 */}
           <Field label="장소">
-            <TextInput
-              style={styles.input}
+            <Input
               value={form.location}
               onChangeText={(v) => setField('location', v)}
               placeholder="장소 (선택)"
@@ -338,8 +336,8 @@ export default function EventFormScreen({ channelId, clubId, event, onSaved, onC
 
           {/* 설명 */}
           <Field label="설명">
-            <TextInput
-              style={[styles.input, styles.textArea]}
+            <Input
+              style={styles.textArea}
               value={form.description}
               onChangeText={(v) => setField('description', v)}
               placeholder="설명 (선택)"
@@ -352,36 +350,17 @@ export default function EventFormScreen({ channelId, clubId, event, onSaved, onC
             />
             <Text style={styles.charCount}>{form.description.length} / 1000</Text>
           </Field>
-        </View>
+        </GlassSurface>
 
         {/* 하단 버튼 */}
         <View style={styles.buttonRow}>
-          <Pressable
-            style={({ pressed }) => [styles.cancelButton, pressed && styles.cancelButtonPressed]}
-            onPress={handleCancel}
-            disabled={saving}
-            accessibilityRole="button"
-          >
-            <Text style={styles.cancelButtonText}>취소</Text>
-          </Pressable>
-          <Pressable
-            style={({ pressed }) => [
-              styles.saveButton,
-              saving && styles.saveButtonDisabled,
-              pressed && !saving && styles.saveButtonPressed,
-            ]}
+          <Button label="취소" variant="secondary" onPress={handleCancel} disabled={saving} style={styles.formBtn} />
+          <Button
+            label={saving ? '저장 중' : isEditMode ? '수정 완료' : '일정 저장'}
             onPress={handleSubmit}
             disabled={saving}
-            accessibilityRole="button"
-          >
-            {saving ? (
-              <ActivityIndicator size="small" color="#fff" />
-            ) : (
-              <Text style={styles.saveButtonText}>
-                {isEditMode ? '수정 완료' : '일정 저장'}
-              </Text>
-            )}
-          </Pressable>
+            style={styles.formBtnPrimary}
+          />
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -392,7 +371,7 @@ export default function EventFormScreen({ channelId, clubId, event, onSaved, onC
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  container: { flex: 1, backgroundColor: colors.surfaceSecondary },
+  container: { flex: 1, backgroundColor: 'transparent' },
   content: {
     padding: spacing.md,
     gap: spacing.md,
@@ -406,46 +385,20 @@ const styles = StyleSheet.create({
   headerTitle: { fontSize: 22, fontWeight: '700', color: colors.textPrimary },
 
   submitErrorBox: {
-    backgroundColor: '#fef2f2',
-    borderRadius: radius.md,
+    backgroundColor: colors.glassText,
+    borderRadius: radius.lg,
     padding: spacing.md,
-    borderLeftWidth: 4,
-    borderLeftColor: colors.error,
+    borderWidth: 1,
+    borderColor: colors.ink,
   },
   submitErrorText: { color: colors.error, fontSize: 14 },
 
   form: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
     padding: spacing.md,
     gap: spacing.md,
-    ...Platform.select({
-      web: { boxShadow: '0 1px 4px rgba(0,0,0,0.08)' } as object,
-      default: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.08,
-        shadowRadius: 4,
-        elevation: 2,
-      },
-    }),
+    backgroundColor: 'transparent',
   },
-
-  input: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.sm,
-    paddingHorizontal: spacing.md,
-    paddingVertical: Platform.OS === 'ios' ? spacing.sm + 2 : spacing.sm,
-    fontSize: 15,
-    color: colors.textPrimary,
-    backgroundColor: colors.surfaceSecondary,
-    ...Platform.select({
-      web: { outlineStyle: 'none' } as object,
-      default: {},
-    }),
-  },
-  inputError: { borderColor: colors.error },
+  inputError: { borderColor: colors.ink },
   textArea: { height: 100, paddingTop: spacing.sm },
   charCount: { fontSize: 11, color: colors.textSecondary, textAlign: 'right' },
 
@@ -466,32 +419,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.xs + 2,
     borderRadius: radius.full,
-    borderWidth: 1.5,
-    borderColor: colors.primary,
+    borderWidth: 1,
+    borderColor: 'rgba(26,26,26,0.14)',
+    backgroundColor: colors.glass,
   },
   addEndButtonPressed: { opacity: 0.7, transform: [{ scale: 0.96 }] },
   addEndButtonText: { fontSize: 13, color: colors.primary, fontWeight: '600' },
 
   buttonRow: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.sm },
-  cancelButton: {
-    flex: 1,
-    paddingVertical: spacing.sm + 2,
-    borderRadius: radius.md,
-    borderWidth: 1.5,
-    borderColor: colors.border,
-    alignItems: 'center',
-  },
-  cancelButtonPressed: { backgroundColor: colors.border },
-  cancelButtonText: { fontSize: 15, fontWeight: '600', color: colors.textSecondary },
-  saveButton: {
-    flex: 2,
-    paddingVertical: spacing.sm + 2,
-    borderRadius: radius.md,
-    backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  saveButtonPressed: { backgroundColor: colors.primaryDark, transform: [{ scale: 0.97 }] },
-  saveButtonDisabled: { opacity: 0.6 },
-  saveButtonText: { fontSize: 15, fontWeight: '700', color: '#fff' },
+  formBtn: { flex: 1, minHeight: 44 },
+  formBtnPrimary: { flex: 2, minHeight: 44 },
 })

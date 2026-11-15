@@ -1,14 +1,28 @@
 import { ActivityIndicator, View, StyleSheet } from 'react-native'
-import { Stack, useRouter, useSegments } from 'expo-router'
+import { DefaultTheme, Stack, ThemeProvider, useRouter, useSegments } from 'expo-router'
 import * as Linking from 'expo-linking'
 import { useEffect } from 'react'
 import { AppWallpaper } from '../src/features/ui/AppWallpaper'
+import { useAppFonts } from '../src/features/ui/fonts'
 import { colors } from '../src/features/ui/theme'
 import { AuthProvider } from '../src/features/auth/AuthProvider'
 import { useAuth } from '../src/features/auth/useAuth'
 import { usePushToken } from '../src/features/notifications/usePushToken'
 import { parseInviteToken } from '../src/features/deeplink/parseInviteLink'
 import { setPendingDeepLink, consumePendingDeepLink } from '../src/features/deeplink/pendingDeepLink'
+
+const navTheme = {
+  ...DefaultTheme,
+  colors: {
+    ...DefaultTheme.colors,
+    primary: colors.accent,
+    background: 'transparent',
+    card: 'transparent',
+    text: colors.ink,
+    border: 'rgba(26,26,26,0.08)',
+    notification: colors.accent,
+  },
+}
 
 export default function RootLayout() {
   return (
@@ -23,6 +37,8 @@ function RootLayoutNav() {
   const segments = useSegments()
   const router = useRouter()
   const url = Linking.useURL()
+  const fontsReady = useAppFonts()
+  const onPreview = __DEV__ && segments[0] === 'preview'
 
   // 로그인 후 푸시 토큰 등록 (실기기에서만 동작, 웹/시뮬레이터 자동 스킵)
   usePushToken(session?.user?.id)
@@ -42,14 +58,14 @@ function RootLayoutNav() {
 
     const inAuthGroup = segments[0] === '(auth)'
 
-    if (!session && !inAuthGroup) {
+    if (!session && !inAuthGroup && !onPreview) {
       router.replace('/(auth)/login')
     } else if (session && inAuthGroup) {
-      router.replace(consumePendingDeepLink() ?? '/(app)/')
+      router.replace(consumePendingDeepLink() ?? '/(app)')
     }
-  }, [session, loading, segments])
+  }, [session, loading, segments, onPreview])
 
-  if (loading) {
+  if (loading || !fontsReady) {
     return (
       <View style={styles.center}>
         <ActivityIndicator size="large" color={colors.accent} />
@@ -58,9 +74,17 @@ function RootLayoutNav() {
   }
 
   return (
-    <AppWallpaper>
-      <Stack screenOptions={{ headerShown: false }} />
-    </AppWallpaper>
+    <ThemeProvider value={navTheme}>
+      <AppWallpaper>
+        <Stack
+          screenOptions={{
+            headerShown: false,
+            contentStyle: { backgroundColor: 'transparent' },
+            animation: 'none',
+          }}
+        />
+      </AppWallpaper>
+    </ThemeProvider>
   )
 }
 

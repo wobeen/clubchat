@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { Modal, StyleSheet, Text, View } from 'react-native'
 import { Pressable } from './Pressable'
+import { GlassSurface } from './Glass'
+import { radius } from './theme'
 
 interface ActionSheetOption {
   label: string
@@ -31,7 +33,8 @@ export function useActionSheet() {
     return (
       <Modal transparent visible animationType="fade" onRequestClose={close}>
         <Pressable style={styles.backdrop} onPress={close} animated={false}>
-          <Pressable style={styles.sheet} onPress={(e) => e.stopPropagation()} animated={false}>
+          <Pressable style={styles.sheetWrap} onPress={(e) => e.stopPropagation()} animated={false}>
+            <GlassSurface tone="text" radius={radius.panel} style={styles.sheet}>
             {sheet.title && (
               <View style={styles.titleWrap}>
                 <Text style={styles.title}>{sheet.title}</Text>
@@ -60,6 +63,7 @@ export function useActionSheet() {
                 </Text>
               </Pressable>
             ))}
+            </GlassSurface>
           </Pressable>
         </Pressable>
       </Modal>
@@ -77,13 +81,10 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     padding: 12,
   },
+  sheetWrap: { width: '100%', maxWidth: 400, marginBottom: 8 },
   sheet: {
     width: '100%',
-    maxWidth: 400,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
     overflow: 'hidden',
-    marginBottom: 8,
   },
   titleWrap: { paddingVertical: 14, paddingHorizontal: 16, alignItems: 'center' },
   title: { fontSize: 13, color: '#5A5A5A' },
@@ -91,6 +92,8 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     alignItems: 'center',
     justifyContent: 'center',
+    borderRadius: radius.full,
+    marginHorizontal: 8,
   },
   optionBorder: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: '#E8E8E8' },
   optionPressed: { backgroundColor: '#F2F2F2' },

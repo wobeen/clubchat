@@ -46,7 +46,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     height: 56,
     paddingHorizontal: 12,
-    backgroundColor: colors.surface,
+    backgroundColor: 'transparent',
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.borderLight,
   },

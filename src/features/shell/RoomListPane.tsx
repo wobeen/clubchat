@@ -142,7 +142,7 @@ const styles = StyleSheet.create({
   sectionAction: { fontSize: 13, fontWeight: '700', color: colors.primary },
 
   roomContainer: {
-    backgroundColor: colors.surface,
+    backgroundColor: 'transparent',
     borderRadius: radius.lg,
     overflow: 'hidden',
     ...shadows.card,

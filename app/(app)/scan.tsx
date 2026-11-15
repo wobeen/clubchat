@@ -67,7 +67,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#000000' },
   centered: {
     flex: 1, alignItems: 'center', justifyContent: 'center',
-    backgroundColor: '#F2F2F2', paddingHorizontal: 32, gap: 16,
+    backgroundColor: 'transparent', paddingHorizontal: 32, gap: 16,
   },
   permissionText: { fontSize: 15, color: '#5A5A5A', textAlign: 'center', lineHeight: 22 },
   permissionButton: {

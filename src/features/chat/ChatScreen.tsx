@@ -320,9 +320,9 @@ export function ChatScreen({
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F2F2F2' },
+  container: { flex: 1, backgroundColor: 'transparent' },
   flexOne: { flex: 1 },
-  centered: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#F2F2F2' },
+  centered: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: 'transparent' },
 
   header: {
     flexDirection: 'row',
@@ -330,7 +330,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 8,
     paddingBottom: 10,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: 'transparent',
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: '#E8E8E8',
   },

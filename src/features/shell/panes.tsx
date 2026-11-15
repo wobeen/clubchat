@@ -13,7 +13,6 @@
 import { Children, ReactNode } from 'react'
 import { StyleSheet, View, ViewStyle } from 'react-native'
 import { GlassSurface } from '../ui/Glass'
-import { colors } from '../ui/theme'
 import { useBreakpoint } from './useBreakpoint'
 
 interface PaneGroupProps {
@@ -61,7 +60,6 @@ const styles = StyleSheet.create({
   pane: {
     flexGrow: 0,
     flexShrink: 0,
-    backgroundColor: 'transparent',
   },
-  paneCompact: { flex: 1 },
+  paneCompact: { flex: 1, backgroundColor: 'transparent' },
 })

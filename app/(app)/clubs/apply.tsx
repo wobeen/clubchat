@@ -208,8 +208,8 @@ export default function ApplyScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F2F2F2' },
-  centered: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#F2F2F2' },
+  container: { flex: 1, backgroundColor: 'transparent' },
+  centered: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: 'transparent' },
   content: { padding: 16, gap: 12, paddingBottom: 100 },
 
   clubCard: {
@@ -258,7 +258,7 @@ const styles = StyleSheet.create({
   bottomBar: {
     position: 'absolute', bottom: 0, left: 0, right: 0,
     paddingHorizontal: 20, paddingTop: 12,
-    backgroundColor: '#F2F2F2',
+    backgroundColor: 'transparent',
     borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: '#E8E8E8',
   },
   submitBtn: {

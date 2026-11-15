@@ -15,6 +15,8 @@ import { useAuth } from '../../../src/features/auth/useAuth'
 import { useToast } from '../../../src/features/ui/Toast'
 import { useConfirm } from '../../../src/features/ui/ConfirmDialog'
 import { ScreenOverlay } from '../../../src/features/shell'
+import { GlassSurface } from '../../../src/features/ui/Glass'
+import { colors, radius } from '../../../src/features/ui/theme'
 
 interface MemberRow {
   id: string
@@ -230,7 +232,7 @@ function MembersScreenContent() {
 
       <ScrollView contentContainerStyle={styles.content}>
         {/* 세그먼트 탭 */}
-        <View style={styles.segmentControl}>
+        <GlassSurface tone="chrome" radius={radius.full} style={styles.segmentControl}>
           <Pressable
             style={[styles.segmentOption, tab === 'active' && styles.segmentOptionActive]}
             onPress={() => setTab('active')}
@@ -247,10 +249,10 @@ function MembersScreenContent() {
               OB · 졸업생 {obMembers.length}
             </Text>
           </Pressable>
-        </View>
+        </GlassSurface>
 
         {/* 멤버 목록 */}
-        <View style={styles.memberList}>
+        <GlassSurface tone="text" radius={radius.lg} style={styles.memberList}>
           {displayed.length === 0 && (
             <View style={styles.emptyState}>
               <Text style={styles.emptyText}>
@@ -310,7 +312,7 @@ function MembersScreenContent() {
               </Pressable>
             )
           })}
-        </View>
+        </GlassSurface>
       </ScrollView>
     </View>
   )
@@ -328,19 +330,19 @@ export default function MembersScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F2F2F2' },
+  container: { flex: 1, backgroundColor: 'transparent' },
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   content: { padding: 16, gap: 12, paddingBottom: 40 },
 
   segmentControl: {
-    height: 44, borderRadius: 14, backgroundColor: '#E8E8E8',
+    height: 44, borderRadius: radius.full, backgroundColor: 'transparent',
     padding: 4, flexDirection: 'row', gap: 4,
   },
   segmentOption: {
-    flex: 1, borderRadius: 11, alignItems: 'center', justifyContent: 'center',
+    flex: 1, borderRadius: radius.full, alignItems: 'center', justifyContent: 'center',
   },
   segmentOptionActive: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.paper,
     shadowColor: 'rgba(25,31,40,1)', shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.08, shadowRadius: 4, elevation: 2,
   },
@@ -348,7 +350,7 @@ const styles = StyleSheet.create({
   segmentTextActive: { fontWeight: '700', color: '#1A1A1A' },
 
   memberList: {
-    backgroundColor: '#FFFFFF', borderRadius: 20,
+    backgroundColor: 'transparent', borderRadius: radius.lg,
     shadowColor: 'rgba(25,31,40,1)', shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05, shadowRadius: 6, elevation: 2,
   },
@@ -368,9 +370,9 @@ const styles = StyleSheet.create({
   memberName: { fontSize: 15, fontWeight: '700', color: '#1A1A1A' },
   memberSub: { fontSize: 12, color: '#5A5A5A' },
 
-  roleBadge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 10 },
+  roleBadge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: radius.full },
   roleBadgeText: { fontSize: 11, fontWeight: '700' },
-  obBadge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 10, backgroundColor: '#E8E8E8' },
+  obBadge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: radius.full, backgroundColor: '#E8E8E8' },
   obBadgeText: { fontSize: 11, fontWeight: '700', color: '#5F5F5F' },
 
   toggleText: { fontSize: 13, fontWeight: '600', color: '#5A5A5A' },

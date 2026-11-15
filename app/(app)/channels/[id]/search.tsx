@@ -198,7 +198,7 @@ export default function SearchScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F2F2F2' },
+  container: { flex: 1, backgroundColor: 'transparent' },
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -240,6 +240,6 @@ const styles = StyleSheet.create({
   resultSender: { fontSize: 13, fontWeight: '700', color: '#374151' },
   resultTime: { fontSize: 11, color: '#5F5F5F' },
   resultContent: { fontSize: 14, color: '#1A1A1A', lineHeight: 20 },
-  highlight: { backgroundColor: '#FEF08A', color: '#1A1A1A', fontWeight: '700' },
+  highlight: { backgroundColor: '#D7E6F5', color: '#1A1A1A', fontWeight: '700' },
   separator: { height: 8 },
 })

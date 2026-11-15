@@ -15,6 +15,9 @@ import * as Clipboard from 'expo-clipboard'
 import { supabase } from '../../../../src/lib/supabase'
 import { buildInviteLink } from '../../../../src/features/deeplink/parseInviteLink'
 import { ScreenOverlay } from '../../../../src/features/shell'
+import { GlassSurface } from '../../../../src/features/ui/Glass'
+import { Button } from '../../../../src/features/ui/GlassControls'
+import { colors, radius } from '../../../../src/features/ui/theme'
 
 interface CreateInviteSuccess {
   success: true
@@ -47,7 +50,7 @@ function InviteScreenContent() {
     if (clubId) {
       router.replace({ pathname: '/(app)/clubs/[id]', params: { id: clubId } })
     } else {
-      router.replace('/(app)/')
+      router.replace('/(app)')
     }
   }
 
@@ -138,14 +141,7 @@ function InviteScreenContent() {
     return (
       <View style={styles.centered}>
         <Text style={styles.errorText}>{state.message}</Text>
-        <Pressable
-          style={styles.retryButton}
-          onPress={fetchToken}
-          accessibilityRole="button"
-          accessibilityLabel="다시 시도"
-        >
-          <Text style={styles.retryButtonText}>다시 시도</Text>
-        </Pressable>
+        <Button label="다시 시도" onPress={fetchToken} style={styles.retryButton} />
       </View>
     )
   }
@@ -159,7 +155,7 @@ function InviteScreenContent() {
       contentContainerStyle={styles.inner}
       keyboardShouldPersistTaps="handled"
     >
-      <View style={styles.card}>
+      <GlassSurface tone="text" radius={radius.panel} style={styles.card}>
         <Text style={styles.cardTitle}>
           {channelName ?? '방'} 초대
         </Text>
@@ -172,40 +168,22 @@ function InviteScreenContent() {
         </View>
 
         <View style={styles.linkRow}>
-          <Pressable
-            style={({ pressed }) => [styles.copyButton, pressed && styles.pressedOpacity]}
+          <Button
+            label={copied ? '복사됐어요!' : '링크 복사'}
+            variant="secondary"
             onPress={() => handleCopyLink(inviteLink)}
-            accessibilityRole="button"
-            accessibilityLabel="초대 링크 복사"
-          >
-            <Text style={styles.copyButtonText}>
-              {copied ? '복사됐어요!' : '링크 복사'}
-            </Text>
-          </Pressable>
-          <Pressable
-            style={({ pressed }) => [styles.shareButton, pressed && styles.pressedOpacity]}
-            onPress={() => handleShareLink(inviteLink)}
-            accessibilityRole="button"
-            accessibilityLabel="초대 링크 공유"
-          >
-            <Text style={styles.shareButtonText}>공유하기</Text>
-          </Pressable>
+            style={styles.pairBtn}
+          />
+          <Button label="공유" onPress={() => handleShareLink(inviteLink)} style={styles.pairBtn} />
         </View>
 
         <View style={styles.tokenBox}>
           <Text style={styles.tokenLabel}>초대 코드 (직접 입력용)</Text>
           <Text style={styles.tokenText} selectable>{token}</Text>
         </View>
-      </View>
+      </GlassSurface>
 
-      <Pressable
-        style={({ pressed }) => [styles.doneButton, pressed && styles.pressedOpacity]}
-        onPress={goToClub}
-        accessibilityRole="button"
-        accessibilityLabel="완료"
-      >
-        <Text style={styles.doneButtonText}>완료</Text>
-      </Pressable>
+      <Button label="완료" onPress={goToClub} style={styles.doneButton} />
     </ScrollView>
   )
 }
@@ -224,7 +202,7 @@ export default function InviteScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F2F2F2',
+    backgroundColor: 'transparent',
   },
   inner: {
     paddingHorizontal: 24,
@@ -236,7 +214,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#F2F2F2',
+    backgroundColor: 'transparent',
     paddingHorizontal: 24,
     gap: 16,
   },
@@ -246,22 +224,16 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   card: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
     padding: 28,
     width: '100%',
     maxWidth: 400,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.07,
-    shadowRadius: 8,
-    elevation: 3,
     marginBottom: 24,
   },
+  pairBtn: { flex: 1, minHeight: 44 },
   qrBox: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
+    backgroundColor: colors.paper,
+    borderRadius: 22,
     padding: 16,
     borderWidth: 1.5,
     borderColor: '#E8E8E8',
@@ -288,14 +260,14 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   tokenBox: {
-    backgroundColor: '#D7E6F5',
-    borderRadius: 12,
+    backgroundColor: colors.glassNested,
+    borderRadius: radius.full,
     paddingVertical: 14,
     paddingHorizontal: 20,
     width: '100%',
     alignItems: 'center',
     borderWidth: 1.5,
-    borderColor: '#D7E6F5',
+    borderColor: 'rgba(255,255,255,0.8)',
   },
   tokenLabel: {
     fontSize: 11,
@@ -309,48 +281,10 @@ const styles = StyleSheet.create({
     letterSpacing: 1.5,
     textAlign: 'center',
   },
-  copyButton: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: 10,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1.5,
-    borderColor: '#0863BF',
-    alignItems: 'center',
-    ...(Platform.OS === 'web' ? ({ cursor: 'pointer' } as object) : {}),
-  },
-  copyButtonText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#0863BF',
-  },
-  shareButton: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: 10,
-    backgroundColor: '#0863BF',
-    alignItems: 'center',
-    ...(Platform.OS === 'web' ? ({ cursor: 'pointer' } as object) : {}),
-  },
-  shareButtonText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#FFFFFF',
-  },
   doneButton: {
-    height: 52,
+    height: 44,
     width: '100%',
     maxWidth: 400,
-    borderRadius: 14,
-    backgroundColor: '#0863BF',
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...(Platform.OS === 'web' ? ({ cursor: 'pointer' } as object) : {}),
-  },
-  doneButtonText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#FFFFFF',
   },
   errorText: {
     fontSize: 15,
@@ -358,18 +292,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   retryButton: {
-    paddingVertical: 10,
+    minHeight: 44,
     paddingHorizontal: 24,
-    borderRadius: 10,
-    backgroundColor: '#0863BF',
-    ...(Platform.OS === 'web' ? ({ cursor: 'pointer' } as object) : {}),
-  },
-  retryButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#FFFFFF',
-  },
-  pressedOpacity: {
-    opacity: 0.6,
   },
 })

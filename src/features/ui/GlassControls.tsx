@@ -1,6 +1,7 @@
 import { ReactNode } from 'react'
 import { StyleSheet, Text, TextInput, TextInputProps, View, ViewStyle } from 'react-native'
 import { Pressable } from './Pressable'
+import { fontStyle } from './fonts'
 import { colors, radius, type as typeScale } from './theme'
 
 interface ButtonProps {
@@ -125,7 +126,7 @@ const styles = StyleSheet.create({
   },
   ghost: { backgroundColor: 'transparent' },
   disabled: { opacity: 0.5 },
-  btnText: { fontSize: typeScale.control, fontWeight: '600' },
+  btnText: { fontSize: typeScale.control, ...fontStyle('600') },
   primaryText: { color: colors.onAccent },
   inkText: { color: colors.ink },
   iconBtn: {
@@ -148,8 +149,8 @@ const styles = StyleSheet.create({
   },
   chipOn: { backgroundColor: colors.paper },
   indicator: { width: 3, height: 16, borderRadius: 2, backgroundColor: colors.accent },
-  chipText: { fontSize: typeScale.body, fontWeight: '500', color: colors.ink },
-  chipTextOn: { fontWeight: '600' },
+  chipText: { fontSize: typeScale.body, ...fontStyle('500'), color: colors.ink },
+  chipTextOn: { ...fontStyle('600') },
   badge: {
     minWidth: 18,
     height: 18,
@@ -159,7 +160,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  badgeText: { color: colors.onAccent, fontSize: 11, fontWeight: '700' },
+  badgeText: { color: colors.onAccent, fontSize: 11, ...fontStyle('700') },
   input: {
     height: 36,
     borderRadius: radius.full,
@@ -169,6 +170,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.8)',
     color: colors.ink,
     fontSize: typeScale.body,
+    ...fontStyle('400'),
   },
   area: { height: undefined, minHeight: 96, borderRadius: 22, paddingVertical: 10, textAlignVertical: 'top' },
   track: { width: 36, height: 22, borderRadius: radius.full, justifyContent: 'center' },

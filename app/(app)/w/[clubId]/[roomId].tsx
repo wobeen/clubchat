@@ -10,6 +10,7 @@ import { useFocusEffect, useRouter } from 'expo-router'
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useAuth } from '@/features/auth/useAuth'
+import { GlassSurface } from '@/features/ui/Glass'
 import { colors, radius, shadows } from '@/features/ui/theme'
 import { useToast } from '@/features/ui/Toast'
 import { ChannelHomeSkeleton } from '@/features/ui/Skeleton'
@@ -206,7 +207,7 @@ export default function WorkspaceRoomScreen() {
       <View style={styles.fill}>
         <ToastComponent />
         {roomView === 'home' && <PaneHeader title={room?.name ?? '방'} onPressBack={goUp} />}
-        {bodyContent}
+        {roomView === 'home' ? <GlassSurface tone="text" style={styles.fill}>{bodyContent}</GlassSurface> : bodyContent}
       </View>
     )
   }
@@ -229,7 +230,7 @@ export default function WorkspaceRoomScreen() {
             />
           </ScrollView>
         </Pane>
-        <View style={styles.fill}>{bodyContent}</View>
+        <GlassSurface tone="text" style={styles.fill}>{bodyContent}</GlassSurface>
         {roomView === 'chat' && (
           <Pane width={300}>
             <RoomDetailPane
@@ -255,10 +256,10 @@ const styles = StyleSheet.create({
   fill: { flex: 1 },
   scroll: { flex: 1 },
   scrollContent: { padding: 16, gap: 12, paddingBottom: 24 },
-  listScrollContent: { padding: 16, gap: 10, backgroundColor: colors.background },
+  listScrollContent: { padding: 16, gap: 10, backgroundColor: 'transparent' },
 
   card: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.glassNested,
     borderRadius: radius.lg,
     padding: 18,
     gap: 12,
@@ -283,7 +284,7 @@ const styles = StyleSheet.create({
   chatBar: {
     padding: 12,
     paddingHorizontal: 20,
-    backgroundColor: colors.background,
+    backgroundColor: 'transparent',
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: colors.borderLight,
   },

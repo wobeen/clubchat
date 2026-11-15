@@ -127,7 +127,7 @@ export default function JoinByLinkScreen() {
         <Text style={styles.errorText}>{state.message}</Text>
         <Pressable
           style={({ pressed }) => [styles.secondaryButton, pressed && styles.pressedOpacity]}
-          onPress={() => router.replace('/(app)/')}
+          onPress={() => router.replace('/(app)')}
           accessibilityRole="button"
           accessibilityLabel="마이 페이지로"
         >
@@ -186,35 +186,36 @@ export default function JoinByLinkScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F7F8FA' },
+  container: { flex: 1, backgroundColor: 'transparent' },
   inner: { flexGrow: 1, paddingHorizontal: 24, paddingTop: 48, alignItems: 'center' },
   centered: {
     flex: 1, alignItems: 'center', justifyContent: 'center',
-    backgroundColor: '#F7F8FA', paddingHorizontal: 24, gap: 16,
+    backgroundColor: 'transparent', paddingHorizontal: 24, gap: 16,
   },
   card: {
-    backgroundColor: '#FFFFFF', borderRadius: 20, padding: 28,
+    backgroundColor: 'rgba(255,255,255,0.70)', borderRadius: 28, padding: 28,
     width: '100%', maxWidth: 400, alignItems: 'center',
     shadowColor: 'rgba(25,31,40,1)', shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05, shadowRadius: 6, elevation: 2,
   },
   iconCircle: {
-    width: 64, height: 64, borderRadius: 32, backgroundColor: '#E7EFFF',
+    width: 64, height: 64, borderRadius: 32, backgroundColor: '#EBEBEB',
     alignItems: 'center', justifyContent: 'center', marginBottom: 18,
   },
   iconText: { fontSize: 26 },
   cardTitle: { fontSize: 20, fontWeight: '800', color: '#1A1A1A', marginBottom: 8, textAlign: 'center' },
   cardSubtitle: { fontSize: 14, color: '#5A5A5A', textAlign: 'center', lineHeight: 20, marginBottom: 24 },
   primaryButton: {
-    height: 50, width: '100%', borderRadius: 12, backgroundColor: '#3B7DD8',
+    height: 44, width: '100%', borderRadius: 999, backgroundColor: '#0863BF',
     alignItems: 'center', justifyContent: 'center',
   },
   primaryButtonText: { fontSize: 15, fontWeight: '700', color: '#FFFFFF' },
   secondaryButton: {
-    height: 50, paddingHorizontal: 24, borderRadius: 12,
-    borderWidth: 1.5, borderColor: '#3B7DD8', alignItems: 'center', justifyContent: 'center',
+    height: 44, paddingHorizontal: 24, borderRadius: 999,
+    borderWidth: 1, borderColor: 'rgba(26,26,26,0.14)', backgroundColor: 'rgba(255,255,255,0.42)',
+    alignItems: 'center', justifyContent: 'center',
   },
-  secondaryButtonText: { fontSize: 15, fontWeight: '700', color: '#3B7DD8' },
+  secondaryButtonText: { fontSize: 15, fontWeight: '700', color: '#1A1A1A' },
   errorText: { fontSize: 15, color: '#1A1A1A', textAlign: 'center' },
   pressedOpacity: { opacity: 0.7 },
 })

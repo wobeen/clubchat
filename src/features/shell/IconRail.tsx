@@ -9,7 +9,8 @@ import { Pressable } from '../ui/Pressable'
 import { useAuth } from '../auth/useAuth'
 import { useProfile, ProfileRow } from '../auth/useProfile'
 import { useToast } from '../ui/Toast'
-import { colors } from '../ui/theme'
+import { GlassSurface } from '../ui/Glass'
+import { colors, radius } from '../ui/theme'
 import { useWorkspaceData, WorkspaceClub } from './useWorkspaceData'
 import { useWorkspaceNavigation } from './useWorkspaceNavigation'
 import { getClubColor, getInitials } from './shellUtils'
@@ -30,7 +31,7 @@ export function IconRail() {
   const { show: showToast, ToastComponent } = useToast()
 
   return (
-    <View style={styles.rail}>
+    <GlassSurface tone="chrome" radius={radius.panel} style={styles.rail}>
       <ToastComponent />
 
       <ProfileEditSheet
@@ -91,7 +92,7 @@ export function IconRail() {
       >
         <UserAvatarMark profile={profile} />
       </Pressable>
-    </View>
+    </GlassSurface>
   )
 }
 
@@ -142,7 +143,7 @@ const styles = StyleSheet.create({
     width: RAIL_WIDTH,
     flexGrow: 0,
     flexShrink: 0,
-    backgroundColor: colors.glass,
+    backgroundColor: 'transparent',
     alignItems: 'center',
     paddingTop: 16,
     paddingBottom: 12,

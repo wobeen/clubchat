@@ -86,6 +86,18 @@ export const type = {
   meta: 12,
 } as const
 
+// Pretendard (SIL OFL). 웹은 같은 family에 weight를 걸고, 네이티브는 파일별 family를 쓴다.
+// 파일이 없으면 Apple SD Gothic Neo / Noto Sans KR / sans-serif로 폴백한다.
+export const typography = {
+  family: 'Pretendard',
+  fallback: '"Apple SD Gothic Neo", "Noto Sans KR", sans-serif',
+  stack: 'Pretendard, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif',
+  regular: 'Pretendard-Regular',
+  medium: 'Pretendard-Medium',
+  semibold: 'Pretendard-SemiBold',
+  bold: 'Pretendard-Bold',
+} as const
+
 export const glass = {
   chromeOpacity: 0.42,
   textOpacity: 0.7,

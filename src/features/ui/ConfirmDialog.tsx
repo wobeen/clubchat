@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { ActivityIndicator, Modal, StyleSheet, Text, View } from 'react-native'
 import { Pressable } from './Pressable'
+import { GlassSurface } from './Glass'
+import { radius } from './theme'
 
 interface ConfirmOptions {
   title: string
@@ -42,7 +44,8 @@ export function useConfirm() {
     return (
       <Modal transparent visible animationType="fade" onRequestClose={close}>
         <Pressable style={styles.backdrop} onPress={close} animated={false}>
-          <Pressable style={styles.card} onPress={(e) => e.stopPropagation()} animated={false}>
+          <Pressable style={styles.cardWrap} onPress={(e) => e.stopPropagation()} animated={false}>
+            <GlassSurface tone="text" radius={radius.panel} style={styles.card}>
             <Text style={styles.title}>{options.title}</Text>
             {options.message && <Text style={styles.message}>{options.message}</Text>}
             <View style={styles.actions}>
@@ -75,6 +78,7 @@ export function useConfirm() {
                     )}
               </Pressable>
             </View>
+            </GlassSurface>
           </Pressable>
         </Pressable>
       </Modal>
@@ -92,11 +96,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 24,
   },
+  cardWrap: { width: '100%', maxWidth: 340 },
   card: {
     width: '100%',
-    maxWidth: 340,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
     paddingTop: 22,
     paddingHorizontal: 20,
     paddingBottom: 14,
@@ -107,7 +109,7 @@ const styles = StyleSheet.create({
   btn: {
     flex: 1,
     paddingVertical: 12,
-    borderRadius: 10,
+    borderRadius: radius.full,
     alignItems: 'center',
     justifyContent: 'center',
   },

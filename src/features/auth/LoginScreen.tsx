@@ -1,11 +1,8 @@
-import {
-  ActivityIndicator,
-  Platform,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native'
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native'
 import { Pressable } from '../ui/Pressable'
+import { GlassSurface } from '../ui/Glass'
+import { fontStyle } from '../ui/fonts'
+import { colors, radius } from '../ui/theme'
 import { useGoogleAuth } from './useGoogleAuth'
 
 export function LoginScreen() {
@@ -13,23 +10,17 @@ export function LoginScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.hero}>
-        {/* 로고 자리 — 추후 <Image> 교체 */}
-        <View style={styles.logoPlaceholder}>
+      <GlassSurface tone="text" radius={radius.panel} style={styles.card}>
+        <View style={styles.logo}>
           <Text style={styles.logoLetter}>C</Text>
         </View>
         <Text style={styles.appName}>ClubChat</Text>
-        <Text style={styles.tagline}>동아리·소모임 업무용 메신저</Text>
-      </View>
+        <Text style={styles.tagline}>동아리와 스터디를 한곳에서</Text>
 
-      <View style={styles.actions}>
         {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
         <Pressable
-          style={({ pressed }) => [
-            styles.googleButton,
-            (loading || pressed) && styles.googleButtonDisabled,
-          ]}
+          style={({ pressed }) => [styles.googleButton, (loading || pressed) && styles.googleButtonPressed]}
           onPress={signInWithGoogle}
           disabled={loading}
           accessibilityRole="button"
@@ -37,12 +28,18 @@ export function LoginScreen() {
           accessibilityState={{ disabled: loading }}
         >
           {loading ? (
-            <ActivityIndicator color="#444" size="small" />
+            <ActivityIndicator color={colors.ink} size="small" />
           ) : (
-            <Text style={styles.googleButtonText}>Google로 로그인</Text>
+            <>
+              <View style={styles.gMark}>
+                <Text style={styles.gMarkText}>G</Text>
+              </View>
+              <Text style={styles.googleButtonText}>Google로 계속</Text>
+            </>
           )}
         </Pressable>
-      </View>
+        <Text style={styles.fine}>학교 계정으로 로그인합니다. 비밀번호는 저장하지 않습니다.</Text>
+      </GlassSurface>
     </View>
   )
 }
@@ -53,62 +50,74 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 32,
+    paddingHorizontal: 24,
   },
-  hero: {
+  card: {
+    width: '100%',
+    maxWidth: 400,
+    paddingHorizontal: 24,
+    paddingTop: 28,
+    paddingBottom: 24,
     alignItems: 'center',
-    marginBottom: 64,
   },
-  logoPlaceholder: {
-    width: 64,
-    height: 64,
-    borderRadius: 999,
-    backgroundColor: '#1A1A1A',
+  logo: {
+    width: 44,
+    height: 44,
+    borderRadius: radius.full,
+    backgroundColor: colors.ink,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 16,
   },
-  logoLetter: { color: '#FFFFFF', fontSize: 28, fontWeight: '700' },
+  logoLetter: { color: colors.paper, fontSize: 18, ...fontStyle('700') },
   appName: {
-    fontSize: 32,
-    fontWeight: '700',
-    color: '#1A1A1A',
-    letterSpacing: -0.5,
+    fontSize: 28,
+    ...fontStyle('700'),
+    color: colors.ink,
+    letterSpacing: -0.6,
   },
   tagline: {
     marginTop: 8,
-    fontSize: 15,
-    color: '#5A5A5A',
-  },
-  actions: {
-    width: '100%',
-    maxWidth: 360,
-    alignItems: 'center',
-    gap: 12,
+    marginBottom: 28,
+    fontSize: 14,
+    color: colors.textSecondary,
+    ...fontStyle('400'),
   },
   googleButton: {
     width: '100%',
-    height: 52,
-    borderWidth: 1.5,
-    borderRadius: 999,
+    height: 44,
+    borderRadius: radius.full,
+    borderWidth: 1,
     borderColor: 'rgba(26,26,26,0.14)',
-    backgroundColor: 'rgba(255,255,255,0.7)',
+    backgroundColor: colors.glass,
     alignItems: 'center',
     justifyContent: 'center',
-    // Web에서 hover cursor
-    ...(Platform.OS === 'web' ? ({ cursor: 'pointer' } as object) : {}),
+    flexDirection: 'row',
+    gap: 10,
   },
-  googleButtonDisabled: {
-    opacity: 0.6,
+  googleButtonPressed: { opacity: 0.7 },
+  gMark: {
+    width: 18,
+    height: 18,
+    borderRadius: radius.full,
+    backgroundColor: colors.ink,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  googleButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1A1A1A',
+  gMarkText: { color: colors.paper, fontSize: 11, ...fontStyle('700') },
+  googleButtonText: { fontSize: 15, ...fontStyle('600'), color: colors.ink },
+  fine: {
+    marginTop: 14,
+    fontSize: 12,
+    color: colors.textMuted,
+    textAlign: 'center',
+    ...fontStyle('400'),
   },
   errorText: {
     fontSize: 14,
-    color: '#1A1A1A',
+    color: colors.ink,
     textAlign: 'center',
+    marginBottom: 12,
+    ...fontStyle('400'),
   },
 })

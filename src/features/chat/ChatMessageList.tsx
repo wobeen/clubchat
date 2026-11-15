@@ -60,7 +60,7 @@ const styles = StyleSheet.create({
   typingBar: {
     paddingHorizontal: 16,
     paddingVertical: 4,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: 'transparent',
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: '#F4F4F4',
   },

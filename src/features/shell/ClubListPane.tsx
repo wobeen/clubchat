@@ -162,7 +162,7 @@ export function ClubListPane({
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
+  container: { flex: 1, backgroundColor: 'transparent' },
 
   pageHeader: {
     flexDirection: 'row',
@@ -180,7 +180,7 @@ const styles = StyleSheet.create({
   emptyContainer: { flex: 1 },
 
   clubCard: {
-    backgroundColor: colors.surface,
+    backgroundColor: 'transparent',
     borderRadius: radius.lg,
     paddingVertical: 16,
     paddingHorizontal: 16,
@@ -216,7 +216,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 12,
     paddingBottom: 16,
-    backgroundColor: colors.background,
+    backgroundColor: 'transparent',
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: colors.borderLight,
   },

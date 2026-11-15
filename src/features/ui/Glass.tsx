@@ -1,5 +1,5 @@
 import { ReactNode } from 'react'
-import { Platform, StyleSheet, View, ViewStyle } from 'react-native'
+import { Platform, StyleProp, StyleSheet, View, ViewStyle } from 'react-native'
 import { BlurView } from 'expo-blur'
 import { colors, glass, radius, shadows } from './theme'
 import { useReducedTransparency } from './useReducedTransparency'
@@ -16,8 +16,16 @@ interface GlassSurfaceProps {
   children?: ReactNode
   tone?: GlassTone
   radius?: number
-  style?: ViewStyle
+  style?: StyleProp<ViewStyle>
   padded?: boolean
+}
+
+export function webBackdrop(blur: number = glass.blur, saturate: number = glass.saturate): ViewStyle {
+  if (Platform.OS !== 'web') return {}
+  return {
+    backdropFilter: `blur(${blur}px) saturate(${saturate})`,
+    WebkitBackdropFilter: `blur(${blur}px) saturate(${saturate})`,
+  } as ViewStyle
 }
 
 export function GlassSurface({
@@ -30,22 +38,23 @@ export function GlassSurface({
   const reduced = useReducedTransparency()
   const spec = TONE[tone]
   const fill = `rgba(255,255,255,${spec.opacity})`
-  const webGlass = Platform.OS === 'web' && !reduced
-    ? ({
-        backdropFilter: `blur(${spec.blur}px) saturate(${spec.saturate})`,
-        WebkitBackdropFilter: `blur(${spec.blur}px) saturate(${spec.saturate})`,
-      } as ViewStyle)
-    : null
+  const flat = (StyleSheet.flatten(style) ?? {}) as ViewStyle
+  const { backgroundColor: _ignored, ...restStyle } = flat
+  const webGlass = Platform.OS === 'web' && !reduced ? webBackdrop(spec.blur, spec.saturate) : null
 
   return (
     <View
+      nativeID={tone === 'text' ? 'glass-surface' : undefined}
+      {...(Platform.OS === 'web'
+        ? ({ dataSet: { glass: reduced ? 'solid' : tone } } as object)
+        : null)}
       style={[
         styles.shell,
+        restStyle,
         { borderRadius: corner, backgroundColor: fill },
         webGlass,
         shadows.glass,
         padded ? styles.padded : null,
-        style,
       ]}
     >
       {Platform.OS !== 'web' && !reduced ? (
@@ -70,8 +79,8 @@ const styles = StyleSheet.create({
   highlight: {
     position: 'absolute',
     top: 0,
-    left: 0,
-    right: 0,
+    left: 12,
+    right: 12,
     height: 1,
     backgroundColor: '#FFFFFF',
   },

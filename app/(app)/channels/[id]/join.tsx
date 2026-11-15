@@ -288,7 +288,7 @@ export default function JoinChannelScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F2F2F2',
+    backgroundColor: 'transparent',
   },
   inner: {
     paddingHorizontal: 24,

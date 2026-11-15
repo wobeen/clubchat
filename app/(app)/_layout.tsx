@@ -10,7 +10,15 @@ export default function AppLayout() {
   const overlayHeaderShown = isCompact
 
   return (
-    <Stack>
+    <Stack
+      screenOptions={{
+        contentStyle: { backgroundColor: 'transparent' },
+        headerStyle: { backgroundColor: 'rgba(255,255,255,0.70)' },
+        headerTintColor: '#0863BF',
+        headerTitleStyle: { color: '#1A1A1A' },
+        headerShadowVisible: false,
+      }}
+    >
       <Stack.Screen name="index" options={{ headerShown: false }} />
       <Stack.Screen name="w" options={{ headerShown: false }} />
       <Stack.Screen name="join" options={{ title: '방 입장', headerBackTitle: '뒤로' }} />

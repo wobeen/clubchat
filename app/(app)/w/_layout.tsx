@@ -15,6 +15,7 @@ export default function WorkspaceLayout() {
       <Stack
         screenOptions={{
           headerShown: false,
+          contentStyle: { backgroundColor: 'transparent' },
           animation: isCompact ? 'slide_from_right' : 'none',
         }}
       />

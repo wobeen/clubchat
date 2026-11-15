@@ -357,9 +357,9 @@ export default function ManageClubScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F2F2F2' },
+  container: { flex: 1, backgroundColor: 'transparent' },
   content: { padding: 16, paddingBottom: 48, gap: 12 },
-  centered: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#F2F2F2', paddingHorizontal: 24 },
+  centered: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: 'transparent', paddingHorizontal: 24 },
 
   card: {
     backgroundColor: '#FFFFFF', borderRadius: 20, padding: 18,
@@ -397,7 +397,7 @@ const styles = StyleSheet.create({
   reqNameRow: { flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' },
   reqName: { fontSize: 15, fontWeight: '700', color: '#1A1A1A' },
   reqTime: { fontSize: 12, color: '#5A5A5A' },
-  reqMessage: { backgroundColor: '#F2F2F2', borderRadius: 10, padding: 10 },
+  reqMessage: { backgroundColor: 'transparent', borderRadius: 10, padding: 10 },
   reqMessageText: { fontSize: 13, color: '#5A5A5A', lineHeight: 18 },
   reqActions: { flexDirection: 'row', gap: 8, paddingLeft: 54 },
   approveBtn: {

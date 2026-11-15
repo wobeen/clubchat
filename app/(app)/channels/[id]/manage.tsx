@@ -373,7 +373,7 @@ export default function ManageChannelScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F2F2F2',
+    backgroundColor: 'transparent',
   },
   content: {
     padding: 24,
@@ -383,7 +383,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#F2F2F2',
+    backgroundColor: 'transparent',
     paddingHorizontal: 24,
   },
   sectionLabel: {
@@ -518,7 +518,7 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   passwordStatusPill: {
-    backgroundColor: '#F2F2F2',
+    backgroundColor: 'transparent',
     borderRadius: 10,
     paddingVertical: 12,
     paddingHorizontal: 16,

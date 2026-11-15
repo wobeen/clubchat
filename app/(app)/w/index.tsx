@@ -6,6 +6,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native'
 import { useAuth } from '@/features/auth/useAuth'
 import { useProfile } from '@/features/auth/useProfile'
 import { useToast } from '@/features/ui/Toast'
+import { GlassSurface } from '@/features/ui/Glass'
 import { colors } from '@/features/ui/theme'
 import {
   ClubListPane,
@@ -94,9 +95,9 @@ export default function WorkspaceIndexScreen() {
             onPressJoin={() => setJoinVisible(true)}
           />
         </Pane>
-        <View style={styles.emptyMain}>
+        <GlassSurface tone="text" style={styles.emptyMain}>
           <Text style={styles.emptyMainText}>동아리를 선택하세요</Text>
-        </View>
+        </GlassSurface>
       </PaneGroup>
     </View>
   )
@@ -104,6 +105,6 @@ export default function WorkspaceIndexScreen() {
 
 const styles = StyleSheet.create({
   fill: { flex: 1 },
-  emptyMain: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.background },
+  emptyMain: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: 'transparent' },
   emptyMainText: { fontSize: 15, color: colors.textSecondary, fontWeight: '500' },
 })

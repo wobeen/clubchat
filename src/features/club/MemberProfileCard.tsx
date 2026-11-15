@@ -1,5 +1,8 @@
 import { Modal, StyleSheet, Text, View } from 'react-native'
 import { Pressable } from '../ui/Pressable'
+import { GlassSurface } from '../ui/Glass'
+import { Button } from '../ui/GlassControls'
+import { colors, radius } from '../ui/theme'
 
 export interface MemberProfile {
   id: string
@@ -61,7 +64,8 @@ export function MemberProfileCard({ profile, onClose }: Props) {
   return (
     <Modal visible transparent animationType="fade" onRequestClose={onClose}>
       <Pressable style={styles.backdrop} onPress={onClose} animated={false}>
-        <Pressable style={styles.card} onPress={() => {}} animated={false}>
+        <Pressable style={styles.cardWrap} onPress={() => {}} animated={false}>
+          <GlassSurface tone="text" radius={radius.panel} style={styles.card}>
           <View style={[styles.avatarLarge, { backgroundColor: profile.avatar_emoji ? '#EBEBEB' : color.bg }]}>
             {profile.avatar_emoji
               ? <Text style={styles.avatarEmoji}>{profile.avatar_emoji}</Text>
@@ -108,9 +112,8 @@ export function MemberProfileCard({ profile, onClose }: Props) {
             </View>
           </View>
 
-          <Pressable style={styles.closeBtn} onPress={onClose}>
-            <Text style={styles.closeBtnText}>닫기</Text>
-          </Pressable>
+          <Button label="닫기" variant="secondary" onPress={onClose} style={styles.closeBtn} />
+          </GlassSurface>
         </Pressable>
       </Pressable>
     </Modal>
@@ -125,10 +128,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 32,
   },
+  cardWrap: { width: '100%' },
   card: {
     width: '100%',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 24,
     padding: 28,
     paddingBottom: 20,
     alignItems: 'center',
@@ -150,12 +152,12 @@ const styles = StyleSheet.create({
   avatarInitials: { fontSize: 30, fontWeight: '800' },
   name: { fontSize: 20, fontWeight: '800', color: '#1A1A1A' },
   badgeRow: { flexDirection: 'row', gap: 6 },
-  badge: { paddingHorizontal: 10, paddingVertical: 3, borderRadius: 10 },
+  badge: { paddingHorizontal: 10, paddingVertical: 3, borderRadius: radius.full },
   badgeText: { fontSize: 12, fontWeight: '700' },
   infoBox: {
     width: '100%',
-    backgroundColor: '#F2F2F2',
-    borderRadius: 16,
+    backgroundColor: colors.glassNested,
+    borderRadius: radius.lg,
     paddingHorizontal: 16,
   },
   infoRow: {
@@ -168,13 +170,5 @@ const styles = StyleSheet.create({
   },
   infoLabel: { fontSize: 14, color: '#5A5A5A' },
   infoValue: { fontSize: 14, fontWeight: '700', color: '#1A1A1A' },
-  closeBtn: {
-    width: '100%',
-    height: 48,
-    borderRadius: 14,
-    backgroundColor: '#F4F4F4',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  closeBtnText: { fontSize: 14, fontWeight: '700', color: '#5F5F5F' },
+  closeBtn: { width: '100%', minHeight: 44 },
 })

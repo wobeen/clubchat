@@ -14,6 +14,7 @@ import {
   View,
 } from 'react-native'
 import { supabase } from '@/lib/supabase'
+import { GlassSurface } from '@/features/ui/Glass'
 import { colors, radius, shadows } from '@/features/ui/theme'
 import { useToast } from '@/features/ui/Toast'
 import { ClubDetailSkeleton } from '@/features/ui/Skeleton'
@@ -246,7 +247,7 @@ export default function WorkspaceClubScreen() {
       <View style={styles.fill}>
         <ToastComponent />
         <PaneHeader title={activeClub?.name ?? '동아리'} onPressBack={goToClubList} />
-        {mainContent}
+        <GlassSurface tone="text" style={styles.fill}>{mainContent}</GlassSurface>
       </View>
     )
   }
@@ -271,7 +272,7 @@ export default function WorkspaceClubScreen() {
             activeClubId={clubId}
           />
         </Pane>
-        <View style={styles.fill}>{mainContent}</View>
+        <GlassSurface tone="text" style={styles.fill}>{mainContent}</GlassSurface>
       </PaneGroup>
     </View>
   )
@@ -282,7 +283,7 @@ const styles = StyleSheet.create({
   scrollContent: { padding: 20, gap: 12, paddingBottom: 48 },
 
   card: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.glassNested,
     borderRadius: radius.lg,
     padding: 18,
     ...shadows.card,
@@ -314,7 +315,7 @@ const styles = StyleSheet.create({
   sectionAction: { fontSize: 13, fontWeight: '700', color: colors.primary },
 
   eventCard: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.glassNested,
     borderRadius: radius.lg,
     padding: 16,
     gap: 12,

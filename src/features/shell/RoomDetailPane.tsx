@@ -123,7 +123,7 @@ const styles = StyleSheet.create({
   roomName: { fontSize: 13, fontWeight: '700', color: colors.textSecondary, paddingHorizontal: 2 },
 
   card: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.glassNested,
     borderRadius: radius.lg,
     padding: 16,
     gap: 10,

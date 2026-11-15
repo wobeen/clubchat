@@ -41,8 +41,8 @@
       "name": "ClubChat",
       "shortName": "ClubChat",
       "description": "동아리·소모임을 위한 업무용 메신저",
-      "themeColor": "#4A90D9",
-      "backgroundColor": "#F3F4F6",
+      "themeColor": "#F2F2F2",
+      "backgroundColor": "#F2F2F2",
       "lang": "ko",
       "scope": "/",
       "display": "standalone",
@@ -50,6 +50,17 @@
     },
     "plugins": [
       "expo-router",
+      [
+        "expo-font",
+        {
+          "fonts": [
+            "./assets/fonts/Pretendard-Regular.ttf",
+            "./assets/fonts/Pretendard-Medium.ttf",
+            "./assets/fonts/Pretendard-SemiBold.ttf",
+            "./assets/fonts/Pretendard-Bold.ttf"
+          ]
+        }
+      ],
       "@react-native-community/datetimepicker",
       [
         "expo-image-picker",
