@@ -13,6 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { supabase } from '../../../../src/lib/supabase'
 import { ScreenOverlay } from '../../../../src/features/shell'
+import { GlassSurface } from '../../../../src/features/ui/Glass'
 
 interface SearchResult {
   id: string
@@ -110,7 +111,7 @@ function SearchScreenContent() {
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
       {/* 검색 입력창 */}
-      <View style={styles.searchBar}>
+      <GlassSurface tone="chrome" radius={999} style={styles.searchBar}>
         <Text style={styles.searchIcon}>🔍</Text>
         <TextInput
           ref={inputRef}
@@ -134,7 +135,7 @@ function SearchScreenContent() {
             <Text style={styles.clearButton}>✕</Text>
           </Pressable>
         )}
-      </View>
+      </GlassSurface>
 
       {/* 결과 */}
       {loading ? (
@@ -172,13 +173,13 @@ function SearchScreenContent() {
             )
           }
           renderItem={({ item }) => (
-            <View style={styles.resultItem}>
+            <GlassSurface tone="text" radius={22} style={styles.resultItem}>
               <View style={styles.resultMeta}>
                 <Text style={styles.resultSender}>{item.senderName}</Text>
                 <Text style={styles.resultTime}>{formatDatetime(item.createdAt)}</Text>
               </View>
               {boldQuery(item.content, query)}
-            </View>
+            </GlassSurface>
           )}
           ItemSeparatorComponent={() => <View style={styles.separator} />}
         />
@@ -202,11 +203,10 @@ const styles = StyleSheet.create({
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#E8E8E8',
+    marginHorizontal: 12,
+    marginTop: 12,
     paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingVertical: 8,
     gap: 8,
   },
   searchIcon: { fontSize: 16, color: '#5F5F5F' },
@@ -220,26 +220,24 @@ const styles = StyleSheet.create({
   clearButton: { fontSize: 14, color: '#5F5F5F', padding: 4 },
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: 80 },
   emptyText: { fontSize: 14, color: '#5F5F5F', textAlign: 'center' },
-  hintText: { fontSize: 14, color: '#CBD5E1', textAlign: 'center' },
+  hintText: { fontSize: 14, color: '#5F5F5F', textAlign: 'center' },
   retryButton: {
     marginTop: 16,
     paddingHorizontal: 16,
     paddingVertical: 8,
-    borderRadius: 8,
-    backgroundColor: '#F4F4F4',
+    borderRadius: 999,
+    backgroundColor: '#0863BF',
   },
-  retryButtonText: { fontSize: 14, color: '#0863BF', fontWeight: '600' },
+  retryButtonText: { fontSize: 14, color: '#FFFFFF', fontWeight: '600' },
   listContent: { flexGrow: 1, padding: 12 },
   resultItem: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 10,
     padding: 14,
     gap: 6,
   },
   resultMeta: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  resultSender: { fontSize: 13, fontWeight: '700', color: '#374151' },
+  resultSender: { fontSize: 13, fontWeight: '700', color: '#5A5A5A' },
   resultTime: { fontSize: 11, color: '#5F5F5F' },
   resultContent: { fontSize: 14, color: '#1A1A1A', lineHeight: 20 },
-  highlight: { backgroundColor: '#D7E6F5', color: '#1A1A1A', fontWeight: '700' },
+  highlight: { backgroundColor: '#D7E6F5', color: '#0863BF', fontWeight: '700', borderRadius: 4 },
   separator: { height: 8 },
 })

@@ -9,6 +9,8 @@ import { MyMessageBubble, OtherMessageBubble } from '../chat/MessageBubble'
 import { ChatComposer } from '../chat/ChatComposer'
 import { MemberProfileCard, MemberProfile } from '../club/MemberProfileCard'
 import EventFormScreen from '../schedule/EventFormScreen'
+import CreateClubScreen from '../../../app/(app)/clubs/create'
+import CreateRoomScreen from '../../../app/(app)/channels/create'
 import { useBreakpoint } from '../shell/useBreakpoint'
 import type { ChatMessage, SenderInfo } from '../chat/types'
 
@@ -41,7 +43,19 @@ const PROFILE: MemberProfile = {
   channelName: '주말출사',
 }
 
-type Scene = 'club' | 'chat' | 'event' | 'form' | 'invite' | 'members'
+type Scene =
+  | 'club'
+  | 'chat'
+  | 'event'
+  | 'form'
+  | 'invite'
+  | 'members'
+  | 'create-club'
+  | 'create-room'
+  | 'search'
+  | 'manage'
+  | 'room'
+  | 'apply'
 
 export function UiPreview() {
   const params = useLocalSearchParams<{ scene?: string; clean?: string }>()
@@ -53,7 +67,7 @@ export function UiPreview() {
     <View style={styles.fill}>
       {!clean ? (
         <ScrollView horizontal contentContainerStyle={styles.switcher} showsHorizontalScrollIndicator={false}>
-          {(['club', 'chat', 'event', 'form', 'invite', 'members'] as Scene[]).map((key) => (
+          {(['club', 'chat', 'event', 'form', 'invite', 'members', 'create-club', 'create-room', 'search', 'manage', 'room', 'apply'] as Scene[]).map((key) => (
             <Button key={key} label={key} variant={scene === key ? 'primary' : 'secondary'} onPress={() => {
               if (typeof window !== 'undefined') {
                 const url = new URL(window.location.href)
@@ -74,6 +88,12 @@ export function UiPreview() {
         ) : null}
         {scene === 'invite' ? <InviteScene /> : null}
         {scene === 'members' ? <MembersScene onOpen={() => setProfile(PROFILE)} /> : null}
+        {scene === 'create-club' ? <CreateClubScreen /> : null}
+        {scene === 'create-room' ? <CreateRoomScreen /> : null}
+        {scene === 'search' ? <SearchScene /> : null}
+        {scene === 'manage' ? <ManageScene /> : null}
+        {scene === 'room' ? <RoomManageScene /> : null}
+        {scene === 'apply' ? <ApplyScene /> : null}
       </View>
       <MemberProfileCard profile={profile} onClose={() => setProfile(null)} />
     </View>
@@ -189,6 +209,89 @@ function MembersScene({ onOpen }: { onOpen: () => void }) {
   )
 }
 
+function SearchScene() {
+  return (
+    <View style={styles.fill}>
+      <GlassSurface tone="chrome" radius={radius.full} style={styles.searchBar}>
+        <Text style={styles.body}>남산</Text>
+      </GlassSurface>
+      <GlassSurface tone="text" radius={22} style={styles.card}>
+        <Text style={styles.meta}>박서준 · 토 17:02</Text>
+        <Text style={styles.body}>토요일 <Text style={styles.hit}>남산</Text> 타워 쪽에서 모일까요?</Text>
+      </GlassSurface>
+      <GlassSurface tone="text" radius={22} style={styles.card}>
+        <Text style={styles.meta}>김하은 · 토 17:06</Text>
+        <Text style={styles.body}>일몰 직후 <Text style={styles.hit}>남산</Text>서울타워가 좋아요.</Text>
+      </GlassSurface>
+    </View>
+  )
+}
+
+function ManageScene() {
+  return (
+    <ScrollView contentContainerStyle={styles.pad}>
+      <GlassSurface tone="text" style={styles.card}>
+        <Text style={styles.cardTitle}>동아리 공개</Text>
+        <Text style={styles.body}>공개하면 검색에 노출되고 누구나 가입 신청을 보낼 수 있어요.</Text>
+        <Text style={styles.meta}>신규 부원 모집 중 · 공개 상태</Text>
+      </GlassSurface>
+      <Text style={styles.kicker}>가입 신청 1건</Text>
+      <GlassSurface tone="text" style={styles.card}>
+        <Text style={styles.cardTitle}>이수민 · 24학번</Text>
+        <Text style={styles.body}>사진 동아리에서 촬영을 배우고 싶어요.</Text>
+        <View style={styles.pair}>
+          <Button label="승인" style={styles.block} />
+          <Button label="거절" variant="secondary" style={styles.block} />
+        </View>
+      </GlassSurface>
+      <GlassSurface tone="text" style={styles.card}>
+        <Text style={styles.kicker}>초대 코드</Text>
+        <Text style={styles.code}>K7QM2P4A</Text>
+        <View style={styles.pair}>
+          <Button label="복사" variant="secondary" style={styles.block} />
+          <Button label="재발급" variant="secondary" style={styles.block} />
+        </View>
+      </GlassSurface>
+    </ScrollView>
+  )
+}
+
+function RoomManageScene() {
+  return (
+    <View style={styles.center}>
+      <GlassSurface tone="text" style={styles.dialog}>
+        <Text style={styles.kicker}>주말출사 초대</Text>
+        <View style={styles.qr}><Text style={styles.meta}>QR</Text></View>
+        <Text style={styles.code}>K7QM2P4A</Text>
+        <View style={styles.pair}>
+          <Button label="링크 복사" variant="secondary" style={styles.block} />
+          <Button label="공유" style={styles.block} />
+        </View>
+        <Button label="새 코드 발급" variant="danger" style={styles.block} />
+        <Text style={styles.body}>비밀번호로 보호되고 있어요</Text>
+        <Button label="비밀번호 변경" style={styles.block} />
+      </GlassSurface>
+    </View>
+  )
+}
+
+function ApplyScene() {
+  return (
+    <ScrollView contentContainerStyle={styles.pad}>
+      <GlassSurface tone="text" style={styles.card}>
+        <Text style={styles.title}>프레임</Text>
+        <Text style={styles.meta}>멤버 12명</Text>
+        <Text style={styles.body}>신규 부원 모집 중</Text>
+      </GlassSurface>
+      <GlassSurface tone="text" style={styles.card}>
+        <Text style={styles.cardTitle}>자기소개 한마디</Text>
+        <Text style={styles.body}>사진 동아리에서 촬영을 배우고 싶어요.</Text>
+      </GlassSurface>
+      <Button label="가입 신청 보내기" style={styles.block} />
+    </ScrollView>
+  )
+}
+
 const styles = StyleSheet.create({
   fill: { flex: 1, backgroundColor: 'transparent' },
   switcher: { gap: 8, padding: 12 },
@@ -217,4 +320,7 @@ const styles = StyleSheet.create({
   qr: { width: 180, height: 180, borderRadius: 22, backgroundColor: colors.paper, alignItems: 'center', justifyContent: 'center' },
   code: { fontSize: 20, letterSpacing: 2, color: colors.accent, ...fontStyle('700') },
   segment: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 10 },
+  searchBar: { margin: 16, paddingHorizontal: 16, paddingVertical: 12 },
+  pad: { padding: 16, gap: 12 },
+  hit: { backgroundColor: '#D7E6F5', color: colors.accent, ...fontStyle('700') },
 })

@@ -18,6 +18,7 @@ import { useToast } from '../../../../src/features/ui/Toast'
 import { useConfirm } from '../../../../src/features/ui/ConfirmDialog'
 import { buildInviteLink } from '../../../../src/features/deeplink/parseInviteLink'
 import { ScreenOverlay } from '../../../../src/features/shell'
+import { GlassSurface } from '../../../../src/features/ui/Glass'
 
 type LoadState =
   | { status: 'loading' }
@@ -237,6 +238,7 @@ function ManageChannelScreenContent() {
     >
       <ToastComponent />
       <ConfirmComponent />
+      <GlassSurface tone="text" style={styles.panel}>
       {channelName ? (
         <Text style={styles.sectionLabel}>
           <Text style={styles.channelNameHighlight}>{channelName}</Text>
@@ -355,6 +357,7 @@ function ManageChannelScreenContent() {
           <Text style={styles.removePasswordText}>비밀번호 보호 해제</Text>
         </Pressable>
       )}
+      </GlassSurface>
     </ScrollView>
   )
 }
@@ -376,9 +379,10 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   content: {
-    padding: 24,
+    padding: 16,
     paddingBottom: 48,
   },
+  panel: { padding: 20 },
   centered: {
     flex: 1,
     alignItems: 'center',
@@ -401,10 +405,10 @@ const styles = StyleSheet.create({
   qrBox: {
     alignSelf: 'center',
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
+    borderRadius: 22,
     padding: 16,
-    borderWidth: 1.5,
-    borderColor: '#E8E8E8',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.8)',
     marginBottom: 16,
   },
   linkRow: {
@@ -415,10 +419,10 @@ const styles = StyleSheet.create({
   linkButton: {
     flex: 1,
     height: 44,
-    borderRadius: 10,
-    borderWidth: 1.5,
-    borderColor: '#0863BF',
-    backgroundColor: '#FFFFFF',
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: 'rgba(26,26,26,0.14)',
+    backgroundColor: 'rgba(255,255,255,0.42)',
     alignItems: 'center',
     justifyContent: 'center',
     ...(Platform.OS === 'web' ? ({ cursor: 'pointer' } as object) : {}),
@@ -426,17 +430,17 @@ const styles = StyleSheet.create({
   linkButtonText: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#0863BF',
+    color: '#1A1A1A',
   },
   shareButton: {
     flex: 1,
     marginBottom: 0,
   },
   tokenBox: {
-    backgroundColor: '#D7E6F5',
-    borderWidth: 1.5,
-    borderColor: '#D7E6F5',
-    borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.38)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.8)',
+    borderRadius: 999,
     paddingVertical: 14,
     paddingHorizontal: 16,
     alignItems: 'center',
@@ -450,13 +454,13 @@ const styles = StyleSheet.create({
   tokenText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#1D4ED8',
+    color: '#0863BF',
     letterSpacing: 1.5,
     textAlign: 'center',
   },
   copyButton: {
     height: 44,
-    borderRadius: 10,
+    borderRadius: 999,
     backgroundColor: '#0863BF',
     alignItems: 'center',
     justifyContent: 'center',
@@ -475,10 +479,10 @@ const styles = StyleSheet.create({
   },
   regenerateButton: {
     height: 44,
-    borderRadius: 10,
-    borderWidth: 1.5,
+    borderRadius: 999,
+    borderWidth: 1,
     borderColor: '#1A1A1A',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: 'rgba(255,255,255,0.42)',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 10,
@@ -506,7 +510,7 @@ const styles = StyleSheet.create({
   retryButton: {
     paddingVertical: 10,
     paddingHorizontal: 24,
-    borderRadius: 10,
+    borderRadius: 999,
     backgroundColor: '#0863BF',
   },
   retryButtonText: {
@@ -527,15 +531,15 @@ const styles = StyleSheet.create({
   passwordStatusText: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#4B5563',
+    color: '#5A5A5A',
     textAlign: 'center',
   },
   input: {
-    height: 48,
-    backgroundColor: '#F9FAFB',
-    borderRadius: 10,
-    borderWidth: 1.5,
-    borderColor: '#E8E8E8',
+    height: 44,
+    backgroundColor: 'rgba(255,255,255,0.55)',
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.8)',
     paddingHorizontal: 16,
     fontSize: 15,
     color: '#1A1A1A',

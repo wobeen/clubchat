@@ -15,6 +15,7 @@ import { supabase } from '../../../src/lib/supabase'
 import { useToast } from '../../../src/features/ui/Toast'
 import { useConfirm } from '../../../src/features/ui/ConfirmDialog'
 import { ScreenOverlay } from '../../../src/features/shell'
+import { GlassSurface } from '../../../src/features/ui/Glass'
 
 interface ClubInfo {
   invite_code: string
@@ -227,7 +228,7 @@ function ManageClubScreenContent() {
       <ConfirmComponent />
 
       {/* 공개 토글 카드 */}
-      <View style={styles.card}>
+      <GlassSurface tone="text" style={styles.card}>
         <View style={styles.publicRow}>
           <View style={styles.publicInfo}>
             <Text style={styles.publicTitle}>동아리 공개</Text>
@@ -250,7 +251,7 @@ function ManageClubScreenContent() {
             <Text style={styles.publicPillText}>신규 부원 모집 중 · 공개 상태</Text>
           </View>
         )}
-      </View>
+      </GlassSurface>
 
       {/* 가입 신청 */}
       {club.is_public && (
@@ -260,9 +261,9 @@ function ManageClubScreenContent() {
           </View>
 
           {requests.length === 0 ? (
-            <View style={styles.emptyRequests}>
+            <GlassSurface tone="text" style={styles.emptyRequests}>
               <Text style={styles.emptyText}>대기 중인 신청이 없어요</Text>
-            </View>
+            </GlassSurface>
           ) : (
             requests.map((req) => {
               const color = getAvatarColor(req.profiles.display_name)
@@ -270,7 +271,7 @@ function ManageClubScreenContent() {
               const isProcessing = processingId === req.id
 
               return (
-                <View key={req.id} style={styles.card}>
+                <GlassSurface key={req.id} tone="text" style={styles.card}>
                   <View style={styles.requestHeader}>
                     <View style={[styles.reqAvatar, { backgroundColor: req.profiles.avatar_emoji ? '#EBEBEB' : color.bg }]}>
                       {req.profiles.avatar_emoji
@@ -311,7 +312,7 @@ function ManageClubScreenContent() {
                       </>
                     )}
                   </View>
-                </View>
+                </GlassSurface>
               )
             })
           )}
@@ -319,7 +320,7 @@ function ManageClubScreenContent() {
       )}
 
       {/* 초대 코드 */}
-      <View style={[styles.card, styles.codeCard]}>
+      <GlassSurface tone="text" style={StyleSheet.flatten([styles.card, styles.codeCard])}>
         <View style={styles.codeInfo}>
           <Text style={styles.codeLabel}>초대 코드</Text>
           <Text style={styles.codeValue}>{club.invite_code}</Text>
@@ -339,7 +340,7 @@ function ManageClubScreenContent() {
             ? <ActivityIndicator size="small" color="#5A5A5A" />
             : <Text style={styles.codeBtnText}>재발급</Text>}
         </Pressable>
-      </View>
+      </GlassSurface>
 
     </ScrollView>
   )
@@ -362,7 +363,7 @@ const styles = StyleSheet.create({
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: 'transparent', paddingHorizontal: 24 },
 
   card: {
-    backgroundColor: '#FFFFFF', borderRadius: 20, padding: 18,
+    padding: 18,
     shadowColor: 'rgba(25,31,40,1)', shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05, shadowRadius: 6, elevation: 2,
     gap: 14,
@@ -375,7 +376,7 @@ const styles = StyleSheet.create({
   publicDesc: { fontSize: 13, color: '#5A5A5A', lineHeight: 18 },
   publicPill: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
-    backgroundColor: '#FFFFFF', borderRadius: 12, paddingVertical: 10, paddingHorizontal: 14,
+    backgroundColor: 'rgba(255,255,255,0.38)', borderRadius: 999, paddingVertical: 10, paddingHorizontal: 14,
   },
   publicDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#0863BF' },
   publicPillText: { fontSize: 13, fontWeight: '600', color: '#0863BF' },
@@ -385,7 +386,7 @@ const styles = StyleSheet.create({
   sectionLabel: { fontSize: 13, fontWeight: '600', color: '#5A5A5A' },
 
   // 신청 없음
-  emptyRequests: { backgroundColor: '#FFFFFF', borderRadius: 20, padding: 28, alignItems: 'center',
+  emptyRequests: { padding: 28, alignItems: 'center',
     shadowColor: 'rgba(25,31,40,1)', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 6, elevation: 2 },
   emptyText: { fontSize: 14, color: '#5A5A5A' },
 
@@ -397,19 +398,20 @@ const styles = StyleSheet.create({
   reqNameRow: { flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' },
   reqName: { fontSize: 15, fontWeight: '700', color: '#1A1A1A' },
   reqTime: { fontSize: 12, color: '#5A5A5A' },
-  reqMessage: { backgroundColor: 'transparent', borderRadius: 10, padding: 10 },
+  reqMessage: { backgroundColor: 'rgba(255,255,255,0.38)', borderRadius: 16, padding: 10 },
   reqMessageText: { fontSize: 13, color: '#5A5A5A', lineHeight: 18 },
   reqActions: { flexDirection: 'row', gap: 8, paddingLeft: 54 },
   approveBtn: {
-    flex: 1, height: 40, borderRadius: 12, backgroundColor: '#0863BF',
+    flex: 1, height: 40, borderRadius: 999, backgroundColor: '#0863BF',
     alignItems: 'center', justifyContent: 'center',
   },
   approveBtnText: { fontSize: 14, fontWeight: '700', color: '#FFFFFF' },
   rejectBtn: {
-    flex: 1, height: 40, borderRadius: 12, backgroundColor: '#F4F4F4',
+    flex: 1, height: 40, borderRadius: 999, backgroundColor: 'rgba(255,255,255,0.42)',
+    borderWidth: 1, borderColor: 'rgba(26,26,26,0.14)',
     alignItems: 'center', justifyContent: 'center',
   },
-  rejectBtnText: { fontSize: 14, fontWeight: '700', color: '#5F5F5F' },
+  rejectBtnText: { fontSize: 14, fontWeight: '700', color: '#1A1A1A' },
 
   // 초대 코드
   codeCard: { flexDirection: 'row', alignItems: 'center', gap: 12 },
@@ -417,7 +419,7 @@ const styles = StyleSheet.create({
   codeLabel: { fontSize: 14, fontWeight: '700', color: '#1A1A1A' },
   codeValue: { fontSize: 16, fontWeight: '800', color: '#0863BF', letterSpacing: 2 },
   codeBtn: {
-    height: 34, paddingHorizontal: 14, borderRadius: 12, backgroundColor: '#F4F4F4',
+    height: 34, paddingHorizontal: 14, borderRadius: 999, backgroundColor: 'rgba(255,255,255,0.55)',
     alignItems: 'center', justifyContent: 'center',
   },
   codeBtnText: { fontSize: 13, fontWeight: '700', color: '#5A5A5A' },
@@ -425,6 +427,6 @@ const styles = StyleSheet.create({
 
   pressed: { opacity: 0.7, transform: [{ scale: 0.97 }] },
   errorText: { fontSize: 15, color: '#1A1A1A', textAlign: 'center', marginBottom: 20 },
-  retryBtn: { paddingVertical: 10, paddingHorizontal: 24, borderRadius: 10, backgroundColor: '#0863BF' },
+  retryBtn: { paddingVertical: 10, paddingHorizontal: 24, borderRadius: 999, backgroundColor: '#0863BF' },
   retryBtnText: { fontSize: 14, fontWeight: '600', color: '#FFFFFF' },
 })

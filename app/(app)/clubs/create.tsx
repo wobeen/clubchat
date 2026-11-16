@@ -11,6 +11,7 @@ import {
 } from 'react-native'
 import { useRouter } from 'expo-router'
 import { supabase } from '../../../src/lib/supabase'
+import { GlassSurface } from '../../../src/features/ui/Glass'
 
 interface CreateClubSuccess {
   success: true
@@ -87,8 +88,8 @@ export default function CreateClubScreen() {
 
   if (form.status === 'created') {
     return (
-      <View style={styles.container}>
-        <View style={styles.successCard}>
+      <View style={[styles.container, styles.successWrap]}>
+        <GlassSurface tone="text" style={styles.successCard}>
           <View style={styles.successIcon}>
             <Text style={styles.successIconText}>OK</Text>
           </View>
@@ -121,7 +122,7 @@ export default function CreateClubScreen() {
           >
             <Text style={styles.doneButtonText}>완료</Text>
           </Pressable>
-        </View>
+        </GlassSurface>
       </View>
     )
   }
@@ -134,6 +135,7 @@ export default function CreateClubScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <View style={styles.inner}>
+        <GlassSurface tone="text" style={styles.formCard}>
         <Text style={styles.title}>새 동아리 만들기</Text>
         <Text style={styles.subtitle}>동아리 이름을 입력하면 초대 코드가 자동으로 생성됩니다.</Text>
 
@@ -177,6 +179,7 @@ export default function CreateClubScreen() {
             : <Text style={styles.createButtonText}>만들기</Text>
           }
         </Pressable>
+        </GlassSurface>
       </View>
     </KeyboardAvoidingView>
   )
@@ -187,10 +190,15 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'transparent',
   },
+  successWrap: { justifyContent: 'center' },
   inner: {
     flex: 1,
-    paddingHorizontal: 24,
-    paddingTop: 32,
+    paddingHorizontal: 16,
+    paddingTop: 16,
+  },
+  formCard: {
+    padding: 24,
+    gap: 0,
   },
   title: {
     fontSize: 24,
@@ -210,22 +218,22 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#374151',
+    color: '#5A5A5A',
     marginBottom: 8,
   },
   input: {
-    height: 52,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    borderWidth: 1.5,
-    borderColor: '#E8E8E8',
+    height: 44,
+    backgroundColor: 'rgba(255,255,255,0.55)',
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.8)',
     paddingHorizontal: 16,
     fontSize: 16,
     color: '#1A1A1A',
   },
   createButton: {
-    height: 52,
-    borderRadius: 14,
+    height: 44,
+    borderRadius: 999,
     backgroundColor: '#0863BF',
     alignItems: 'center',
     justifyContent: 'center',
@@ -248,10 +256,10 @@ const styles = StyleSheet.create({
   },
   // 생성 완료 상태
   successCard: {
-    flex: 1,
+    margin: 16,
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 32,
+    paddingHorizontal: 28,
+    paddingVertical: 32,
   },
   successIcon: {
     width: 72,
@@ -295,20 +303,20 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
   codeBox: {
-    backgroundColor: '#D7E6F5',
-    borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.38)',
+    borderRadius: 999,
     paddingVertical: 16,
     paddingHorizontal: 24,
     marginBottom: 10,
     width: '100%',
     alignItems: 'center',
     borderWidth: 1.5,
-    borderColor: '#D7E6F5',
+    borderColor: 'rgba(255,255,255,0.8)',
   },
   codeText: {
     fontSize: 28,
     fontWeight: '800',
-    color: '#1D4ED8',
+    color: '#0863BF',
     letterSpacing: 4,
   },
   codeHint: {
@@ -321,7 +329,7 @@ const styles = StyleSheet.create({
   copyButton: {
     paddingVertical: 10,
     paddingHorizontal: 24,
-    borderRadius: 10,
+    borderRadius: 999,
     backgroundColor: '#0863BF',
     ...(Platform.OS === 'web' ? ({ cursor: 'pointer' } as object) : {}),
   },
@@ -331,10 +339,10 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   doneButton: {
-    height: 52,
+    height: 44,
     width: '100%',
     maxWidth: 320,
-    borderRadius: 14,
+    borderRadius: 999,
     backgroundColor: '#0863BF',
     alignItems: 'center',
     justifyContent: 'center',

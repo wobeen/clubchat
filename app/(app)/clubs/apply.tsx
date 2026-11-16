@@ -17,6 +17,7 @@ import { useAuth } from '../../../src/features/auth/useAuth'
 import { useToast } from '../../../src/features/ui/Toast'
 import { getClubColor } from '../../../src/features/shell/shellUtils'
 import { EntityAvatar } from '../../../src/features/shell/EntityAvatar'
+import { GlassSurface } from '../../../src/features/ui/Glass'
 
 interface ClubInfo {
   id: string
@@ -138,7 +139,7 @@ export default function ApplyScreen() {
         <ToastComponent />
 
         {/* 동아리 소개 카드 */}
-        <View style={styles.clubCard}>
+        <GlassSurface tone="text" style={styles.clubCard}>
           <EntityAvatar label={firstChar} color={color} size={68} radius={22} textStyle={styles.clubBadgeText} />
           <Text style={styles.clubName}>{club.name}</Text>
           <Text style={styles.clubMeta}>멤버 {club.memberCount}명</Text>
@@ -151,17 +152,17 @@ export default function ApplyScreen() {
           {club.description ? (
             <Text style={styles.clubDesc}>{club.description}</Text>
           ) : null}
-        </View>
+        </GlassSurface>
 
         {/* 자기소개 입력 */}
         {alreadyApplied ? (
-          <View style={styles.appliedCard}>
+          <GlassSurface tone="text" style={styles.appliedCard}>
             <Text style={styles.appliedIcon}>✓</Text>
             <Text style={styles.appliedTitle}>신청이 접수됐어요</Text>
             <Text style={styles.appliedDesc}>동아리 관리자의 승인을 기다리고 있어요.</Text>
-          </View>
+          </GlassSurface>
         ) : (
-          <View style={styles.messageCard}>
+          <GlassSurface tone="text" style={styles.messageCard}>
             <Text style={styles.messageTitle}>자기소개 한마디</Text>
             <TextInput
               style={styles.messageInput}
@@ -174,7 +175,7 @@ export default function ApplyScreen() {
               returnKeyType="default"
             />
             <Text style={styles.charCount}>{message.length} / {MAX_LEN}</Text>
-          </View>
+          </GlassSurface>
         )}
 
         {/* 안내 */}
@@ -213,7 +214,7 @@ const styles = StyleSheet.create({
   content: { padding: 16, gap: 12, paddingBottom: 100 },
 
   clubCard: {
-    backgroundColor: '#FFFFFF', borderRadius: 24, padding: 24,
+    padding: 24,
     alignItems: 'center', gap: 14,
     shadowColor: 'rgba(25,31,40,1)', shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05, shadowRadius: 6, elevation: 2,
@@ -223,27 +224,28 @@ const styles = StyleSheet.create({
   clubMeta: { fontSize: 13, color: '#5A5A5A' },
   recruitPill: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
-    backgroundColor: '#EBEBEB', borderRadius: 12, paddingVertical: 6, paddingHorizontal: 14,
+    backgroundColor: 'rgba(255,255,255,0.55)', borderRadius: 999, paddingVertical: 6, paddingHorizontal: 14,
   },
   recruitDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: '#0863BF' },
   recruitText: { fontSize: 13, fontWeight: '700', color: '#0863BF' },
   clubDesc: { fontSize: 14, color: '#5A5A5A', lineHeight: 22, textAlign: 'center' },
 
   messageCard: {
-    backgroundColor: '#FFFFFF', borderRadius: 20, padding: 18, gap: 10,
+    padding: 18, gap: 10,
     shadowColor: 'rgba(25,31,40,1)', shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05, shadowRadius: 6, elevation: 2,
   },
   messageTitle: { fontSize: 14, fontWeight: '700', color: '#1A1A1A' },
   messageInput: {
-    minHeight: 88, backgroundColor: '#F4F4F4', borderRadius: 14,
+    minHeight: 88, backgroundColor: 'rgba(255,255,255,0.55)', borderRadius: 22,
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.8)',
     padding: 14, fontSize: 14, color: '#1A1A1A', lineHeight: 21,
     ...(Platform.OS === 'web' ? ({ outlineStyle: 'none' } as object) : {}),
   },
   charCount: { fontSize: 12, color: '#5F5F5F', textAlign: 'right' },
 
   appliedCard: {
-    backgroundColor: '#FFFFFF', borderRadius: 20, padding: 32, alignItems: 'center', gap: 8,
+    padding: 32, alignItems: 'center', gap: 8,
     shadowColor: 'rgba(25,31,40,1)', shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05, shadowRadius: 6, elevation: 2,
   },
@@ -262,7 +264,7 @@ const styles = StyleSheet.create({
     borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: '#E8E8E8',
   },
   submitBtn: {
-    height: 54, borderRadius: 18, backgroundColor: '#0863BF',
+    height: 44, borderRadius: 999, backgroundColor: '#0863BF',
     alignItems: 'center', justifyContent: 'center',
     shadowColor: '#0863BF', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 14, elevation: 6,
   },

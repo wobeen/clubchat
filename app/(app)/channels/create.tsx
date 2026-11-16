@@ -13,6 +13,7 @@ import {
 } from 'react-native'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { supabase } from '../../../src/lib/supabase'
+import { GlassSurface } from '../../../src/features/ui/Glass'
 
 interface CreateChannelSuccess {
   success: true
@@ -107,6 +108,7 @@ export default function CreateChannelScreen() {
         contentContainerStyle={styles.inner}
         keyboardShouldPersistTaps="handled"
       >
+        <GlassSurface tone="text" style={styles.formCard}>
         <Text style={styles.subtitle}>
           <Text style={styles.subtitleBold}>{clubName ?? '동아리'}</Text>에 새 방을 만듭니다
         </Text>
@@ -147,8 +149,8 @@ export default function CreateChannelScreen() {
               if (!v) setPassword('')
               if (form.status === 'error') setForm({ status: 'idle' })
             }}
-            trackColor={{ false: '#E8E8E8', true: '#93C5FD' }}
-            thumbColor={usePassword ? '#0863BF' : '#FFFFFF'}
+            trackColor={{ false: '#E8E8E8', true: '#0863BF' }}
+            thumbColor="#FFFFFF"
             disabled={isLoading}
             accessibilityLabel="비밀번호 설정 토글"
           />
@@ -192,6 +194,7 @@ export default function CreateChannelScreen() {
             : <Text style={styles.createButtonText}>만들기</Text>
           }
         </Pressable>
+        </GlassSurface>
       </ScrollView>
     </KeyboardAvoidingView>
   )
@@ -203,10 +206,11 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   inner: {
-    paddingHorizontal: 24,
-    paddingTop: 24,
+    paddingHorizontal: 16,
+    paddingTop: 16,
     paddingBottom: 40,
   },
+  formCard: { padding: 20 },
   subtitle: {
     fontSize: 15,
     color: '#5A5A5A',
@@ -223,15 +227,15 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#374151',
+    color: '#5A5A5A',
     marginBottom: 8,
   },
   input: {
-    height: 52,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    borderWidth: 1.5,
-    borderColor: '#E8E8E8',
+    height: 44,
+    backgroundColor: 'rgba(255,255,255,0.55)',
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.8)',
     paddingHorizontal: 16,
     fontSize: 16,
     color: '#1A1A1A',
@@ -245,14 +249,14 @@ const styles = StyleSheet.create({
   toggleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.38)',
+    borderRadius: 22,
     paddingVertical: 14,
     paddingHorizontal: 16,
     marginBottom: 20,
     gap: 12,
-    borderWidth: 1.5,
-    borderColor: '#E8E8E8',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.8)',
   },
   toggleLabelGroup: {
     flex: 1,
@@ -268,8 +272,8 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   createButton: {
-    height: 52,
-    borderRadius: 14,
+    height: 44,
+    borderRadius: 999,
     backgroundColor: '#0863BF',
     alignItems: 'center',
     justifyContent: 'center',
