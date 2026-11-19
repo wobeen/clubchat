@@ -46,7 +46,12 @@ export function runRuleBased(c) {
   const draft = extractDraft(state, meeting);
   return {
     decisions: draft.decisions.map((x) => ({ text: x.text, evidenceIds: x.evidenceIds })),
-    tasks: draft.tasks.map((x) => ({ text: x.text, ownerId: x.ownerId ?? null, dueAt: x.dueAt ?? null, evidenceIds: x.evidenceIds })),
+    tasks: draft.tasks.map((x) => ({
+      text: x.text,
+      ownerId: x.ownerId ?? null,
+      dueAt: x.dueAt ?? null,
+      evidenceIds: x.evidenceIds,
+    })),
     unresolved: draft.unresolved.filter((x) => !x.inherited).map((x) => ({ text: x.text, evidenceIds: x.evidenceIds })),
     events: draft.events.map((x) => ({
       text: x.text,
@@ -61,18 +66,24 @@ export function runRuleBased(c) {
 }
 
 // ---------- 채점 ----------
-const norm = (s) => String(s ?? '').replace(/[^\p{L}\p{N}]/gu, '').toLowerCase();
+const norm = (s) =>
+  String(s ?? '')
+    .replace(/[^\p{L}\p{N}]/gu, '')
+    .toLowerCase();
 function bigrams(s) {
   const out = new Map();
   for (let i = 0; i < s.length - 1; i++) out.set(s.slice(i, i + 2), (out.get(s.slice(i, i + 2)) || 0) + 1);
   return out;
 }
 export function similarity(a, b) {
-  const x = norm(a), y = norm(b);
+  const x = norm(a),
+    y = norm(b);
   if (!x || !y) return 0;
   if (x === y || x.includes(y) || y.includes(x)) return 1;
-  const A = bigrams(x), B = bigrams(y);
-  let inter = 0, total = 0;
+  const A = bigrams(x),
+    B = bigrams(y);
+  let inter = 0,
+    total = 0;
   for (const [k, v] of A) inter += Math.min(v, B.get(k) || 0);
   for (const v of A.values()) total += v;
   for (const v of B.values()) total += v;
@@ -82,20 +93,27 @@ const MATCH_THRESHOLD = 0.5;
 // 그리디 1:1 매칭(유사도 높은 쌍부터)
 export function matchItems(expected, actual) {
   const pairs = [];
-  expected.forEach((e, i) => actual.forEach((a, j) => {
-    const s = similarity(e.text, a.text);
-    if (s >= MATCH_THRESHOLD) pairs.push([s, i, j]);
-  }));
+  expected.forEach((e, i) =>
+    actual.forEach((a, j) => {
+      const s = similarity(e.text, a.text);
+      if (s >= MATCH_THRESHOLD) pairs.push([s, i, j]);
+    }),
+  );
   pairs.sort((p, q) => q[0] - p[0]);
-  const usedE = new Set(), usedA = new Set(), out = [];
+  const usedE = new Set(),
+    usedA = new Set(),
+    out = [];
   for (const [, i, j] of pairs) {
     if (usedE.has(i) || usedA.has(j)) continue;
-    usedE.add(i); usedA.add(j); out.push([expected[i], actual[j]]);
+    usedE.add(i);
+    usedA.add(j);
+    out.push([expected[i], actual[j]]);
   }
   return out;
 }
 const jaccard = (a = [], b = []) => {
-  const A = new Set(a), B = new Set(b);
+  const A = new Set(a),
+    B = new Set(b);
   if (!A.size && !B.size) return 1;
   let i = 0;
   for (const v of A) if (B.has(v)) i++;
@@ -112,7 +130,10 @@ function fieldScores(type, e, a) {
   }
   if (type === 'events') {
     f.date = (e.at ?? null) === (a.at ?? null) && !!e.hasTime === !!a.hasTime ? 1 : 0; // 시각은 정확히 일치
-    f.location = norm(e.location) === norm(a.location) || (norm(e.location) && norm(a.location).includes(norm(e.location))) ? 1 : 0;
+    f.location =
+      norm(e.location) === norm(a.location) || (norm(e.location) && norm(a.location).includes(norm(e.location)))
+        ? 1
+        : 0;
     f.participants = sameSet(e.participantIds, a.participantIds) ? 1 : 0;
     f.kind = e.kind === a.kind ? 1 : 0;
   }
@@ -120,15 +141,30 @@ function fieldScores(type, e, a) {
 }
 
 function newAgg() {
-  return { tp: 0, fp: 0, fn: 0, ev: [], date: [], dateStrictHit: 0, dateStrictN: 0, owner: [], loc: [], ppl: [], kind: [] };
+  return {
+    tp: 0,
+    fp: 0,
+    fn: 0,
+    ev: [],
+    date: [],
+    dateStrictHit: 0,
+    dateStrictN: 0,
+    owner: [],
+    loc: [],
+    ppl: [],
+    kind: [],
+  };
 }
 function scoreCase(c, actual) {
   const per = {};
   for (const type of TYPES) {
-    const exp = c.expected[type] || [], act = actual[type] || [];
+    const exp = c.expected[type] || [],
+      act = actual[type] || [];
     const pairs = matchItems(exp, act);
     const a = newAgg();
-    a.tp = pairs.length; a.fp = act.length - pairs.length; a.fn = exp.length - pairs.length;
+    a.tp = pairs.length;
+    a.fp = act.length - pairs.length;
+    a.fn = exp.length - pairs.length;
     for (const [e, x] of pairs) {
       const f = fieldScores(type, e, x);
       a.ev.push(f.evidence);
@@ -137,7 +173,10 @@ function scoreCase(c, actual) {
       if (f.location !== undefined) a.loc.push(f.location);
       if (f.participants !== undefined) a.ppl.push(f.participants);
       if (f.kind !== undefined) a.kind.push(f.kind);
-      if (f.date !== undefined) { a.dateStrictN++; a.dateStrictHit += f.date; }
+      if (f.date !== undefined) {
+        a.dateStrictN++;
+        a.dateStrictHit += f.date;
+      }
     }
     if (type === 'tasks' || type === 'events') a.dateStrictN += exp.length - pairs.length; // 놓친 항목의 날짜는 오답
     per[type] = a;
@@ -165,7 +204,8 @@ const total = newAgg();
 const byType = Object.fromEntries(TYPES.map((t) => [t, newAgg()]));
 const byTag = {};
 for (const c of cases) {
-  let actual, error = null;
+  let actual,
+    error = null;
   try {
     actual = runRuleBased(c);
   } catch (e) {
@@ -174,27 +214,51 @@ for (const c of cases) {
   }
   const per = scoreCase(c, actual);
   const caseAgg = newAgg();
-  for (const t of TYPES) { merge(caseAgg, per[t]); merge(byType[t], per[t]); }
+  for (const t of TYPES) {
+    merge(caseAgg, per[t]);
+    merge(byType[t], per[t]);
+  }
   merge(total, caseAgg);
-  for (const tag of c.tags) { byTag[tag] ||= newAgg(); merge(byTag[tag], caseAgg); }
-  rows.push({ id: c.id, tags: c.tags, error, ...prf(caseAgg), evidence: mean(caseAgg.ev), date: mean(caseAgg.date), exp: caseAgg.tp + caseAgg.fn, got: caseAgg.tp + caseAgg.fp, tp: caseAgg.tp });
+  for (const tag of c.tags) {
+    byTag[tag] ||= newAgg();
+    merge(byTag[tag], caseAgg);
+  }
+  rows.push({
+    id: c.id,
+    tags: c.tags,
+    error,
+    ...prf(caseAgg),
+    evidence: mean(caseAgg.ev),
+    date: mean(caseAgg.date),
+    exp: caseAgg.tp + caseAgg.fn,
+    got: caseAgg.tp + caseAgg.fp,
+    tp: caseAgg.tp,
+  });
   if (verbose) console.log(`\n# ${c.id}\n기대: ${JSON.stringify(c.expected)}\n결과: ${JSON.stringify(actual)}`);
 }
 
 console.log(`ITDA 추출 기준선 — 규칙 기반 extractDraft, 사례 ${cases.length}건\n`);
 console.log('사례'.padEnd(38) + '기대 결과 일치   정밀도  재현율     F1  근거   날짜');
 for (const r of rows) {
-  console.log(`${r.id.padEnd(36)}${String(r.exp).padStart(4)}${String(r.got).padStart(4)}${String(r.tp).padStart(4)}  ${pct(r.p)} ${pct(r.r)} ${pct(r.f1)} ${pct(r.evidence)} ${pct(r.date)}${r.error ? '  ERR ' + r.error : ''}`);
+  console.log(
+    `${r.id.padEnd(36)}${String(r.exp).padStart(4)}${String(r.got).padStart(4)}${String(r.tp).padStart(4)}  ${pct(r.p)} ${pct(r.r)} ${pct(r.f1)} ${pct(r.evidence)} ${pct(r.date)}${r.error ? '  ERR ' + r.error : ''}`,
+  );
 }
 const t = prf(total);
 console.log('\n[항목 종류별]');
 for (const ty of TYPES) {
   const s = prf(byType[ty]);
-  console.log(`${ty.padEnd(11)} 정밀도${pct(s.p)} 재현율${pct(s.r)} F1${pct(s.f1)}  (일치 ${byType[ty].tp} / 기대 ${byType[ty].tp + byType[ty].fn} / 결과 ${byType[ty].tp + byType[ty].fp})`);
+  console.log(
+    `${ty.padEnd(11)} 정밀도${pct(s.p)} 재현율${pct(s.r)} F1${pct(s.f1)}  (일치 ${byType[ty].tp} / 기대 ${byType[ty].tp + byType[ty].fn} / 결과 ${byType[ty].tp + byType[ty].fp})`,
+  );
 }
 console.log('\n[태그별 F1]');
-for (const tag of Object.keys(byTag).sort()) console.log(`${tag.padEnd(18)} ${pct(prf(byTag[tag]).f1)}  (사례 ${cases.filter((c) => c.tags.includes(tag)).length}건)`);
-const dateAcc = mean(total.date), dateStrict = total.dateStrictN ? total.dateStrictHit / total.dateStrictN : null;
+for (const tag of Object.keys(byTag).sort())
+  console.log(
+    `${tag.padEnd(18)} ${pct(prf(byTag[tag]).f1)}  (사례 ${cases.filter((c) => c.tags.includes(tag)).length}건)`,
+  );
+const dateAcc = mean(total.date),
+  dateStrict = total.dateStrictN ? total.dateStrictHit / total.dateStrictN : null;
 console.log('\n[전체]');
 console.log(`항목 일치  정밀도${pct(t.p)} 재현율${pct(t.r)} F1${pct(t.f1)}`);
 console.log(`근거 ID 정확도(일치 항목 평균 Jaccard)  ${pct(mean(total.ev))}`);
@@ -202,5 +266,15 @@ console.log(`날짜 정확도(일치 항목 기준)            ${pct(dateAcc)}`)
 console.log(`날짜 정확도(놓친 항목 오답 포함)        ${pct(dateStrict)}`);
 console.log(`담당자 정확도(일치 업무 기준)           ${pct(mean(total.owner))}`);
 if (jsonOut) {
-  writeFileSync(jsonOut, JSON.stringify({ cases: rows, overall: { ...t, evidence: mean(total.ev), dateMatched: dateAcc, dateStrict, owner: mean(total.owner) } }, null, 2));
+  writeFileSync(
+    jsonOut,
+    JSON.stringify(
+      {
+        cases: rows,
+        overall: { ...t, evidence: mean(total.ev), dateMatched: dateAcc, dateStrict, owner: mean(total.owner) },
+      },
+      null,
+      2,
+    ),
+  );
 }
