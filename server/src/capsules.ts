@@ -4,12 +4,82 @@ import { notFound } from './errors.js';
 const iso = (value: unknown) =>
   value instanceof Date ? value.toISOString() : value == null ? null : new Date(String(value)).toISOString();
 
+const mapMessage = (message: any) => ({
+  id: message.id,
+  authorId: message.author_id,
+  text: message.text,
+  createdAt: iso(message.created_at),
+  ...(message.source_message_id ? { sourceMessageId: message.source_message_id } : {}),
+});
+
+function represent(capsule: any, memberRows: any[], confirmationRows: any[], messageRows: any[]): any {
+  const members = memberRows.filter((row) => row.capsule_id === capsule.id);
+  const confirmations = confirmationRows.filter((row) => row.capsule_id === capsule.id);
+  const messages = messageRows.filter((row) => row.capsule_id === capsule.id);
+  return {
+    id: capsule.id,
+    title: capsule.title,
+    description: capsule.description,
+    status: capsule.status,
+    revision: capsule.revision,
+    version: capsule.version,
+    memberSetVersion: capsule.member_set_version,
+    conclusionVersion: capsule.conclusion_version,
+    facilitatorId: capsule.facilitator_id,
+    parentId: capsule.parent_id,
+    previousId: capsule.previous_id,
+    correctionOf: capsule.correction_of,
+    deferredFrom: capsule.deferred_from,
+    startsAt: iso(capsule.starts_at),
+    confirmedAt: iso(capsule.confirmed_at),
+    createdAt: iso(capsule.created_at),
+    memberIds: members.map((row) => row.user_id),
+    confirmationMemberIds: members
+      .filter((row) => row.is_confirmation_target && !row.departed_at)
+      .map((row) => row.user_id),
+    departedMemberIds: members.filter((row) => row.departed_at).map((row) => row.user_id),
+    messages: messages.filter((row) => !row.is_source).map(mapMessage),
+    sourceMessages: messages.filter((row) => row.is_source).map(mapMessage),
+    confirmations: confirmations.map((row) => row.user_id),
+    confirmationRecords: confirmations.map((row) => ({
+      memberId: row.user_id,
+      revision: row.revision,
+      memberSetVersion: row.member_set_version,
+      conclusionVersion: row.conclusion_version,
+      at: iso(row.at),
+    })),
+    draft: capsule.draft,
+    draftMessageIds: capsule.draft_message_ids,
+    draftHistory: capsule.draft_history,
+    carryover: capsule.carryover,
+    conclusions: capsule.conclusions,
+    agendaStatuses: capsule.agenda_statuses,
+    policyHistory: capsule.policy_history,
+    delegationDisposition: capsule.delegation_disposition,
+    scheduledFrom: capsule.scheduled_from,
+    confirmedSnapshot: capsule.confirmed_snapshot,
+    correctionReason: capsule.correction_reason,
+    correctionImpacts: capsule.correction_impacts,
+  };
+}
+
 export async function canReadCapsule(db: Database, id: string, userId: string): Promise<boolean> {
-  const r = await db.query(`select 1 from capsule_members where capsule_id=$1 and user_id=$2 and departed_at is null`, [
-    id,
-    userId,
-  ]);
-  return r.rowCount > 0;
+  const result = await db.query(
+    'select 1 from capsule_members where capsule_id=$1 and user_id=$2 and departed_at is null',
+    [id, userId],
+  );
+  return result.rowCount > 0;
+}
+
+export async function canReadCapsuleMetadata(db: Database, id: string, userId: string): Promise<boolean> {
+  const result = await db.query(
+    `select 1 from capsules child
+     left join capsule_members direct on direct.capsule_id=child.id and direct.user_id=$2 and direct.departed_at is null
+     left join capsule_members parent on parent.capsule_id=child.parent_id and parent.user_id=$2 and parent.departed_at is null
+     where child.id=$1 and (direct.user_id is not null or parent.user_id is not null)`,
+    [id, userId],
+  );
+  return result.rowCount > 0;
 }
 
 export async function assertCanRead(db: Database, id: string, userId: string): Promise<void> {
@@ -22,81 +92,47 @@ export async function capsuleRepresentation(
   messageLimit = 50,
   includeMessages = true,
 ): Promise<any> {
-  const result = await db.query<any>('select * from capsules where id=$1', [id]);
-  const c = result.rows[0];
-  if (!c) throw notFound();
-  const [members, messages, sources, confirmations] = await Promise.all([
-    db.query<any>(
-      'select user_id, is_confirmation_target, departed_at from capsule_members where capsule_id=$1 order by user_id',
-      [id],
-    ),
-    includeMessages
-      ? db.query<any>(
-          `select * from (select id, author_id, text, created_at, source_message_id from messages where capsule_id=$1 and not is_source order by created_at desc, id desc limit $2) x order by created_at, id`,
-          [id, messageLimit],
-        )
-      : Promise.resolve({ rows: [] }),
-    includeMessages
-      ? db.query<any>(
-          'select id, author_id, text, created_at, source_message_id from messages where capsule_id=$1 and is_source order by created_at, id',
-          [id],
-        )
-      : Promise.resolve({ rows: [] }),
-    db.query<any>(
-      'select user_id, revision, member_set_version, conclusion_version, at from confirmations where capsule_id=$1 order by at',
-      [id],
-    ),
-  ]);
-  const mapMessage = (m: any) => ({
-    id: m.id,
-    authorId: m.author_id,
-    text: m.text,
-    createdAt: iso(m.created_at),
-    ...(m.source_message_id ? { sourceMessageId: m.source_message_id } : {}),
-  });
-  return {
-    id: c.id,
-    title: c.title,
-    description: c.description,
-    status: c.status,
-    revision: c.revision,
-    version: c.version,
-    memberSetVersion: c.member_set_version,
-    conclusionVersion: c.conclusion_version,
-    facilitatorId: c.facilitator_id,
-    parentId: c.parent_id,
-    previousId: c.previous_id,
-    correctionOf: c.correction_of,
-    deferredFrom: c.deferred_from,
-    startsAt: iso(c.starts_at),
-    confirmedAt: iso(c.confirmed_at),
-    createdAt: iso(c.created_at),
-    memberIds: members.rows.map((m) => m.user_id),
-    confirmationMemberIds: members.rows.filter((m) => m.is_confirmation_target && !m.departed_at).map((m) => m.user_id),
-    departedMemberIds: members.rows.filter((m) => m.departed_at).map((m) => m.user_id),
-    messages: messages.rows.map(mapMessage),
-    sourceMessages: sources.rows.map(mapMessage),
-    confirmations: confirmations.rows.map((x) => x.user_id),
-    confirmationRecords: confirmations.rows.map((x) => ({
-      memberId: x.user_id,
-      revision: x.revision,
-      memberSetVersion: x.member_set_version,
-      conclusionVersion: x.conclusion_version,
-      at: iso(x.at),
-    })),
-    draft: c.draft,
-    draftMessageIds: c.draft_message_ids,
-    draftHistory: c.draft_history,
-    carryover: c.carryover,
-    conclusions: c.conclusions,
-    agendaStatuses: c.agenda_statuses,
-    policyHistory: c.policy_history,
-    delegationDisposition: c.delegation_disposition,
-    scheduledFrom: c.scheduled_from,
-    confirmedSnapshot: c.confirmed_snapshot,
-    correctionReason: c.correction_reason,
-    correctionImpacts: c.correction_impacts,
-  };
+  // A node-postgres transaction uses one client; keep its queries sequential.
+  const capsules = await db.query<any>('select * from capsules where id=$1', [id]);
+  const members = await db.query<any>(
+    'select capsule_id,user_id,is_confirmation_target,departed_at from capsule_members where capsule_id=$1 order by user_id',
+    [id],
+  );
+  const confirmations = await db.query<any>(
+    'select capsule_id,user_id,revision,member_set_version,conclusion_version,at from confirmations where capsule_id=$1 order by at',
+    [id],
+  );
+  const messages = includeMessages
+    ? await db.query<any>(
+        `select * from (
+          select id,capsule_id,author_id,text,is_source,source_message_id,created_at
+          from messages where capsule_id=$1 order by created_at desc,id desc limit $2
+        ) selected order by created_at,id`,
+        [id, messageLimit],
+      )
+    : { rows: [] };
+  if (!capsules.rows[0]) throw notFound();
+  return represent(capsules.rows[0], members.rows, confirmations.rows, messages.rows);
+}
+
+export async function relatedCapsuleIds(
+  db: Database,
+  capsuleId: string,
+  extraCapsuleIds: string[] = [],
+): Promise<string[]> {
+  const rows = await db.query<{ id: string }>(
+    `with target as (
+       select id,org_id,parent_id,previous_id,correction_of from capsules where id=$1
+     )
+     select distinct related.id from target
+     join capsules related on related.org_id=target.org_id and (
+       related.id=target.id or related.id=target.parent_id or related.id=target.previous_id or
+       related.id=target.correction_of or related.parent_id=target.id or related.previous_id=target.id or
+       related.correction_of=target.id or related.id=any($2::uuid[])
+     ) order by related.id`,
+    [capsuleId, extraCapsuleIds],
+  );
+  return rows.rows.map((row) => row.id);
 }
 
 export async function domainState(
@@ -104,48 +140,51 @@ export async function domainState(
   capsuleId: string,
   profileId: string,
   messageCapsuleIds: string[] = [capsuleId],
-  extraCapsuleIds: string[] = [],
+  relatedIds?: string[],
 ): Promise<any> {
-  const row = await db.query<any>('select org_id from capsules where id=$1', [capsuleId]);
-  if (!row.rows[0]) throw notFound();
-  const orgId = row.rows[0].org_id;
-  const [org, memberRows, capsuleRows] = await Promise.all([
-    db.query<any>('select name from organizations where id=$1', [orgId]),
-    db.query<any>(
-      `select u.id, u.name, om.teams, om.grade, om.role from org_members om join users u on u.id=om.user_id where om.org_id=$1 and om.left_at is null`,
-      [orgId],
-    ),
-    db.query<any>(
-      `with recursive related(id) as (
-      select id from capsules where id=any($2::uuid[]) and org_id=(select org_id from capsules where id=$1)
-      union
-      select c.id from capsules c join related r on
-        c.parent_id=r.id or c.id=(select parent_id from capsules where id=r.id) or
-        c.previous_id=r.id or c.id=(select previous_id from capsules where id=r.id) or
-        c.correction_of=r.id or c.id=(select correction_of from capsules where id=r.id) or
-        c.deferred_from=r.id or c.id=(select deferred_from from capsules where id=r.id)
-    ) select id from related`,
-      [capsuleId, [...new Set([capsuleId, ...extraCapsuleIds])]],
-    ),
+  const ids = relatedIds ?? (await relatedCapsuleIds(db, capsuleId));
+  if (!ids.length) throw notFound();
+  const target = await db.query<{ org_id: string }>('select org_id from capsules where id=$1', [capsuleId]);
+  if (!target.rows[0]) throw notFound();
+  const orgId = target.rows[0].org_id;
+  const org = await db.query<any>('select name from organizations where id=$1', [orgId]);
+  const orgMembers = await db.query<any>(
+    `select u.id,u.name,om.teams,om.grade,om.role from org_members om
+     join users u on u.id=om.user_id where om.org_id=$1 and om.left_at is null`,
+    [orgId],
+  );
+  const capsules = await db.query<any>('select * from capsules where id=any($1::uuid[]) order by created_at desc', [
+    ids,
   ]);
-  const meetings = [];
-  for (const c of capsuleRows.rows)
-    meetings.push(await capsuleRepresentation(db, c.id, 1000000, messageCapsuleIds.includes(c.id)));
-  const ids = capsuleRows.rows.map((item) => item.id);
-  const events = ids.length
+  const members = await db.query<any>(
+    `select capsule_id,user_id,is_confirmation_target,departed_at from capsule_members
+     where capsule_id=any($1::uuid[]) order by capsule_id,user_id`,
+    [ids],
+  );
+  const confirmations = await db.query<any>(
+    `select capsule_id,user_id,revision,member_set_version,conclusion_version,at from confirmations
+     where capsule_id=any($1::uuid[]) order by capsule_id,at`,
+    [ids],
+  );
+  const messages = messageCapsuleIds.length
     ? await db.query<any>(
-        `select id,capsule_id,source_id,kind,text,at,location,participant_ids,corrects_event_id
-         from calendar_events where capsule_id=any($1::uuid[]) order by at,id`,
-        [ids],
+        `select id,capsule_id,author_id,text,is_source,source_message_id,created_at from messages
+         where capsule_id=any($1::uuid[]) order by created_at,id`,
+        [messageCapsuleIds],
       )
     : { rows: [] };
+  const events = await db.query<any>(
+    `select id,capsule_id,source_id,kind,text,at,location,participant_ids,corrects_event_id
+     from calendar_events where capsule_id=any($1::uuid[]) order by at,id`,
+    [ids],
+  );
   return {
     version: 3,
     profileId,
     organization: org.rows[0].name,
-    members: memberRows.rows,
-    meetings,
-    calendar: events.rows.map((event: any) => ({
+    members: orgMembers.rows,
+    meetings: capsules.rows.map((capsule) => represent(capsule, members.rows, confirmations.rows, messages.rows)),
+    calendar: events.rows.map((event) => ({
       id: event.id,
       meetingId: event.capsule_id,
       sourceId: event.source_id,

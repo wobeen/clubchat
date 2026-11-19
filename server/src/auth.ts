@@ -11,7 +11,14 @@ export function cookies(header?: string): Record<string, string> {
   return Object.fromEntries(
     header.split(';').map((part) => {
       const at = part.indexOf('=');
-      return at < 0 ? [part.trim(), ''] : [part.slice(0, at).trim(), decodeURIComponent(part.slice(at + 1))];
+      if (at < 0) return [part.trim(), ''];
+      const key = part.slice(0, at).trim();
+      const raw = part.slice(at + 1);
+      try {
+        return [key, decodeURIComponent(raw)];
+      } catch {
+        return [key, raw];
+      }
     }),
   );
 }

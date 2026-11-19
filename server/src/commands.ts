@@ -1,12 +1,67 @@
 import { createHash, randomUUID } from 'node:crypto';
 // @ts-expect-error shared domain module is intentionally plain JavaScript
 import * as domain from '../../public/domain.js';
-import { assertCanRead, capsuleRepresentation, domainState } from './capsules.js';
+import {
+  canReadCapsule,
+  canReadCapsuleMetadata,
+  capsuleRepresentation,
+  domainState,
+  relatedCapsuleIds,
+} from './capsules.js';
 import { ApiError, notFound } from './errors.js';
 import { isUuid, withIdempotency } from './idempotency.js';
 import type { Database } from './types.js';
 
 type Executor = (state: any, capsule: any, payload: any) => unknown;
+const json = (value: unknown): string | null => (value == null ? null : JSON.stringify(value));
+const object = (value: unknown): value is Record<string, any> =>
+  !!value && typeof value === 'object' && !Array.isArray(value);
+const uuidArray = (value: unknown): value is string[] => Array.isArray(value) && value.every(isUuid);
+const invalid = (message = '요청 형식이 올바르지 않아요.'): never => {
+  throw new ApiError(400, 'invalid_request', message);
+};
+
+function validatePayload(command: string, value: unknown): Record<string, any> {
+  if (!object(value)) invalid();
+  const payload = structuredClone(value) as Record<string, any>;
+  if (command === 'send-message' && typeof payload.text !== 'string') invalid('text가 필요해요.');
+  if (command === 'delegate') {
+    if (typeof payload.title !== 'string' || !uuidArray(payload.messageIds) || !uuidArray(payload.memberIds)) invalid();
+  }
+  if (command === 'update-draft-item') {
+    if (!['decisions', 'tasks', 'unresolved', 'events'].includes(payload.type) || !object(payload.item)) invalid();
+    if (!isUuid(payload.item.id)) invalid('초안 항목 id는 UUID여야 해요.');
+    if (payload.item.evidenceIds !== undefined && !uuidArray(payload.item.evidenceIds)) invalid();
+    if (payload.type === 'events') {
+      if (typeof payload.item.at !== 'string' || Number.isNaN(Date.parse(payload.item.at)))
+        invalid('일정 날짜가 올바르지 않아요.');
+      payload.item.at = new Date(payload.item.at).toISOString();
+      if (!uuidArray(payload.item.participantIds)) invalid();
+    }
+  }
+  if (command === 'remove-draft-item') {
+    if (!['decisions', 'tasks', 'unresolved', 'events'].includes(payload.type) || !isUuid(payload.id)) invalid();
+  }
+  if (command === 'restore-draft' && !Number.isInteger(payload.revision)) invalid();
+  if (command === 'set-confirmation-members') {
+    if (!uuidArray(payload.memberIds) || typeof payload.reason !== 'string') invalid();
+  }
+  if (['mark-member-departed', 'transfer-facilitator'].includes(command)) {
+    if (!isUuid(payload.memberId) || typeof payload.reason !== 'string') invalid();
+  }
+  if (command === 'set-agenda-status') {
+    if (!isUuid(payload.agendaId) || !['open', 'resolved', 'deferred'].includes(payload.status)) invalid();
+    if (typeof payload.reason !== 'string') invalid();
+    if (payload.targetEventIds !== undefined && !uuidArray(payload.targetEventIds)) invalid();
+  }
+  if (command === 'dispose-child') {
+    if (!isUuid(payload.childId) || !['deferred', 'cancelled'].includes(payload.status)) invalid();
+    if (typeof payload.reason !== 'string' || (payload.followUpId !== undefined && !isUuid(payload.followUpId)))
+      invalid();
+  }
+  if (command === 'create-correction' && typeof payload.reason !== 'string') invalid();
+  return payload;
+}
 const executors: Record<string, Executor> = {
   'send-message': (state, capsule, payload) => domain.sendMessage(state, capsule, payload?.text),
   delegate: (state, capsule, payload) => domain.delegate(state, capsule, payload),
@@ -89,9 +144,9 @@ async function persistMeeting(
   meeting: any,
   orgId: string,
   actorId: string,
-  isNew: boolean,
+  previous?: any,
 ): Promise<void> {
-  if (isNew) {
+  if (!previous) {
     prepareNewMeeting(meeting);
     await tx.query(
       `insert into capsules (
@@ -121,31 +176,31 @@ async function persistMeeting(
         meeting.deferredFrom || null,
         meeting.startsAt || null,
         meeting.confirmedAt || null,
-        meeting.draft || null,
+        json(meeting.draft),
         meeting.draftMessageIds || null,
-        meeting.draftHistory || [],
-        meeting.carryover || [],
-        meeting.conclusions || [],
-        meeting.agendaStatuses || {},
-        meeting.policyHistory || [],
-        meeting.delegationDisposition || null,
+        json(meeting.draftHistory || []),
+        json(meeting.carryover || []),
+        json(meeting.conclusions || []),
+        json(meeting.agendaStatuses || {}),
+        json(meeting.policyHistory || []),
+        json(meeting.delegationDisposition),
         meeting.scheduledFrom || null,
-        meeting.confirmedSnapshot || null,
+        json(meeting.confirmedSnapshot),
         meeting.correctionReason || null,
-        meeting.correctionImpacts || [],
+        json(meeting.correctionImpacts || []),
         actorId,
         meeting.createdAt,
       ],
     );
   } else {
-    await tx.query(
+    const updated = await tx.query(
       `update capsules set
         title=$2,description=$3,status=$4,revision=$5,version=$6,member_set_version=$7,
         conclusion_version=$8,facilitator_id=$9,parent_id=$10,previous_id=$11,correction_of=$12,
         deferred_from=$13,starts_at=$14,confirmed_at=$15,draft=$16,draft_message_ids=$17,
         draft_history=$18,carryover=$19,conclusions=$20,agenda_statuses=$21,policy_history=$22,
         delegation_disposition=$23,scheduled_from=$24,confirmed_snapshot=$25,correction_reason=$26,
-        correction_impacts=$27 where id=$1`,
+        correction_impacts=$27 where id=$1 and version=$28`,
       [
         meeting.id,
         meeting.title,
@@ -162,25 +217,39 @@ async function persistMeeting(
         meeting.deferredFrom || null,
         meeting.startsAt || null,
         meeting.confirmedAt || null,
-        meeting.draft || null,
+        json(meeting.draft),
         meeting.draftMessageIds || null,
-        meeting.draftHistory || [],
-        meeting.carryover || [],
-        meeting.conclusions || [],
-        meeting.agendaStatuses || {},
-        meeting.policyHistory || [],
-        meeting.delegationDisposition || null,
+        json(meeting.draftHistory || []),
+        json(meeting.carryover || []),
+        json(meeting.conclusions || []),
+        json(meeting.agendaStatuses || {}),
+        json(meeting.policyHistory || []),
+        json(meeting.delegationDisposition),
         meeting.scheduledFrom || null,
-        meeting.confirmedSnapshot || null,
+        json(meeting.confirmedSnapshot),
         meeting.correctionReason || null,
-        meeting.correctionImpacts || [],
+        json(meeting.correctionImpacts || []),
+        previous.version,
       ],
     );
+    if (!updated.rowCount)
+      throw new ApiError(409, 'version_conflict', '다른 변경이 있어요. 최신 버전을 확인해주세요.', {
+        version: previous.version,
+      });
   }
 
+  const previousMembers = new Map<string, { target: boolean; departed: boolean }>();
+  if (previous)
+    for (const userId of previous.memberIds)
+      previousMembers.set(userId, {
+        target: (previous.confirmationMemberIds || previous.memberIds).includes(userId),
+        departed: (previous.departedMemberIds || []).includes(userId),
+      });
   for (const userId of meeting.memberIds) {
     const departed = (meeting.departedMemberIds || []).includes(userId);
     const target = (meeting.confirmationMemberIds || meeting.memberIds).includes(userId) && !departed;
+    const old = previousMembers.get(userId);
+    if (old && old.target === target && old.departed === departed) continue;
     await tx.query(
       `insert into capsule_members (capsule_id,user_id,is_confirmation_target,departed_at)
        values ($1,$2,$3,case when $4 then now() else null end)
@@ -191,19 +260,36 @@ async function persistMeeting(
     );
   }
 
-  await tx.query('delete from confirmations where capsule_id=$1', [meeting.id]);
-  for (const record of meeting.confirmationRecords || [])
+  const confirmationKey = (record: any) =>
+    `${record.memberId}:${record.revision}:${record.memberSetVersion}:${record.conclusionVersion}:${record.at}`;
+  const oldConfirmations = new Set((previous?.confirmationRecords || []).map(confirmationKey));
+  const nextConfirmations = new Set((meeting.confirmationRecords || []).map(confirmationKey));
+  const removedUsers = (previous?.confirmationRecords || [])
+    .filter((record: any) => !nextConfirmations.has(confirmationKey(record)))
+    .map((record: any) => record.memberId);
+  if (removedUsers.length)
+    await tx.query('delete from confirmations where capsule_id=$1 and user_id=any($2::uuid[])', [
+      meeting.id,
+      [...new Set(removedUsers)],
+    ]);
+  for (const record of meeting.confirmationRecords || []) {
+    if (oldConfirmations.has(confirmationKey(record))) continue;
     await tx.query(
       `insert into confirmations (capsule_id,user_id,revision,member_set_version,conclusion_version,at)
        values ($1,$2,$3,$4,$5,$6) on conflict do nothing`,
       [meeting.id, record.memberId, record.revision, record.memberSetVersion, record.conclusionVersion, record.at],
     );
+  }
 
+  const previousMessageIds = new Set(
+    [...(previous?.messages || []), ...(previous?.sourceMessages || [])].map((message) => message.id),
+  );
   for (const [isSource, messages] of [
     [false, meeting.messages || []],
     [true, meeting.sourceMessages || []],
   ] as const)
-    for (const message of messages)
+    for (const message of messages) {
+      if (previousMessageIds.has(message.id)) continue;
       await tx.query(
         `insert into messages (id,capsule_id,author_id,text,is_source,source_message_id,created_at)
          values ($1,$2,$3,$4,$5,$6,$7) on conflict (id) do nothing`,
@@ -217,36 +303,46 @@ async function persistMeeting(
           message.createdAt,
         ],
       );
+    }
 }
 
-async function persistCalendar(tx: Database, state: any, relatedIds: string[]): Promise<void> {
-  if (!relatedIds.length) return;
-  await tx.query('delete from calendar_events where capsule_id=any($1::uuid[])', [relatedIds]);
-  for (const event of state.calendar)
+function stableUuid(...parts: string[]): string {
+  const bytes = createHash('sha256').update(parts.join(':')).digest().subarray(0, 16);
+  bytes[6] = (bytes[6] & 0x0f) | 0x40;
+  bytes[8] = (bytes[8] & 0x3f) | 0x80;
+  const hex = bytes.toString('hex');
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+}
+
+async function persistCalendar(tx: Database, state: any, changedCapsuleIds: Set<string>): Promise<void> {
+  for (const event of state.calendar.filter((item: any) => changedCapsuleIds.has(item.meetingId))) {
+    const sourceId = event.sourceId || event.id;
+    if (!isUuid(sourceId)) invalid('일정 source id는 UUID여야 해요.');
+    if (typeof event.at !== 'string' || Number.isNaN(Date.parse(event.at))) invalid('일정 날짜가 올바르지 않아요.');
     await tx.query(
       `insert into calendar_events
        (id,org_id,capsule_id,source_id,kind,text,at,location,participant_ids,corrects_event_id)
-       select $1,org_id,$2,$3,$4,$5,$6,$7,$8,$9 from capsules where id=$2`,
+       select $1,org_id,$2,$3,$4,$5,$6,$7,$8,$9 from capsules where id=$2
+       on conflict (capsule_id,source_id) do update set
+         kind=excluded.kind,text=excluded.text,at=excluded.at,location=excluded.location,
+         participant_ids=excluded.participant_ids,corrects_event_id=excluded.corrects_event_id`,
       [
-        event.id,
+        stableUuid(event.meetingId, sourceId),
         event.meetingId,
-        event.sourceId || event.id,
+        sourceId,
         event.kind,
         event.text,
-        event.at,
+        new Date(event.at).toISOString(),
         event.location || null,
         event.participantIds,
         event.correctsEventId || null,
       ],
     );
+  }
 }
 
 function notificationId(capsuleId: string, sourceId: string, userId: string): string {
-  const bytes = createHash('sha256').update(`${capsuleId}:${sourceId}:${userId}`).digest().subarray(0, 16);
-  bytes[6] = (bytes[6] & 0x0f) | 0x40;
-  bytes[8] = (bytes[8] & 0x3f) | 0x80;
-  const hex = bytes.toString('hex');
-  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+  return stableUuid(capsuleId, sourceId, userId);
 }
 
 export async function executeCommand(
@@ -262,28 +358,38 @@ export async function executeCommand(
 ): Promise<{ status: number; body: any }> {
   const executor = executors[input.command];
   if (!executor) throw notFound();
+  const payload = validatePayload(input.command, input.payload);
   const commandRequest = {
     capsuleId: input.capsuleId,
     command: input.command,
     expectedVersion: input.expectedVersion,
-    payload: input.payload,
+    payload,
   };
   const body = await withIdempotency(db, input.userId, input.key, commandRequest, async (tx) => {
-    await assertCanRead(tx, input.capsuleId, input.userId);
-    const locked = await tx.query<any>('select version,org_id from capsules where id=$1 for update', [input.capsuleId]);
-    if (!locked.rows[0]) throw notFound();
+    if (!(await canReadCapsule(tx, input.capsuleId, input.userId))) {
+      if (await canReadCapsuleMetadata(tx, input.capsuleId, input.userId))
+        throw new ApiError(403, 'forbidden', '하위 캡슐 참여자만 명령을 실행할 수 있어요.');
+      throw notFound();
+    }
+    const extraIds = [payload.childId, payload.followUpId].filter(isUuid);
+    const relationIds = await relatedCapsuleIds(tx, input.capsuleId, extraIds);
+    const locked = await tx.query<any>(
+      'select id,version,org_id from capsules where id=any($1::uuid[]) order by id for update',
+      [relationIds],
+    );
+    const lockedTarget = locked.rows.find((row: any) => row.id === input.capsuleId);
+    if (!lockedTarget) throw notFound();
     if (input.command !== 'send-message') {
       if (!Number.isInteger(input.expectedVersion))
         throw new ApiError(400, 'invalid_request', 'expectedVersion이 필요해요.');
-      if (locked.rows[0].version !== input.expectedVersion)
+      if (lockedTarget.version !== input.expectedVersion)
         throw new ApiError(409, 'version_conflict', '다른 변경이 있어요. 최신 버전을 확인해주세요.', {
-          version: locked.rows[0].version,
+          version: lockedTarget.version,
         });
     }
 
-    const extraIds = [input.payload?.childId, input.payload?.followUpId].filter(isUuid);
     const messageIds = [input.capsuleId, ...(input.command === 'dispose-child' ? extraIds : [])];
-    const state = await domainState(tx, input.capsuleId, input.userId, messageIds, extraIds);
+    const state = await domainState(tx, input.capsuleId, input.userId, messageIds, relationIds);
     const capsule = state.meetings.find((meeting: any) => meeting.id === input.capsuleId);
     assertCommandPermission(input.command, capsule, input.userId);
     const beforeMeetings = new Map<string, any>(
@@ -292,7 +398,7 @@ export async function executeCommand(
     const beforeCalendarState = structuredClone(state.calendar);
     const beforeCalendar = JSON.stringify(beforeCalendarState);
     try {
-      executor(state, capsule, input.payload || {});
+      executor(state, capsule, payload);
     } catch (error) {
       throw new ApiError(422, 'domain_rule', error instanceof Error ? error.message : String(error));
     }
@@ -302,24 +408,20 @@ export async function executeCommand(
       if (!before) return true;
       return JSON.stringify({ ...before, version: undefined }) !== JSON.stringify({ ...meeting, version: undefined });
     });
-    const changedIds = new Set(changed.map((meeting: any) => meeting.id));
+    const changedIds = new Set<string>(changed.map((meeting: any) => meeting.id));
     for (const meeting of changed) {
       const previous = beforeMeetings.get(meeting.id);
       meeting.version = previous ? previous.version + 1 : 0;
-      await persistMeeting(tx, meeting, locked.rows[0].org_id, input.userId, !previous);
+      await persistMeeting(tx, meeting, lockedTarget.org_id, input.userId, previous);
       await tx.query(`insert into outbox (topic,payload) values ('capsule.changed',$1)`, [
-        { capsuleId: meeting.id, version: meeting.version },
+        json({ capsuleId: meeting.id, version: meeting.version }),
       ]);
     }
 
     if (beforeCalendar !== JSON.stringify(state.calendar)) {
-      await persistCalendar(
-        tx,
-        state,
-        state.meetings.map((meeting: any) => meeting.id),
-      );
+      await persistCalendar(tx, state, changedIds);
       await tx.query(`insert into outbox (topic,payload) values ('calendar.changed',$1)`, [
-        { orgId: locked.rows[0].org_id },
+        json({ orgId: lockedTarget.org_id }),
       ]);
     }
 
@@ -340,7 +442,7 @@ export async function executeCommand(
         );
         if (inserted.rowCount)
           await tx.query(`insert into outbox (topic,payload) values ('notification',$1)`, [
-            { id, userId, capsuleId: input.capsuleId, sourceId: event.sourceId || event.id, text },
+            json({ id, userId, capsuleId: input.capsuleId, sourceId: event.sourceId || event.id, text }),
           ]);
       }
     }

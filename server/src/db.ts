@@ -2,7 +2,13 @@ import pg from 'pg';
 import type { Database, QueryResult } from './types.js';
 
 type Queryable = {
-  query(sql: string, params?: unknown[]): Promise<{ rows: any[]; rowCount?: number | null }>;
+  query(
+    sql: string,
+    params?: unknown[],
+  ): Promise<
+    | { rows: any[]; rowCount?: number | null; affectedRows?: number }
+    | Array<{ rows: any[]; rowCount?: number | null; affectedRows?: number }>
+  >;
   exec?(sql: string): Promise<Array<{ rows: any[]; affectedRows?: number }>>;
 };
 
@@ -14,8 +20,12 @@ function adapter(queryable: Queryable): Database {
         const result = results.at(-1) ?? { rows: [], affectedRows: 0 };
         return { rows: result.rows as Row[], rowCount: result.affectedRows ?? result.rows.length };
       }
-      const result = await queryable.query(sql, params);
-      return { rows: result.rows as Row[], rowCount: result.rowCount ?? result.rows.length };
+      const raw = await queryable.query(sql, params);
+      const result = Array.isArray(raw) ? (raw.at(-1) ?? { rows: [], rowCount: 0 }) : raw;
+      return {
+        rows: result.rows as Row[],
+        rowCount: result.rowCount ?? (result.rows.length || result.affectedRows || 0),
+      };
     },
     async transaction<T>(fn: (db: Database) => Promise<T>): Promise<T> {
       await queryable.query('begin');
