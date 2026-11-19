@@ -12,7 +12,7 @@ import { ApiError, notFound } from './errors.js';
 import { isUuid, withIdempotency } from './idempotency.js';
 import type { Database } from './types.js';
 
-type Executor = (state: any, capsule: any, payload: any) => unknown;
+type Executor = (state: any, capsule: any, payload: any, suggestion?: any) => unknown;
 class RetryRelations extends Error {}
 const json = (value: unknown): string | null => (value == null ? null : JSON.stringify(value));
 const object = (value: unknown): value is Record<string, any> =>
@@ -29,6 +29,8 @@ function validatePayload(command: string, value: unknown): Record<string, any> {
   if (command === 'delegate') {
     if (typeof payload.title !== 'string' || !uuidArray(payload.messageIds) || !uuidArray(payload.memberIds)) invalid();
   }
+  if (command === 'extract-draft' && payload.suggestionId !== undefined && !isUuid(payload.suggestionId))
+    invalid('suggestionId는 UUID여야 해요.');
   if (command === 'update-draft-item') {
     if (!['decisions', 'tasks', 'unresolved', 'events'].includes(payload.type) || !object(payload.item)) invalid();
     if (!isUuid(payload.item.id)) invalid('초안 항목 id는 UUID여야 해요.');
@@ -66,7 +68,12 @@ function validatePayload(command: string, value: unknown): Record<string, any> {
 const executors: Record<string, Executor> = {
   'send-message': (state, capsule, payload) => domain.sendMessage(state, capsule, payload?.text),
   delegate: (state, capsule, payload) => domain.delegate(state, capsule, payload),
-  'extract-draft': (state, capsule) => domain.extractDraft(state, capsule),
+  'extract-draft': (state, capsule, _payload, suggestion) =>
+    domain.extractDraft(
+      state,
+      capsule,
+      suggestion ? { candidates: suggestion.candidates, candidateMessageIds: suggestion.message_ids } : undefined,
+    ),
   'update-draft-item': (state, capsule, payload) =>
     domain.updateDraftItem(state, capsule, payload?.type, payload?.item),
   'remove-draft-item': (state, capsule, payload) => domain.removeDraftItem(state, capsule, payload?.type, payload?.id),
@@ -408,17 +415,31 @@ export async function executeCommand(
         const state = await domainState(tx, input.capsuleId, input.userId, messageIds, relationIds);
         const capsule = state.meetings.find((meeting: any) => meeting.id === input.capsuleId);
         assertCommandPermission(input.command, capsule, input.userId);
+        let suggestion: any;
+        if (input.command === 'extract-draft' && payload.suggestionId) {
+          const found = await tx.query<any>(
+            `select id,candidates,message_ids,applied_at,(created_at > now() - interval '1 hour') as fresh
+             from draft_suggestions where id=$1 and capsule_id=$2 for update`,
+            [payload.suggestionId, input.capsuleId],
+          );
+          suggestion = found.rows[0];
+          if (!suggestion) throw new ApiError(422, 'domain_rule', '이 캡슐의 제안이 아니에요.');
+          if (suggestion.applied_at) throw new ApiError(422, 'domain_rule', '이미 반영한 제안이에요.');
+          if (!suggestion.fresh) throw new ApiError(422, 'domain_rule', '제안이 오래됐어요. 다시 요청해주세요.');
+        }
         const beforeMeetings = new Map<string, any>(
           state.meetings.map((meeting: any) => [meeting.id, structuredClone(meeting)]),
         );
         const beforeCalendarState = structuredClone(state.calendar);
         const beforeCalendar = JSON.stringify(beforeCalendarState);
         try {
-          executor(state, capsule, payload);
+          executor(state, capsule, payload, suggestion);
         } catch (error) {
           if (!(error instanceof Error) || error.constructor !== Error) throw error;
           throw new ApiError(422, 'domain_rule', error.message);
         }
+
+        if (suggestion) await tx.query('update draft_suggestions set applied_at=now() where id=$1', [suggestion.id]);
 
         const changed = state.meetings.filter((meeting: any) => {
           const before = beforeMeetings.get(meeting.id);

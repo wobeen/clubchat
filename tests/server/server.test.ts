@@ -105,7 +105,7 @@ test('migration applies to an empty database and is safe to rerun', async () => 
   );
   assert.deepEqual(
     migrations.rows.map((x) => x.name),
-    ['0001_init.sql', '0002_capsule_domain_fields.sql', '0003_relation_indexes.sql'],
+    ['0001_init.sql', '0002_capsule_domain_fields.sql', '0003_relation_indexes.sql', '0004_ai_extraction.sql'],
   );
   assert.ok(tables.rows.some((x) => x.table_name === 'capsules'));
   await f.close();
