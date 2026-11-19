@@ -13,10 +13,13 @@
     "phone": "node server.mjs --lan",
     "test": "node --test tests/*.test.mjs",
     "check": "node scripts/check.mjs",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "test:e2e": "playwright test"
   },
   "devDependencies": {
     "@playwright/test": "^1.65.0",
-    "fake-indexeddb": "^6.2.8"
+    "fake-indexeddb": "^6.2.8",
+    "prettier": "^3.10.1"
   }
 }

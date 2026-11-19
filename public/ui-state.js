@@ -8,8 +8,17 @@ export function captureView() {
   const previous = views.get(renderedId) || {};
   views.set(renderedId, {
     ...previous,
-    ...(composer ? { text: composer.value, start: composer.selectionStart, end: composer.selectionEnd, focused: document.activeElement === composer } : {}),
-    ...(messages ? { scroll: messages.scrollTop, bottom: messages.scrollHeight - messages.scrollTop - messages.clientHeight < 32 } : {}),
+    ...(composer
+      ? {
+          text: composer.value,
+          start: composer.selectionStart,
+          end: composer.selectionEnd,
+          focused: document.activeElement === composer,
+        }
+      : {}),
+    ...(messages
+      ? { scroll: messages.scrollTop, bottom: messages.scrollHeight - messages.scrollTop - messages.clientHeight < 32 }
+      : {}),
   });
 }
 export function restoreView(id) {
@@ -19,7 +28,10 @@ export function restoreView(id) {
   const messages = document.querySelector('#messages');
   if (composer && saved) {
     composer.value = saved.text || '';
-    if (saved.focused) { composer.focus(); composer.setSelectionRange(saved.start || 0, saved.end || 0); }
+    if (saved.focused) {
+      composer.focus();
+      composer.setSelectionRange(saved.start || 0, saved.end || 0);
+    }
   }
   if (messages) messages.scrollTop = !saved || saved.bottom ? messages.scrollHeight : saved.scroll;
 }
