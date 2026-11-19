@@ -184,3 +184,32 @@ create table outbox (
   sent_at timestamptz
 );
 create index on outbox (id) where sent_at is null;
+
+-- v0.3 (migration 0004): AI 회의록 추출 (docs/contracts/ai-extraction.md)
+create table draft_suggestions (
+  id uuid primary key default gen_random_uuid(),
+  capsule_id uuid not null references capsules(id) on delete cascade,
+  user_id uuid not null references users(id),
+  based_on_version int not null,
+  message_ids uuid[] not null,
+  candidates jsonb not null,                  -- 정규화된 후보만. 메시지 본문·모델 원문은 저장하지 않는다
+  model text not null,
+  applied_at timestamptz,                     -- extract-draft로 적용한 시각. 한 번만 적용
+  created_at timestamptz not null default now()
+);
+create index on draft_suggestions (capsule_id, created_at desc);
+
+create table ai_usage (
+  id bigserial primary key,
+  user_id uuid not null references users(id),
+  org_id uuid not null references organizations(id) on delete cascade,
+  capsule_id uuid references capsules(id) on delete set null,
+  model text not null,
+  input_tokens int not null,
+  output_tokens int not null,
+  cost_usd numeric(12, 6) not null,
+  ok boolean not null,                        -- 공급자 오류도 비용이 생길 수 있어 기록
+  created_at timestamptz not null default now()
+);
+create index on ai_usage (created_at);
+create index on ai_usage (user_id, created_at);

@@ -13,6 +13,7 @@ v0.2 (2026-11-19): 도메인 초안 버전 `revision`과 서버 동시성 토큰
 | [api.md](api.md) | HTTP/WebSocket 엔드포인트, 명령 형식, 오류 코드 |
 | [schema.sql](schema.sql) | PostgreSQL 16 테이블·제약 |
 | [permissions.md](permissions.md) | 역할 정의, 명령별 권한·상태 조건 |
+| [ai-extraction.md](ai-extraction.md) | AI 회의록 추출: 제안 API, 후보 스키마, 개인정보·비용 한도, 평가 통과선 |
 
 ## 고정 결정
 
