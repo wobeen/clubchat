@@ -1,11 +1,14 @@
-# 2026-11-19 · 서비스 전환 착수
+# 2026-11-19 · 서비스 전환 1차 완료
 
-사용자 결정: 서비스 전환 진행, 디자인은 흰색+베이지+리퀴드 글래스, 인프라는 OCI 제외. 협업 방식은 총괄 Claude + Codex 워커(서버) + Gemini(조사·감사)이며 동시 워커는 최대 3개.
+사용자 결정: 서비스 전환, 흰색+베이지+리퀴드 글래스, 인프라 AWS Lightsail 서울, 계약 승인, 커밋·push 허가. 운영: 총괄 Claude가 계약·통합·리뷰를 맡고, 워커는 Orca로 띄웠다. Codex(S1·S2a·S2-fix)가 사용량 한도로 멈춘 뒤 S2b부터는 Claude 워커, Gemini(G1)도 한도로 멈춰 Claude 워커로 바꿨다. 병합 전마다 독립 리뷰 서브에이전트가 검사했다.
 
-- 완료(P0): 베이지 글래스 테마, Prettier 도입·전체 포맷(동작 불변, CI에 `format:check` 추가), 계약 v0(`docs/contracts/`: API·스키마·권한·소유권). 스키마는 PGlite에서 15개 테이블 생성 확인. 검사: 문법 13, 단위 46/46, 브라우저 14/14.
-- 남은 형식 문제: `public/app.js`에 160자 넘는 HTML 템플릿 줄 44개. UI 담당 1명이 소유하므로 병렬 충돌 대상이 아니다.
-- 확정: 인프라 AWS Lightsail 서울, 계약 v0 승인, 커밋·push 허가(2026-11-19).
-- 진행: Codex 워커 S1(서버 골격·마이그레이션·개발 로그인·캡슐 조회/생성/메시지 명령), Gemini 워커 G1(UX·접근성 감사, 추출 평가셋). Claude는 원격 저장소 어댑터를 맡는다.
+- 기준 문서: `docs/contracts/`(v0.2: 서버 동시성 `version`과 초안 `revision` 분리, 누적 WebSocket 구독, 알림 수신자 규칙, `DATABASE_CA_FILE`). 배포는 `docs/deploy.md`.
+- 서버(`server/`): 인증(카카오, 개발 로그인), 조직·초대·멤버, 캡슐 명령 15종(멱등성·버전 충돌·관련 캡슐 잠금), 실시간(`/v1/ws`, outbox), 예약·정리 작업, 일정·ICS·읽음, `/health`. 테스트는 PGlite와 PostgreSQL 16에서 같은 41개를 돌린다.
+- 화면: `remote-repository.js`로 서버 모드(`?api` 또는 meta), 실시간 갱신, 읽음 포인터, 서버 모드 설정 정리. 접근성 감사(`docs/research/ux-a11y-audit.md`)의 P0·P1을 반영했다.
+- 평가: `eval/extraction/`(29건, 규칙 기반 기준선 F1 69.0%).
+- 배포: `deploy/`(compose·Caddy·정적 빌드) + `.github/workflows/deploy.yml`. CI에서 이미지 빌드·GHCR push까지 동작하고, Lightsail 비밀값이 없어 서버 반영은 건너뛴다.
+- 사용자 작업 대기: Lightsail 인스턴스·관리형 DB·도메인·GitHub 비밀값, 카카오 개발자 앱(리다이렉트 URI). 실제 카카오 로그인과 운영 배포는 이후 확인한다.
+- 다음 후보: AI 회의록 추출 어댑터(평가셋 기준), 감사 P2 항목, 실사용자 학습 검증.
 
 아래는 로컬 데모 단계의 기록이다.
 
