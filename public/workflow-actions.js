@@ -15,8 +15,21 @@ import { advanceTutorial } from './tutorial.js';
 
 // UI orchestration; domain commands own policy checks and repository owns persistence.
 export function createWorkflowActions(ctx) {
-  const { repo, practice, esc, btn, field, openModal, modal, persist, render, toast, selectMeeting, tutorialEvent } =
-    ctx;
+  const {
+    repo,
+    practice,
+    esc,
+    btn,
+    field,
+    openModal,
+    modal,
+    persist,
+    run,
+    render,
+    toast,
+    selectMeeting,
+    tutorialEvent,
+  } = ctx;
   const state = () => repo.get();
   const name = (id) => state().members.find((x) => x.id === id)?.name || id;
   const checkedResult = (result) => {
@@ -35,8 +48,7 @@ export function createWorkflowActions(ctx) {
   const form = (id, body, m) => `<form id="${id}" data-revision="${m?.revision ?? 0}">${body}</form>`;
   const submit = (id) => `<button type="submit" form="${id}" class="primary">저장하기</button>`;
   const reason = () => field('사유', 'reason', '', 'text', 'required maxlength="500"');
-  async function finish() {
-    await persist();
+  function close() {
     modal.close();
     render();
   }
@@ -51,7 +63,7 @@ export function createWorkflowActions(ctx) {
         checkedResult(await repo.retry());
         modal.close();
         render();
-        toast('저장했어요.');
+        toast(repo.remote ? '최신 내용을 불러왔어요.' : '저장했어요.');
         return true;
       }
       if (action === 'storage-reload') {
@@ -243,44 +255,66 @@ export function createWorkflowActions(ctx) {
         return true;
       }
       if (action === 'restore-draft') {
-        restoreDraft(s, m, Number(target.dataset.restore), { expectedRevision: Number(target.dataset.revision) });
-        await finish();
+        const revision = Number(target.dataset.restore);
+        const expectedRevision = Number(target.dataset.revision);
+        await run('restore-draft', m, { revision }, () => restoreDraft(s, m, revision, { expectedRevision }));
+        close();
         return true;
       }
       return false;
     },
     async submit(formElement, data, m) {
       const s = state(),
-        options = { expectedRevision: Number(formElement.dataset.revision) },
+        expectedRevision = Number(formElement.dataset.revision),
+        options = { expectedRevision },
         formData = new FormData(formElement);
       if (formElement.id === 'policy-form') {
-        if (data.operation === 'targets') setConfirmationMembers(s, m, formData.getAll('target'), data.reason, options);
-        else if (data.operation === 'depart') markMemberDeparted(s, m, data.member, data.reason, options);
-        else transferFacilitator(s, m, data.member, data.reason, options);
+        const memberIds = formData.getAll('target');
+        if (data.operation === 'targets')
+          await run('set-confirmation-members', m, { memberIds, reason: data.reason }, () =>
+            setConfirmationMembers(s, m, memberIds, data.reason, options),
+          );
+        else if (data.operation === 'depart')
+          await run('mark-member-departed', m, { memberId: data.member, reason: data.reason }, () =>
+            markMemberDeparted(s, m, data.member, data.reason, options),
+          );
+        else
+          await run('transfer-facilitator', m, { memberId: data.member, reason: data.reason }, () =>
+            transferFacilitator(s, m, data.member, data.reason, options),
+          );
       } else if (formElement.id === 'agenda-form') {
         const targets = formData.getAll('destination');
-        setAgendaStatus(
-          s,
-          m,
-          data.agendaId,
-          { status: data.status, reason: data.reason, ...(targets.length ? { targetEventIds: targets } : {}) },
-          options,
+        const change = {
+          status: data.status,
+          reason: data.reason,
+          ...(targets.length ? { targetEventIds: targets } : {}),
+        };
+        await run('set-agenda-status', m, { agendaId: data.agendaId, ...change }, () =>
+          setAgendaStatus(s, m, data.agendaId, change, options),
         );
-      } else if (formElement.id === 'disposition-form')
-        disposeChild(s, m, data.child, { status: data.status, reason: data.reason }, options);
-      else if (formElement.id === 'correction-form') {
-        const corrected = createCorrection(s, m, data.reason);
-        selectMeeting(corrected.id, 'minutes');
+      } else if (formElement.id === 'disposition-form') {
+        const change = { status: data.status, reason: data.reason };
+        await run('dispose-child', m, { childId: data.child, ...change }, () =>
+          disposeChild(s, m, data.child, change, options),
+        );
+      } else if (formElement.id === 'correction-form') {
+        const corrected = await run(
+          'create-correction',
+          m,
+          { reason: data.reason },
+          () => createCorrection(s, m, data.reason),
+          (response) => response.affected?.[0],
+        );
+        if (corrected) selectMeeting(corrected.id, 'minutes');
       } else if (formElement.id === 'recovery-form') {
         const file = formData.get('file');
         const raw = file?.size ? await file.text() : data.json;
         checkedResult(await repo.recover(raw));
         ctx.selectFirst();
-        modal.close();
-        render();
+        close();
         return;
       } else return;
-      await finish();
+      close();
     },
   };
 }

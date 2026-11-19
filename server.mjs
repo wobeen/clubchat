@@ -29,17 +29,36 @@ for (const name of [
   'tutorial.js',
   'ui-state.js',
   'workflow-actions.js',
+  'remote-repository.js',
 ])
   routes['/' + name] = [name, 'text/javascript'];
 for (const name of ['capsule.css', 'workflow.css', 'white-theme.css', 'liquid-glass.css'])
   routes['/' + name] = [name, 'text/css'];
 const host = process.argv.includes('--lan') ? '0.0.0.0' : '127.0.0.1';
+// Development stand-in for the production reverse proxy: forwards /v1 to the API so the page and the
+// API share one origin (cookies, Origin check). Example: ITDA_API_URL=http://127.0.0.1:8080
+const apiUrl = process.env.ITDA_API_URL;
+function proxy(req, res) {
+  const upstream = http.request(new URL(req.url, apiUrl), { method: req.method, headers: req.headers }, (answer) => {
+    res.writeHead(answer.statusCode, answer.headers);
+    answer.pipe(res);
+  });
+  upstream.on('error', () => {
+    res.writeHead(502, { 'Content-Type': 'application/json; charset=utf-8' });
+    res.end(JSON.stringify({ error: { code: 'bad_gateway', message: 'API 서버에 연결하지 못했어요.', details: {} } }));
+  });
+  req.pipe(upstream);
+}
 const server = http.createServer(async (req, res) => {
   try {
     const path = new URL(req.url, 'http://localhost').pathname;
     if (path === '/health') {
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end('{"status":"ok","app":"itda"}');
+      return;
+    }
+    if (apiUrl && path.startsWith('/v1/')) {
+      proxy(req, res);
       return;
     }
     const file = routes[path];

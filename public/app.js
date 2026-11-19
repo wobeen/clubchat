@@ -31,14 +31,22 @@ import {
   markMemberDeparted,
 } from './domain.js';
 import { createBrowserRepository } from './browser-repository.js';
+import { createRemoteRepository } from './remote-repository.js';
 import { renderCapsuleNavigation } from './capsule-ui.js';
 import { createTutorial, advanceTutorial, renderTutorial } from './tutorial.js';
 import { captureView, restoreView, clearComposer } from './ui-state.js';
 import { createWorkflowActions } from './workflow-actions.js';
 import { renderDesktop, renderAndroid, renderRoomList, groupAvatar } from './messenger-layouts.js';
 import { addMessengerExamples } from './demo-conversations.js';
-const designPreview = new URLSearchParams(location.search).has('designPreview');
-const practice = new URLSearchParams(location.search).has('practice');
+const params = new URLSearchParams(location.search);
+const designPreview = params.has('designPreview');
+const practice = params.has('practice');
+// Server mode: production pages carry <meta name="itda-api" content="on">; `?api` turns it on in development.
+// Practice and design preview always stay in this browser.
+const apiMode =
+  !practice &&
+  !designPreview &&
+  (params.has('api') || document.querySelector('meta[name="itda-api"]')?.content === 'on');
 const practiceSeed = () => {
   const s = seedState();
   s.meetings = [];
@@ -48,16 +56,18 @@ const practiceSeed = () => {
   s.tutorial = createTutorial();
   return s;
 };
-const repo = await createBrowserRepository({
-  storage: { getItem: (k) => localStorage.getItem(k), setItem: (k, v) => localStorage.setItem(k, v) },
-  indexedDB: globalThis.indexedDB,
-  memory: designPreview,
-  dbName: practice ? 'itda-practice-v3' : 'itda-capsules-v3',
-  legacyKey: practice ? 'itda.practice.legacy' : 'itda.capsules.v2',
-  seed: practice ? practiceSeed : seedState,
-});
+const repo = apiMode
+  ? await createRemoteRepository()
+  : await createBrowserRepository({
+      storage: { getItem: (k) => localStorage.getItem(k), setItem: (k, v) => localStorage.setItem(k, v) },
+      indexedDB: globalThis.indexedDB,
+      memory: designPreview,
+      dbName: practice ? 'itda-practice-v3' : 'itda-capsules-v3',
+      legacyKey: practice ? 'itda.practice.legacy' : 'itda.capsules.v2',
+      seed: practice ? practiceSeed : seedState,
+    });
 let state = repo.get();
-if (repo.status.kind === 'ready') {
+if (!repo.remote && repo.status.kind === 'ready') {
   const changed = !practice && addMessengerExamples(state);
   if (syncConfirmedCalendar(state) || changed) await repo.save();
 }
@@ -197,6 +207,20 @@ async function persist() {
   if (!result.ok) throw Error(result.message || '저장하지 못했어요. 입력을 보존했으니 재시도하거나 내보내주세요.');
   return result;
 }
+/**
+ * Applies one capsule command. Browser mode runs the domain function (with its own draft-revision guard)
+ * and saves; server mode sends the command against the capsule's server `version` and the server runs
+ * the same domain function. `remoteValue` maps the API response to what `local` would have returned.
+ */
+async function run(command, m, payload, local, remoteValue) {
+  if (!repo.remote) {
+    const value = local();
+    await persist();
+    return value;
+  }
+  const response = await repo.command(m.id, command, payload, m.version);
+  return remoteValue?.(response);
+}
 function markRead(m) {
   if (m && canRead(m, state.profileId)) {
     state.reads ??= {};
@@ -213,7 +237,9 @@ function renderStorage() {
   el.hidden = status.kind === 'ready';
   el.innerHTML = el.hidden
     ? ''
-    : `<strong>저장 상태: ${esc(status.message || status.kind)}</strong><span>현재 입력은 이 화면에 보존됩니다.</span>${btn('storage-export', '현재 내용 내보내기', 'outline')}${btn('storage-original', '원본 내보내기', 'outline')}${status.kind === 'conflict' ? btn('storage-reload', '최신 저장본 불러오기', 'outline') : btn('storage-retry', '다시 저장', 'outline')}${btn('storage-recovery', '복구 옵션', 'outline')}`;
+    : repo.remote
+      ? `<strong>${esc(status.message || status.kind)}</strong>${status.loginUrl ? `<a class="primary" href="${esc(status.loginUrl)}">카카오로 로그인</a>` : btn('storage-retry', '다시 불러오기', 'outline')}`
+      : `<strong>저장 상태: ${esc(status.message || status.kind)}</strong><span>현재 입력은 이 화면에 보존됩니다.</span>${btn('storage-export', '현재 내용 내보내기', 'outline')}${btn('storage-original', '원본 내보내기', 'outline')}${status.kind === 'conflict' ? btn('storage-reload', '최신 저장본 불러오기', 'outline') : btn('storage-retry', '다시 저장', 'outline')}${btn('storage-recovery', '복구 옵션', 'outline')}`;
 }
 function selectMeeting(id, which = 'chat') {
   const enter = mobileScreen !== 'room' || activeId !== id;
@@ -578,6 +604,7 @@ const workflow = createWorkflowActions({
   openModal,
   modal,
   persist,
+  run,
   render,
   toast,
   selectMeeting,
@@ -724,18 +751,28 @@ document.addEventListener('click', async (e) => {
       return;
     }
     if (action === 'draft') {
-      extractDraft(state, m, { expectedRevision: m.revision });
-      tutorialEvent('draft');
-      await persist();
+      await run('extract-draft', m, {}, () => {
+        extractDraft(state, m, { expectedRevision: m.revision });
+        tutorialEvent('draft');
+      });
       view = 'minutes';
       render();
       toast('기존 편집을 보존하고 새 대화를 반영했어요.');
       return;
     }
     if (action === 'confirm') {
-      const done = confirmMeeting(state, m, { expectedRevision: Number(target.dataset.revision ?? m.revision) });
-      if (done) tutorialEvent('confirmed');
-      await persist();
+      const expectedRevision = Number(target.dataset.revision ?? m.revision);
+      const done = await run(
+        'confirm',
+        m,
+        {},
+        () => {
+          const confirmed = confirmMeeting(state, m, { expectedRevision });
+          if (confirmed) tutorialEvent('confirmed');
+          return confirmed;
+        },
+        (response) => response.capsule.status === 'confirmed',
+      );
       render();
       toast(
         done
@@ -745,15 +782,14 @@ document.addEventListener('click', async (e) => {
       return;
     }
     if (action === 'reopen' || action === 'reopen-confirm') {
-      resumeConversation(state, m);
+      await run('resume-conversation', m, {}, () => resumeConversation(state, m));
       modal.close();
       view = 'chat';
       render();
       return;
     }
     if (action === 'start-scheduled') {
-      startScheduled(state, m);
-      await persist();
+      await run('start-scheduled', m, {}, () => startScheduled(state, m));
       render();
       return;
     }
@@ -766,11 +802,10 @@ document.addEventListener('click', async (e) => {
       return;
     }
     if (action === 'delete-item') {
-      removeDraftItem(state, m, target.dataset.type, target.dataset.id, {
-        expectedRevision: focusedSource?.revision ?? m.revision,
-      });
+      const expectedRevision = focusedSource?.revision ?? m.revision;
+      const { type, id } = target.dataset;
+      await run('remove-draft-item', m, { type, id }, () => removeDraftItem(state, m, type, id, { expectedRevision }));
       modal.close();
-      await persist();
       render();
       toast('항목을 제외했어요. 참여자 확인을 다시 받아요.');
       return;
@@ -864,10 +899,8 @@ document.addEventListener('click', async (e) => {
     }
     if (action === 'sample') {
       if (m.messages.length) throw Error('예시 대화는 빈 하위 캡슐에만 넣을 수 있어요.');
-      ['결정: 와플 4,000원 · 음료 2,500원', '할 일: 가격표 제작 | 김민수 | 11월 4일'].forEach((text) =>
-        sendMessage(state, m, text),
-      );
-      await persist();
+      for (const text of ['결정: 와플 4,000원 · 음료 2,500원', '할 일: 가격표 제작 | 김민수 | 11월 4일'])
+        await run('send-message', m, { text }, () => sendMessage(state, m, text));
       render();
       toast('시연용 예시를 넣었어요. 이제 회의록 초안을 만들어보세요.');
       return;
@@ -941,38 +974,46 @@ document.addEventListener('submit', async (e) => {
   try {
     if (form.id !== 'recovery-form') requireSaved();
     if (form.id === 'composer') {
-      sendMessage(state, m, data.message);
-      tutorialEvent('message');
-      markRead(m);
-      clearComposer(activeId);
-      await persist();
+      await run('send-message', m, { text: data.message }, () => {
+        sendMessage(state, m, data.message);
+        tutorialEvent('message');
+        markRead(m);
+        clearComposer(activeId);
+      });
+      if (repo.remote) {
+        markRead(m);
+        clearComposer(activeId);
+      }
       render();
       document.querySelector('#composer textarea')?.focus();
     }
     if (form.id === 'create-form') {
-      const created = createMeeting(state, {
-        title: data.title,
-        description: data.description,
-        memberIds: [...creationMembers],
-      });
+      const input = { title: data.title, description: data.description, memberIds: [...creationMembers] };
+      const created = repo.remote ? await repo.createCapsule(input) : createMeeting(state, input);
       selectMeeting(created.id);
       tutorialEvent('created', created.id);
-      await persist();
+      if (!repo.remote) await persist();
       modal.close();
       render();
       toast('새 캡슐을 열었어요. 첫 이야기를 남겨보세요.');
     }
     if (form.id === 'delegate-form') {
-      const child = delegate(state, m, {
+      const payload = {
         title: data.title,
         messageIds: [...delegationSelection],
         memberIds: [...delegationMembers],
-      });
-      await persist();
+      };
+      const child = await run(
+        'delegate',
+        m,
+        payload,
+        () => delegate(state, m, payload),
+        (response) => state.meetings.find((x) => x.id === response.affected?.[0]?.id),
+      );
       modal.close();
       render();
       toast(
-        canRead(child, state.profileId)
+        child && canRead(child, state.profileId)
           ? '하위 캡슐을 열었어요. 결론은 상위로 합류해요.'
           : '위임했어요. 담당 멤버로 전환하면 하위 캡슐을 볼 수 있어요.',
       );
@@ -991,9 +1032,18 @@ document.addEventListener('submit', async (e) => {
         draftItem.kind = data.kind;
         draftItem.participantIds = new FormData(form).getAll('event-member');
       }
-      const changed = updateDraftItem(state, m, type, draftItem, { expectedRevision: focusedSource.revision });
-      if (changed) tutorialEvent('edited');
-      await persist();
+      const before = m.revision;
+      const changed = await run(
+        'update-draft-item',
+        m,
+        { type, item: draftItem },
+        () => {
+          const edited = updateDraftItem(state, m, type, draftItem, { expectedRevision: focusedSource.revision });
+          if (edited) tutorialEvent('edited');
+          return edited;
+        },
+        (response) => response.capsule.revision !== before,
+      );
       modal.close();
       render();
       toast(changed ? '수정한 새 버전의 확인을 받아요.' : '변경이 없어 이전 확인을 유지했어요.');
@@ -1044,6 +1094,7 @@ document.addEventListener('change', async (e) => {
     if (actionBusy) return;
     actionBusy = true;
     try {
+      if (repo.remote) throw Error('서버 모드에서는 로그인한 사용자로만 참여해요.');
       state.profileId = t.value;
       modal.close();
       markRead(meeting());
@@ -1075,7 +1126,8 @@ document.addEventListener('compositionend', () => {
   composing = false;
 });
 async function checkScheduled() {
-  if (actionBusy || composing || modal.open || repo.status.kind !== 'ready') return;
+  // In server mode the server's scheduled job opens capsules.
+  if (repo.remote || actionBusy || composing || modal.open || repo.status.kind !== 'ready') return;
   actionBusy = true;
   try {
     if (activateScheduled(state)) {
