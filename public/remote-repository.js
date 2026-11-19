@@ -231,6 +231,10 @@ export async function createRemoteRepository({
       socket?.close();
       await request('POST', '/v1/auth/logout');
     },
+    /** Asks the server for an AI draft suggestion. Errors keep their API `code` (ai_unavailable, …). */
+    suggestDraft(capsuleId) {
+      return mutate(`/v1/capsules/${capsuleId}/draft-suggestions`, {});
+    },
     /**
      * Runs one capsule command against the capsule `version` the screen last saw.
      * Returns the API response; on 409 the capsule is refreshed and the error rethrown.

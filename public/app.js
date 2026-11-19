@@ -410,7 +410,7 @@ function renderPolicyHistory(m) {
 }
 function renderMinuteItem(m, item, type) {
   const issues = validateItem(state, m, item, type);
-  return `<article class="minute-item ${issues.length ? 'needs-review' : ''}"><div class="minute-item-content"><p>${esc(item.text)}</p>${type === 'tasks' ? `<div class="item-meta"><span>${item.ownerId ? esc(memberName(state, item.ownerId)) : '담당 확인 필요'}</span><span>${item.dueAt ? day(item.dueAt) : '마감 확인 필요'}</span></div>` : type === 'events' ? `<div class="item-meta"><span>${item.at ? date(item.at) : '날짜·시간 확인 필요'}</span><span>${esc(item.location || '장소 미정')}</span><span>${item.participantIds.length}명</span>${item.kind === 'next' ? '<b>다음 캡슐 예약</b>' : ''}</div>` : ''}<div class="evidence-row">${btn('evidence', icon('link') + ` 근거 메시지 ${item.evidenceIds.length}`, 'evidence-button', `data-type="${type}" data-id="${item.id}"`)}${issues.length ? `<span class="needs-label">${esc(issues.join(' · '))}</span>` : `<span class="valid-label">✓ ${type === 'tasks' ? '근거·담당·마감 입력됨' : type === 'events' ? '근거·날짜·참여자 입력됨' : '근거 연결됨'}</span>`}</div></div>${m.status === 'review' ? btn('edit-item', icon('edit'), 'icon-button item-edit', `data-type="${type}" data-id="${item.id}" aria-label="${esc(item.text)} 수정"`) : ''}</article>`;
+  return `<article class="minute-item ${issues.length ? 'needs-review' : ''}"><div class="minute-item-content"><p>${esc(item.text)}</p>${type === 'tasks' ? `<div class="item-meta"><span>${item.ownerId ? esc(memberName(state, item.ownerId)) : '담당 확인 필요'}</span><span>${item.dueAt ? day(item.dueAt) : '마감 확인 필요'}</span></div>` : type === 'events' ? `<div class="item-meta"><span>${item.at ? date(item.at) : '날짜·시간 확인 필요'}</span><span>${esc(item.location || '장소 미정')}</span><span>${item.participantIds.length}명</span>${item.kind === 'next' ? '<b>다음 캡슐 예약</b>' : ''}</div>` : ''}<div class="evidence-row">${item.source === 'ai' ? '<span class="ai-badge">AI 제안</span>' : ''}${btn('evidence', icon('link') + ` 근거 메시지 ${item.evidenceIds.length}`, 'evidence-button', `data-type="${type}" data-id="${item.id}"`)}${issues.length ? `<span class="needs-label">${esc(issues.join(' · '))}</span>` : `<span class="valid-label">✓ ${type === 'tasks' ? '근거·담당·마감 입력됨' : type === 'events' ? '근거·날짜·참여자 입력됨' : '근거 연결됨'}</span>`}</div></div>${m.status === 'review' ? btn('edit-item', icon('edit'), 'icon-button item-edit', `data-type="${type}" data-id="${item.id}" aria-label="${esc(item.text)} 수정"`) : ''}</article>`;
 }
 function renderResult(m) {
   if (m.status !== 'confirmed')
@@ -764,13 +764,26 @@ document.addEventListener('click', async (e) => {
       return;
     }
     if (action === 'draft') {
-      await run('extract-draft', m, {}, () => {
+      // Server mode asks the AI first; when it is unavailable the user is told and the rules are used.
+      let suggestion = null;
+      let note = '기존 편집을 보존하고 새 대화를 반영했어요.';
+      if (repo.remote)
+        try {
+          toast('AI가 새 대화를 정리하고 있어요…');
+          suggestion = await repo.suggestDraft(m.id);
+          note = 'AI가 정리한 초안이에요. 근거와 담당·날짜를 꼭 확인해주세요.';
+        } catch (error) {
+          if (['ai_unavailable', 'ai_budget_exceeded', 'rate_limited'].includes(error.code))
+            note = `${error.message} 규칙 기반(결정: · 할 일: 형식)으로 정리했어요.`;
+          else if (error.code !== 'domain_rule') throw error;
+        }
+      await run('extract-draft', m, suggestion ? { suggestionId: suggestion.id } : {}, () => {
         extractDraft(state, m, { expectedRevision: m.revision });
         tutorialEvent('draft');
       });
       view = 'minutes';
       render();
-      toast('기존 편집을 보존하고 새 대화를 반영했어요.');
+      toast(note);
       return;
     }
     if (action === 'confirm') {

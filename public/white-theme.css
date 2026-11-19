@@ -157,3 +157,14 @@ dialog::backdrop {
     justify-content: center;
   }
 }
+/* AI-suggested draft items: labelled in text, not only by colour. */
+:root body #app .ai-badge {
+  display: inline-block;
+  margin-right: 6px;
+  padding: 1px 8px;
+  border: 1px solid var(--beige-700) !important;
+  border-radius: 999px;
+  background-color: var(--beige-100) !important;
+  font-size: 11px;
+  font-weight: 700;
+}
