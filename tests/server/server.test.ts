@@ -307,6 +307,11 @@ test('delegation, confirmations, conclusions, calendar and carryover persist end
   );
   assert.equal(next.rowCount, 1);
   assert.equal(next.rows[0].carryover.length, 1);
+  const activationJob = await f.db.query<any>(
+    "select status from jobs where kind='activate-scheduled' and payload->>'capsuleId'=$1",
+    [next.rows[0].id],
+  );
+  assert.deepEqual(activationJob.rows, [{ status: 'pending' }]);
   await f.close();
 });
 

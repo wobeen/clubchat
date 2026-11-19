@@ -13,6 +13,7 @@ import { isUuid, withIdempotency } from './idempotency.js';
 import type { Database } from './types.js';
 
 type Executor = (state: any, capsule: any, payload: any) => unknown;
+class RetryRelations extends Error {}
 const json = (value: unknown): string | null => (value == null ? null : JSON.stringify(value));
 const object = (value: unknown): value is Record<string, any> =>
   !!value && typeof value === 'object' && !Array.isArray(value);
@@ -192,6 +193,12 @@ async function persistMeeting(
         meeting.createdAt,
       ],
     );
+    if (meeting.status === 'scheduled' && meeting.startsAt)
+      await tx.query(
+        `insert into jobs (kind,payload,run_at) values ('activate-scheduled',$1,$2)
+         on conflict (kind,payload) do nothing`,
+        [json({ capsuleId: meeting.id }), meeting.startsAt],
+      );
   } else {
     const updated = await tx.query(
       `update capsules set
@@ -365,94 +372,111 @@ export async function executeCommand(
     expectedVersion: input.expectedVersion,
     payload,
   };
-  const body = await withIdempotency(db, input.userId, input.key, commandRequest, async (tx) => {
-    if (!(await canReadCapsule(tx, input.capsuleId, input.userId))) {
-      if (await canReadCapsuleMetadata(tx, input.capsuleId, input.userId))
-        throw new ApiError(403, 'forbidden', '하위 캡슐 참여자만 명령을 실행할 수 있어요.');
-      throw notFound();
-    }
-    const extraIds = [payload.childId, payload.followUpId].filter(isUuid);
-    const relationIds = await relatedCapsuleIds(tx, input.capsuleId, extraIds);
-    const locked = await tx.query<any>(
-      'select id,version,org_id from capsules where id=any($1::uuid[]) order by id for update',
-      [relationIds],
-    );
-    const lockedTarget = locked.rows.find((row: any) => row.id === input.capsuleId);
-    if (!lockedTarget) throw notFound();
-    if (input.command !== 'send-message') {
-      if (!Number.isInteger(input.expectedVersion))
-        throw new ApiError(400, 'invalid_request', 'expectedVersion이 필요해요.');
-      if (lockedTarget.version !== input.expectedVersion)
-        throw new ApiError(409, 'version_conflict', '다른 변경이 있어요. 최신 버전을 확인해주세요.', {
-          version: lockedTarget.version,
-        });
-    }
-
-    const messageIds = [input.capsuleId, ...(input.command === 'dispose-child' ? extraIds : [])];
-    const state = await domainState(tx, input.capsuleId, input.userId, messageIds, relationIds);
-    const capsule = state.meetings.find((meeting: any) => meeting.id === input.capsuleId);
-    assertCommandPermission(input.command, capsule, input.userId);
-    const beforeMeetings = new Map<string, any>(
-      state.meetings.map((meeting: any) => [meeting.id, structuredClone(meeting)]),
-    );
-    const beforeCalendarState = structuredClone(state.calendar);
-    const beforeCalendar = JSON.stringify(beforeCalendarState);
+  let body: any;
+  for (let attempt = 0; attempt < 3; attempt++) {
     try {
-      executor(state, capsule, payload);
-    } catch (error) {
-      throw new ApiError(422, 'domain_rule', error instanceof Error ? error.message : String(error));
-    }
-
-    const changed = state.meetings.filter((meeting: any) => {
-      const before = beforeMeetings.get(meeting.id);
-      if (!before) return true;
-      return JSON.stringify({ ...before, version: undefined }) !== JSON.stringify({ ...meeting, version: undefined });
-    });
-    const changedIds = new Set<string>(changed.map((meeting: any) => meeting.id));
-    for (const meeting of changed) {
-      const previous = beforeMeetings.get(meeting.id);
-      meeting.version = previous ? previous.version + 1 : 0;
-      await persistMeeting(tx, meeting, lockedTarget.org_id, input.userId, previous);
-      await tx.query(`insert into outbox (topic,payload) values ('capsule.changed',$1)`, [
-        json({ capsuleId: meeting.id, version: meeting.version }),
-      ]);
-    }
-
-    if (beforeCalendar !== JSON.stringify(state.calendar)) {
-      await persistCalendar(tx, state, changedIds);
-      await tx.query(`insert into outbox (topic,payload) values ('calendar.changed',$1)`, [
-        json({ orgId: lockedTarget.org_id }),
-      ]);
-    }
-
-    const priorEvents = new Set(beforeCalendarState.map((event: any) => `${event.meetingId}:${event.sourceId}`));
-    const activeMembers = new Set(
-      capsule.memberIds.filter((id: string) => !(capsule.departedMemberIds || []).includes(id)),
-    );
-    for (const event of state.calendar.filter(
-      (item: any) => !priorEvents.has(`${item.meetingId}:${item.sourceId || item.id}`),
-    )) {
-      const text = `${event.text} 일정이 등록됐어요.`;
-      for (const userId of event.participantIds.filter((id: string) => activeMembers.has(id))) {
-        const id = notificationId(input.capsuleId, event.sourceId || event.id, userId);
-        const inserted = await tx.query<{ id: string }>(
-          `insert into notifications (id,user_id,capsule_id,text,created_at) values ($1,$2,$3,$4,now())
-           on conflict (id) do nothing returning id`,
-          [id, userId, input.capsuleId, text],
+      body = await withIdempotency(db, input.userId, input.key, commandRequest, async (tx) => {
+        if (!(await canReadCapsule(tx, input.capsuleId, input.userId))) {
+          if (await canReadCapsuleMetadata(tx, input.capsuleId, input.userId))
+            throw new ApiError(403, 'forbidden', '하위 캡슐 참여자만 명령을 실행할 수 있어요.');
+          throw notFound();
+        }
+        const extraIds = [payload.childId, payload.followUpId].filter(isUuid);
+        const relationIds = await relatedCapsuleIds(tx, input.capsuleId, extraIds);
+        const locked = await tx.query<any>(
+          'select id,version,org_id from capsules where id=any($1::uuid[]) order by id for update',
+          [relationIds],
         );
-        if (inserted.rowCount)
-          await tx.query(`insert into outbox (topic,payload) values ('notification',$1)`, [
-            json({ id, userId, capsuleId: input.capsuleId, sourceId: event.sourceId || event.id, text }),
-          ]);
-      }
-    }
+        const verifiedRelationIds = await relatedCapsuleIds(tx, input.capsuleId, extraIds);
+        if (
+          verifiedRelationIds.length !== relationIds.length ||
+          verifiedRelationIds.some((id, index) => id !== relationIds[index])
+        )
+          throw new RetryRelations();
+        const lockedTarget = locked.rows.find((row: any) => row.id === input.capsuleId);
+        if (!lockedTarget) throw notFound();
+        if (input.command !== 'send-message') {
+          if (!Number.isInteger(input.expectedVersion))
+            throw new ApiError(400, 'invalid_request', 'expectedVersion이 필요해요.');
+          if (lockedTarget.version !== input.expectedVersion)
+            throw new ApiError(409, 'version_conflict', '다른 변경이 있어요. 최신 버전을 확인해주세요.', {
+              version: lockedTarget.version,
+            });
+        }
 
-    return {
-      capsule: await capsuleRepresentation(tx, input.capsuleId),
-      affected: state.meetings
-        .filter((meeting: any) => meeting.id !== input.capsuleId && changedIds.has(meeting.id))
-        .map((meeting: any) => ({ id: meeting.id, version: meeting.version })),
-    };
-  });
+        const messageIds = [input.capsuleId, ...(input.command === 'dispose-child' ? extraIds : [])];
+        const state = await domainState(tx, input.capsuleId, input.userId, messageIds, relationIds);
+        const capsule = state.meetings.find((meeting: any) => meeting.id === input.capsuleId);
+        assertCommandPermission(input.command, capsule, input.userId);
+        const beforeMeetings = new Map<string, any>(
+          state.meetings.map((meeting: any) => [meeting.id, structuredClone(meeting)]),
+        );
+        const beforeCalendarState = structuredClone(state.calendar);
+        const beforeCalendar = JSON.stringify(beforeCalendarState);
+        try {
+          executor(state, capsule, payload);
+        } catch (error) {
+          if (!(error instanceof Error) || error.constructor !== Error) throw error;
+          throw new ApiError(422, 'domain_rule', error.message);
+        }
+
+        const changed = state.meetings.filter((meeting: any) => {
+          const before = beforeMeetings.get(meeting.id);
+          if (!before) return true;
+          return (
+            JSON.stringify({ ...before, version: undefined }) !== JSON.stringify({ ...meeting, version: undefined })
+          );
+        });
+        const changedIds = new Set<string>(changed.map((meeting: any) => meeting.id));
+        for (const meeting of changed) {
+          const previous = beforeMeetings.get(meeting.id);
+          meeting.version = previous ? previous.version + 1 : 0;
+          await persistMeeting(tx, meeting, lockedTarget.org_id, input.userId, previous);
+          await tx.query(`insert into outbox (topic,payload) values ('capsule.changed',$1)`, [
+            json({ capsuleId: meeting.id, version: meeting.version }),
+          ]);
+        }
+
+        if (beforeCalendar !== JSON.stringify(state.calendar)) {
+          await persistCalendar(tx, state, changedIds);
+          await tx.query(`insert into outbox (topic,payload) values ('calendar.changed',$1)`, [
+            json({ orgId: lockedTarget.org_id }),
+          ]);
+        }
+
+        const priorEvents = new Set(beforeCalendarState.map((event: any) => `${event.meetingId}:${event.sourceId}`));
+        const activeMembers = new Set(
+          capsule.memberIds.filter((id: string) => !(capsule.departedMemberIds || []).includes(id)),
+        );
+        for (const event of state.calendar.filter(
+          (item: any) => !priorEvents.has(`${item.meetingId}:${item.sourceId || item.id}`),
+        )) {
+          const text = `${event.text} 일정이 등록됐어요.`;
+          for (const userId of event.participantIds.filter((id: string) => activeMembers.has(id))) {
+            const id = notificationId(input.capsuleId, event.sourceId || event.id, userId);
+            const inserted = await tx.query<{ id: string }>(
+              `insert into notifications (id,user_id,capsule_id,text,created_at) values ($1,$2,$3,$4,now())
+           on conflict (id) do nothing returning id`,
+              [id, userId, input.capsuleId, text],
+            );
+            if (inserted.rowCount)
+              await tx.query(`insert into outbox (topic,payload) values ('notification',$1)`, [
+                json({ id, userId, capsuleId: input.capsuleId, sourceId: event.sourceId || event.id, text }),
+              ]);
+          }
+        }
+
+        return {
+          capsule: await capsuleRepresentation(tx, input.capsuleId),
+          affected: state.meetings
+            .filter((meeting: any) => meeting.id !== input.capsuleId && changedIds.has(meeting.id))
+            .map((meeting: any) => ({ id: meeting.id, version: meeting.version })),
+        };
+      });
+      break;
+    } catch (error) {
+      if (!(error instanceof RetryRelations) || attempt === 2) throw error;
+    }
+  }
   return { status: 200, body };
 }

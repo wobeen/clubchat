@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import pg from 'pg';
 import type { Database, QueryResult } from './types.js';
 
@@ -41,10 +42,15 @@ function adapter(queryable: Queryable): Database {
   };
 }
 
-export function createPgDatabase(connectionString: string, searchPath?: string): Database {
+export function createPgDatabase(
+  connectionString: string,
+  searchPath?: string,
+  caFile = process.env.DATABASE_CA_FILE,
+): Database {
   const pool = new pg.Pool({
     connectionString,
     ...(searchPath ? { options: `-c search_path=${searchPath}` } : {}),
+    ...(caFile ? { ssl: { ca: readFileSync(caFile, 'utf8'), rejectUnauthorized: true } } : {}),
   });
   return {
     async query<Row>(sql: string, params: unknown[] = []) {
