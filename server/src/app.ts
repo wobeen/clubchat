@@ -207,7 +207,7 @@ export function buildApp({
 
   const requireAdmin = async (database: Database, orgId: string, userId: string) => {
     const membership = await database.query<{ role: string }>(
-      'select role from org_members where org_id=$1 and user_id=$2 and left_at is null',
+      'select role from org_members where org_id=$1 and user_id=$2 and left_at is null for update',
       [orgId, userId],
     );
     if (!membership.rows[0]) throw notFound();

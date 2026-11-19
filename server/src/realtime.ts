@@ -20,7 +20,9 @@ interface Client {
 export class RealtimeHub {
   private readonly clients = new Set<Client>();
 
-  add(socket: WebSocket, userId: string, sessionId: string, expiresAt?: Date): Client {
+  add(socket: WebSocket, userId: string, sessionId: string, expiresAt?: Date): Client | null {
+    // A socket that closed while the session lookup was pending would never fire 'close' again.
+    if (socket.readyState !== socket.OPEN) return null;
     const client: Client = { socket, userId, sessionId, capsuleIds: new Set<string>() };
     this.clients.add(client);
     if (expiresAt) {
@@ -47,13 +49,29 @@ export class RealtimeHub {
       (id) => !client.capsuleIds.has(id),
     );
     if (!wanted.length) return;
+    // Terminal capsules (confirmed/cancelled/deferred) are evicted first to make room for new subscriptions.
+    let evictable: string[] = [];
+    if (client.capsuleIds.size + wanted.length > MAX_SUBSCRIPTIONS && client.capsuleIds.size) {
+      const finished = await db.query<{ id: string }>(
+        `select id from capsules where id=any($1::uuid[]) and status in ('confirmed','cancelled','deferred')`,
+        [[...client.capsuleIds]],
+      );
+      evictable = finished.rows.map((row) => row.id);
+    }
+    const capacity = MAX_SUBSCRIPTIONS - client.capsuleIds.size + evictable.length;
+    if (capacity <= 0) return;
+    const limited = wanted.slice(0, capacity);
     const readable = await db.query<{ capsule_id: string }>(
       `select capsule_id from capsule_members
        where capsule_id = any($1::uuid[]) and user_id=$2 and departed_at is null`,
-      [wanted, client.userId],
+      [limited, client.userId],
     );
     for (const row of readable.rows) {
-      if (client.capsuleIds.size >= MAX_SUBSCRIPTIONS) break;
+      if (client.capsuleIds.size >= MAX_SUBSCRIPTIONS) {
+        const victim = evictable.pop();
+        if (!victim) break;
+        client.capsuleIds.delete(victim);
+      }
       client.capsuleIds.add(row.capsule_id);
     }
   }
@@ -141,7 +159,14 @@ export function registerRealtime(app: FastifyInstance, db: Database, config: Con
           const session = await db.query<{ expires_at: Date | string }>('select expires_at from sessions where id=$1', [
             sessionHash(token),
           ]);
-          return hub.add(socket, user.id, sessionHash(token), new Date(session.rows[0]?.expires_at ?? Date.now()));
+          const added = hub.add(
+            socket,
+            user.id,
+            sessionHash(token),
+            new Date(session.rows[0]?.expires_at ?? Date.now()),
+          );
+          if (!added) throw new Error('socket closed');
+          return added;
         })();
         ready.catch(() => socket.close());
         let queue: Promise<unknown> = ready.catch(() => {});
@@ -180,13 +205,9 @@ export class OutboxDispatcher {
           `select id,topic,payload from outbox where sent_at is null
            order by id for update skip locked limit 100`,
         );
-        for (const row of rows.rows) {
-          try {
-            await this.publish(row.topic, row.payload);
-          } catch {
-            // A failed delivery must not block later events; sockets resync on reconnect.
-          }
-        }
+        // A failing re-authorization query throws: the transaction rolls back, nothing is marked sent,
+        // and the next drain retries (socket send errors are already contained inside publish).
+        for (const row of rows.rows) await this.publish(row.topic, row.payload);
         if (rows.rowCount)
           await tx.query('update outbox set sent_at=now() where id=any($1::bigint[])', [
             rows.rows.map((row) => row.id),

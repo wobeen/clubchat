@@ -595,3 +595,86 @@ test('an empty JSON body is a 400, not a 500', async () => {
   assert.equal(response.json().error.code, 'invalid_request');
   await f.close();
 });
+
+const fakeSocket = (readyState: number) => {
+  const handlers: Record<string, (() => void)[]> = {};
+  return {
+    OPEN: 1,
+    readyState,
+    once: (event: string, fn: () => void) => (handlers[event] ||= []).push(fn),
+    close() {},
+    send() {},
+    emit: (event: string) => (handlers[event] || []).forEach((fn) => fn()),
+  } as any;
+};
+
+test('a socket that already closed is not registered in the hub', async () => {
+  const hub = new RealtimeHub();
+  assert.equal(hub.add(fakeSocket(3), randomUUID(), 'session'), null);
+  const open = fakeSocket(1);
+  assert.ok(hub.add(open, randomUUID(), 'session'));
+  open.emit('close');
+  hub.close();
+});
+
+test('a full subscription set evicts finished capsules first and ignores new ones otherwise', async () => {
+  const f = await fixture();
+  const owner = await f.login();
+  const org = await f.organization(owner.cookie);
+  const [finished, active, fresh, extra] = [
+    await f.capsule(owner.cookie, org),
+    await f.capsule(owner.cookie, org),
+    await f.capsule(owner.cookie, org),
+    await f.capsule(owner.cookie, org),
+  ];
+  await f.db.query("update capsules set status='cancelled' where id=$1", [finished]);
+  const hub = new RealtimeHub();
+  const client = hub.add(fakeSocket(1), owner.userId, 'session')!;
+  for (let index = 0; index < 498; index++) client.capsuleIds.add(randomUUID());
+  client.capsuleIds.add(finished);
+  client.capsuleIds.add(active);
+  await hub.subscribe(f.db, client, [fresh]);
+  assert.equal(client.capsuleIds.size, 500);
+  assert.ok(client.capsuleIds.has(fresh));
+  assert.ok(!client.capsuleIds.has(finished));
+  assert.ok(client.capsuleIds.has(active));
+  await hub.subscribe(f.db, client, [extra]);
+  assert.ok(!client.capsuleIds.has(extra));
+  assert.equal(client.capsuleIds.size, 500);
+  hub.close();
+  await f.close();
+});
+
+test('an outbox row stays unsent when delivery fails and is retried by the next drain', async () => {
+  const f = await fixture();
+  let fail = true;
+  const delivered: string[] = [];
+  const dispatcher = new OutboxDispatcher(f.db, async (topic) => {
+    if (fail) throw new Error('db down');
+    delivered.push(topic);
+  });
+  await f.db.query("insert into outbox (topic,payload) values ('calendar.changed','{}')");
+  await assert.rejects(dispatcher.drain(), /db down/);
+  assert.equal((await f.db.query<any>('select count(*)::int n from outbox where sent_at is null')).rows[0].n, 1);
+  fail = false;
+  assert.equal(await dispatcher.drain(), 1);
+  assert.deepEqual(delivered, ['calendar.changed']);
+  await f.close();
+});
+
+test('invite creation and cancellation require the requester to still be an admin', async () => {
+  const f = await fixture();
+  const admin = await f.login();
+  const member = await f.login();
+  const org = await f.organization(admin.cookie);
+  await f.db.query("insert into org_members (org_id,user_id,role) values ($1,$2,'admin')", [org, member.userId]);
+  await f.db.query("update org_members set role='member' where org_id=$1 and user_id=$2", [org, member.userId]);
+  const create = await f.app.inject({
+    method: 'POST',
+    url: `/v1/organizations/${org}/invites`,
+    headers: { origin, cookie: member.cookie, 'idempotency-key': randomUUID() },
+    payload: { expiresInHours: 24 },
+  });
+  assert.equal(create.statusCode, 403);
+  await f.close();
+});
