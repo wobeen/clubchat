@@ -5,10 +5,11 @@
 - 기준 문서: `docs/contracts/`(v0.2: 서버 동시성 `version`과 초안 `revision` 분리, 누적 WebSocket 구독, 알림 수신자 규칙, `DATABASE_CA_FILE`). 배포는 `docs/deploy.md`.
 - 서버(`server/`): 인증(카카오, 개발 로그인), 조직·초대·멤버, 캡슐 명령 15종(멱등성·버전 충돌·관련 캡슐 잠금), 실시간(`/v1/ws`, outbox), 예약·정리 작업, 일정·ICS·읽음, `/health`. 테스트는 PGlite와 PostgreSQL 16에서 같은 41개를 돌린다.
 - 화면: `remote-repository.js`로 서버 모드(`?api` 또는 meta), 실시간 갱신, 읽음 포인터, 서버 모드 설정 정리. 접근성 감사(`docs/research/ux-a11y-audit.md`)의 P0·P1을 반영했다.
-- 평가: `eval/extraction/`(29건, 규칙 기반 기준선 F1 69.0%).
+- 평가: `eval/extraction/`(66건, 조정용 dev 33 / 시험용 test 33, 규칙 기반 F1 42.3%), 시연 대화 `eval/scenarios/`와 `scripts/seed-scenarios.mjs`.
 - 배포: `deploy/`(compose·Caddy·정적 빌드) + `.github/workflows/deploy.yml`. CI에서 이미지 빌드·GHCR push까지 동작하고, Lightsail 비밀값이 없어 서버 반영은 건너뛴다.
 - 사용자 작업 대기: Lightsail 인스턴스·관리형 DB·도메인·GitHub 비밀값, 카카오 개발자 앱(리다이렉트 URI). 실제 카카오 로그인과 운영 배포는 이후 확인한다.
-- 다음 후보: AI 회의록 추출 어댑터(평가셋 기준), 감사 P2 항목, 실사용자 학습 검증.
+- AI 회의록(2026-11-20 보류): 계약 `docs/contracts/ai-extraction.md` v1.1, 도메인 후보 반영, 서버 제안 API·Anthropic/Gemini 어댑터·마스킹·한도, 화면의 AI 우선 + 규칙 대체까지 병합했다. 운영 AI는 꺼져 있다(키 미설정). 남은 일: Gemini 무료 등급 응답 확인(11/20 503·시간 초과), dev 세트로 프롬프트 조정, test 세트 통과선 측정, 운영 전 Haiku로 재측정.
+- 다음 후보: 감사 P2 항목, 실사용자 학습 검증, AI 회의록 재개.
 
 아래는 로컬 데모 단계의 기록이다.
 
