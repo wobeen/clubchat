@@ -138,3 +138,94 @@ test('an expired session asks for login instead of showing data', async () => {
   assert.equal(repo.status.loginUrl, '/v1/auth/kakao/start');
   assert.equal(repo.get().meetings.length, 0);
 });
+
+class FakeSocket {
+  static instances = [];
+  constructor(url) {
+    this.url = url;
+    this.readyState = 0;
+    this.sent = [];
+    FakeSocket.instances.push(this);
+  }
+  open() {
+    this.readyState = 1;
+    this.onopen?.();
+  }
+  send(data) {
+    this.sent.push(JSON.parse(data));
+  }
+  receive(message) {
+    this.onmessage?.({ data: JSON.stringify(message) });
+  }
+  close() {
+    this.readyState = 3;
+    this.onclose?.();
+  }
+}
+const settle = () => new Promise((resolve) => setTimeout(resolve, 20));
+
+test('a live change with a newer version refetches the capsule and notifies the screen; stale ones are ignored', async () => {
+  FakeSocket.instances = [];
+  let served = capsule('c1', 0);
+  const routes = baseRoutes([served]);
+  routes['GET /v1/capsules/c1'] = () => [200, served];
+  const { fetch, calls } = fakeApi(routes);
+  const repo = await createRemoteRepository({ fetch, WebSocket: FakeSocket, socketUrl: 'ws://test/v1/ws' });
+  const socket = FakeSocket.instances[0];
+  socket.open();
+  assert.deepEqual(socket.sent[0], { type: 'subscribe', capsuleIds: ['c1'] });
+  let changes = 0;
+  repo.onChange(() => changes++);
+  const before = calls.length;
+  socket.receive({ type: 'capsule.changed', capsuleId: 'c1', version: 0 });
+  await settle();
+  assert.equal(calls.length, before);
+  served = capsule('c1', 2, { title: '다른 참여자가 바꾼 제목' });
+  socket.receive({ type: 'capsule.changed', capsuleId: 'c1', version: 2 });
+  await settle();
+  assert.equal(repo.get().meetings[0].title, '다른 참여자가 바꾼 제목');
+  assert.equal(changes, 1);
+  repo.close();
+});
+
+test('after a dropped connection the repository reconnects and reloads what it missed', async () => {
+  FakeSocket.instances = [];
+  const { fetch, calls } = fakeApi(baseRoutes([capsule('c1', 0)]));
+  const repo = await createRemoteRepository({
+    fetch,
+    WebSocket: FakeSocket,
+    socketUrl: 'ws://test/v1/ws',
+    reconnectDelay: 1,
+  });
+  FakeSocket.instances[0].open();
+  FakeSocket.instances[0].close();
+  await settle();
+  assert.equal(FakeSocket.instances.length, 2);
+  const mesBefore = calls.filter((c) => c.url === '/v1/me').length;
+  FakeSocket.instances[1].open();
+  await settle();
+  assert.equal(calls.filter((c) => c.url === '/v1/me').length, mesBefore + 1);
+  repo.close();
+});
+
+test('the read pointer starts from the server unread count and is sent once per last message', async () => {
+  const routes = baseRoutes([]);
+  const messages = [1, 2, 3].map((n) => ({
+    id: `m${n}`,
+    authorId: user,
+    text: `${n}`,
+    createdAt: '2026-11-19T00:00:00.000Z',
+  }));
+  routes[`GET /v1/organizations/${org}/capsules?filter=all`] = () => [200, [{ id: 'c1', unreadCount: 2 }]];
+  routes['GET /v1/capsules/c1'] = () => [200, capsule('c1', 0, { messages })];
+  routes['POST /v1/capsules/c1/read'] = () => [200, { ok: true }];
+  const { fetch, calls } = fakeApi(routes);
+  const repo = await createRemoteRepository({ fetch });
+  assert.equal(repo.get().reads[`${user}:c1`], 1);
+  repo.markRead('c1', 'm3');
+  repo.markRead('c1', 'm3');
+  await settle();
+  const reads = calls.filter((c) => c.url === '/v1/capsules/c1/read');
+  assert.equal(reads.length, 1);
+  assert.deepEqual(reads[0].body, { lastMessageId: 'm3' });
+});
