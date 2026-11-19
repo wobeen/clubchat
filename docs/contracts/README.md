@@ -36,6 +36,7 @@ v0.2 (2026-11-19): 도메인 초안 버전 `revision`과 서버 동시성 토큰
 | `SESSION_SECRET` | 세션 서명 키(32바이트 이상) |
 | `KAKAO_CLIENT_ID` / `KAKAO_CLIENT_SECRET` / `KAKAO_REDIRECT_URI` | 카카오 로그인 |
 | `AUTH_DEV_LOGIN` | `1`이면 개발용 로그인 허용. 운영에서 설정 시 서버가 시작을 거부 |
+| `DATABASE_CA_FILE` | 관리형 PostgreSQL의 CA 인증서(PEM) 경로. 있으면 인증서를 검증하는 TLS로 연결 |
 | `PORT` | 기본 8080 |
 
 ## 작업 소유권
