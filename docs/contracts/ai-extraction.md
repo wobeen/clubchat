@@ -1,6 +1,12 @@
-# AI 회의록 추출 계약 v1
+# AI 회의록 추출 계약 v1.1
 
-상태: 승인됨 · 2026-11-20. 모델은 Anthropic Claude `claude-haiku-5-5`이고, 운영 월 상한은 $10이다. 결정 근거는 [모델 개요](https://platform.claude.com/docs/en/models/overview)다.
+상태: 승인됨 · 2026-11-20.
+
+v1.1: 비용 때문에 **개발과 평가는 Google Gemini 무료 등급(`gemini-3.8-flash`)으로 하고, 운영 AI는 기본으로 꺼 둔다**. 운영에서 켤 때 쓸 모델은 Anthropic Claude `claude-haiku-5-5`(월 상한 $10)이며, 켜기 전에 Haiku로 시험 세트를 다시 측정해 통과선을 확인한다. 근거는 [Claude 모델 개요](https://platform.claude.com/docs/en/models/overview)와 [Gemini 요금](https://ai.google.dev/gemini-api/docs/pricing)이다.
+
+Gemini 무료 등급은 Google 요금표에 "콘텐츠가 제품 개선에 사용됨"이라고 되어 있다. 그래서 **실제 사용자 대화는 Gemini로 보내지 않는다.**
+- 서버는 `NODE_ENV=production`에서 `AI_PROVIDER=gemini`이면 시작을 거부한다.
+- Gemini에는 평가 세트처럼 직접 만든 데이터만 보낸다.
 
 AI는 **제안만** 한다. 초안에 들어가는 항목은 기존과 같은 코드 검증(근거 메시지 존재, 담당자 소속, 날짜 형식)을 거치고, 참여자의 공동 확인을 받는다. 규칙 기반 추출(`결정:` 같은 접두어)은 그대로 남긴다. AI를 쓸 수 없을 때는 사용자에게 그 사실을 알리고 규칙 기반으로 정리한다.
 
@@ -79,8 +85,10 @@ sequenceDiagram
 
 | 이름 | 기본값 | 용도 |
 | --- | --- | --- |
-| `ANTHROPIC_API_KEY` | (없음) | 없으면 제안 API는 503 `ai_unavailable` |
-| `AI_MODEL` | `claude-haiku-5-5` | 모델 id |
+| `AI_PROVIDER` | `anthropic` | `anthropic` 또는 `gemini`. `gemini`는 운영(`NODE_ENV=production`)에서 시작 거부 |
+| `ANTHROPIC_API_KEY` | (없음) | provider가 anthropic인데 없으면 제안 API는 503 `ai_unavailable`. 운영 기본은 미설정(AI 꺼짐) |
+| `GEMINI_API_KEY` | (없음) | 개발·평가 전용 |
+| `AI_MODEL` | provider별 `claude-haiku-5-5` / `gemini-3.8-flash` | 모델 id |
 | `AI_MONTHLY_BUDGET_USD` | `10` | 월 상한(KST 월) |
 | `AI_USER_HOURLY_LIMIT` | `20` | 사용자당 시간당 요청 수 |
 | `AI_PRICE_INPUT_PER_MTOK` / `AI_PRICE_OUTPUT_PER_MTOK` | `1` / `5` | 비용 계산 단가(USD). 실제 요금보다 높게 잡아 상한을 지킨다 |
@@ -107,6 +115,7 @@ export interface Extractor {
 ```
 
 - `createAnthropicExtractor({ apiKey, model, fetch, prices })`: 도구 하나를 강제(`tool_choice`)해 구조화 출력을 받는다. 프롬프트는 `prompt.ts` 한 곳에 둔다.
+- `createGeminiExtractor({ apiKey, model, fetch, prices })`: 같은 프롬프트와 같은 출력 스키마를 Gemini의 구조화 출력(JSON 스키마)으로 받는다. 무료 등급이면 비용은 0으로 기록한다. 프롬프트 조정은 Gemini로 하지만, 운영 전환 전에 Haiku로 다시 측정해야 한다.
 - `mask.ts`, `normalize.ts`는 모델과 무관한 순수 함수로 만들고 단위 테스트한다.
 - 평가 도구(`eval/extraction/run-ai.mjs`)는 같은 `Extractor`를 직접 불러 쓴다.
 
