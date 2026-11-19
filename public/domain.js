@@ -360,16 +360,65 @@ function appendExtracted(state, m, draft, message) {
     });
   }
 }
+/**
+ * Adds AI-suggested items. Only messages the suggestion covered count as reflected; evidence must point
+ * at those messages (or delegated source messages), owners and participants must be capsule members,
+ * and unusable dates become null so the item shows as needing review. Nothing is invented here.
+ */
+function appendCandidates(m, draft, candidates, pending) {
+  const allowed = new Set([...pending.map((x) => x.id), ...m.sourceMessages.map((x) => x.id)]);
+  const isDate = (value) => typeof value === 'string' && Number.isFinite(Date.parse(value));
+  for (const type of TYPES)
+    for (const raw of Array.isArray(candidates?.[type]) ? candidates[type] : []) {
+      const text = typeof raw?.text === 'string' ? raw.text.trim() : '';
+      const evidenceIds = [...new Set(Array.isArray(raw?.evidenceIds) ? raw.evidenceIds : [])].filter((id) =>
+        allowed.has(id),
+      );
+      if (!text || !evidenceIds.length) continue;
+      const base = { id: uid(), text, evidenceIds, source: 'ai' };
+      if (type === 'decisions') draft.decisions.push(base);
+      if (type === 'unresolved') draft.unresolved.push({ ...base, agendaId: base.id, from: m.id, status: 'open' });
+      if (type === 'tasks')
+        draft.tasks.push({
+          ...base,
+          ownerId: m.memberIds.includes(raw.ownerId) ? raw.ownerId : null,
+          dueAt: isDate(raw.dueAt) ? new Date(raw.dueAt).toISOString() : null,
+          dateText: typeof raw.dateText === 'string' ? raw.dateText : '',
+        });
+      if (type === 'events') {
+        const at = isDate(raw.at) ? new Date(raw.at).toISOString() : null;
+        draft.events.push({
+          ...base,
+          at,
+          hasTime: Boolean(at && raw.hasTime),
+          dateText: typeof raw.dateText === 'string' ? raw.dateText : '',
+          location: typeof raw.location === 'string' ? raw.location : '',
+          participantIds: [...new Set(Array.isArray(raw.participantIds) ? raw.participantIds : [])].filter((id) =>
+            m.memberIds.includes(id),
+          ),
+          kind: raw.kind === 'next' ? 'next' : 'event',
+        });
+      }
+    }
+}
+/**
+ * Builds or extends the draft from messages not yet reflected. Default: the prefix rules. With
+ * `options.candidates` (an AI suggestion), only `options.candidateMessageIds` are reflected and later
+ * messages stay pending.
+ */
 export function extractDraft(state, m, options = {}) {
   assertMember(m, state.profileId);
   editable(m);
   revisionGuard(m, options);
   const existing = !!m.draft,
     ids = new Set(existing ? m.draftMessageIds || m.messages.map((x) => x.id) : []);
-  const pending = m.messages.filter((x) => !ids.has(x.id));
+  const suggested = options.candidates != null;
+  const covered = new Set(options.candidateMessageIds || []);
+  const pending = m.messages.filter((x) => !ids.has(x.id) && (!suggested || covered.has(x.id)));
   if (existing && !pending.length) return m.draft;
   const draft = existing ? clone(m.draft) : emptyDraft();
-  for (const message of pending) appendExtracted(state, m, draft, message);
+  if (suggested) appendCandidates(m, draft, options.candidates, pending);
+  else for (const message of pending) appendExtracted(state, m, draft, message);
   if (!existing) {
     for (const item of getAgendaItems(m)) {
       if (item.status === 'resolved') continue;
@@ -384,9 +433,10 @@ export function extractDraft(state, m, options = {}) {
       });
     }
   }
-  bump(m, existing ? '反映: 새 대화' : '첫 초안');
+  bump(m, suggested ? 'AI 제안 반영' : existing ? '반영: 새 대화' : '첫 초안');
   m.draft = draft;
-  m.draftMessageIds = m.messages.map((x) => x.id);
+  const reflected = new Set([...ids, ...pending.map((x) => x.id)]);
+  m.draftMessageIds = m.messages.filter((x) => reflected.has(x.id)).map((x) => x.id);
   m.status = 'review';
   return draft;
 }
