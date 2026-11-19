@@ -31,8 +31,11 @@ function adapter(queryable: Queryable): Database {
   };
 }
 
-export function createPgDatabase(connectionString: string): Database {
-  const pool = new pg.Pool({ connectionString });
+export function createPgDatabase(connectionString: string, searchPath?: string): Database {
+  const pool = new pg.Pool({
+    connectionString,
+    ...(searchPath ? { options: `-c search_path=${searchPath}` } : {}),
+  });
   return {
     async query<Row>(sql: string, params: unknown[] = []) {
       const result = await pool.query(sql, params);
@@ -52,12 +55,31 @@ export function createPgDatabase(connectionString: string): Database {
         client.release();
       }
     },
-    async close() { await pool.end(); },
+    async close() {
+      await pool.end();
+    },
   };
 }
 
 export function createPGliteDatabase(pglite: Queryable & { close(): Promise<void> }): Database {
-  const db = adapter(pglite);
+  const base = adapter(pglite);
+  let tail: Promise<void> = Promise.resolve();
+  const db: Database = {
+    query: base.query,
+    async transaction<T>(fn: (tx: Database) => Promise<T>): Promise<T> {
+      const previous = tail;
+      let release!: () => void;
+      tail = new Promise<void>((resolve) => {
+        release = resolve;
+      });
+      await previous;
+      try {
+        return await base.transaction(fn);
+      } finally {
+        release();
+      }
+    },
+  };
   db.close = () => pglite.close();
   return db;
 }
