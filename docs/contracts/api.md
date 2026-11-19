@@ -100,7 +100,7 @@ Idempotency-Key: <uuid>
 
 | 방향 | 메시지 |
 | --- | --- |
-| 클라이언트 → 서버 | `{ "type": "subscribe", "capsuleIds": ["..."] }` 읽기 권한이 있는 것만 구독, 나머지는 조용히 무시 |
+| 클라이언트 → 서버 | `{ "type": "subscribe", "capsuleIds": ["..."] }` 구독은 **누적**된다(이전 구독을 지우지 않음, 소켓당 최대 500개). UUID가 아니거나 읽기 권한이 없는 id만 조용히 무시하고 나머지는 구독한다. 권한은 발송 시점에 다시 확인해, 빠진 참여자·탈퇴한 조직 멤버·끝난 세션에는 보내지 않는다 |
 | 서버 → 클라이언트 | `{ "type": "capsule.changed", "capsuleId", "version" }` |
 | 서버 → 클라이언트 | `{ "type": "calendar.changed", "orgId" }`, `{ "type": "notification", "id", "text" }` |
 
