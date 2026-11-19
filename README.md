@@ -8,6 +8,8 @@
 - 연습: http://127.0.0.1:4173/?practice=1
 - 검사: `npm ci`, `npm run check`, `npm test`, `npm run test:e2e` (브라우저 설치는 구현 결과 참고)
 - 진행 기록: [실행 체크포인트](ITDA_EXECUTION_CHECKPOINT.md)
+- 서비스 전환 계약(API·DB·권한, 작업 소유권): [docs/contracts](docs/contracts/README.md)
+- 코드 형식: `npm run format`(Prettier). CI가 `npm run format:check`로 검사한다.
 
 ## 이전 데모 설명 · 변경 전 기록
 
