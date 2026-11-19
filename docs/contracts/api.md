@@ -1,4 +1,4 @@
-# API 계약 v0.1
+# API 계약 v0.2
 
 기본 경로 `/v1`. 요청·응답은 JSON(UTF-8). 시각은 ISO 8601 UTC 문자열, 조직 시간대는 `organizations.time_zone`(기본 `Asia/Seoul`).
 
@@ -6,9 +6,10 @@
 
 - **인증**: 세션 쿠키 `itda_session`. 없거나 만료되면 `401 unauthenticated`.
 - **CSRF**: `GET`/`HEAD` 외 요청은 `Origin`이 `APP_ORIGIN`과 같아야 한다. 아니면 `403 bad_origin`.
-- **낙관적 동시성**: 캡슐을 바꾸는 모든 명령은 `expectedRevision`을 받는다. DB의 현재 `capsules.revision`과 다르면 아무것도 바꾸지 않고 `409 revision_conflict`와 최신 `revision`을 돌려준다.
+- **낙관적 동시성**: 캡슐에는 두 숫자가 있다. `revision`은 도메인의 **초안 버전**이고 도메인 함수만 바꾼다(확인 레코드가 여기에 묶인다). `version`은 서버의 **동시성 토큰**으로, 캡슐 상태를 실제로 바꾼 명령마다 서버가 +1 한다. 명령은 `expectedVersion`을 받고, DB의 `capsules.version`과 다르면 아무것도 바꾸지 않고 `409 version_conflict`와 최신 `version`을 돌려준다. 예외: `send-message`는 추가만 하므로 `expectedVersion`을 검사하지 않는다(동시에 대화해도 충돌 없음). 서버는 도메인 함수에 `expectedRevision` 옵션을 넘기지 않는다.
+- **변경 없음**: 도메인 함수가 실행됐지만 저장할 상태가 그대로면(예: 같은 값으로 `update-draft-item`, `resume-conversation`) `version`을 올리지 않고 outbox도 남기지 않는다. 응답은 200과 현재 캡슐.
 - **멱등성**: 변경 요청은 `Idempotency-Key` 헤더(UUID)를 필수로 받는다. 같은 사용자·같은 키의 재요청은 처음 응답을 그대로 돌려준다(24시간 보관). 키 없이 오면 `400 idempotency_key_required`.
-- **오류 형식**: `{ "error": { "code": "revision_conflict", "message": "사용자에게 보여줄 한국어 문장", "details": {} } }`
+- **오류 형식**: `{ "error": { "code": "version_conflict", "message": "사용자에게 보여줄 한국어 문장", "details": {} } }`
 - **권한**: 비참여자에게는 캡슐의 존재도 드러내지 않는다. 읽기 권한이 없으면 `404 not_found`, 읽을 수는 있지만 명령 권한이 없으면 `403 forbidden`.
 
 | HTTP | code | 의미 |
@@ -48,23 +49,23 @@
 
 | 메서드·경로 | 설명 |
 | --- | --- |
-| `GET /v1/organizations/:orgId/capsules?filter=all\|needs_my_confirmation\|waiting\|children\|scheduled` | 내가 읽을 수 있는 캡슐 목록. 각 항목은 `{ id, title, status, revision, parentId, previousId, lastMessage, unreadCount, blockers }` |
+| `GET /v1/organizations/:orgId/capsules?filter=all\|needs_my_confirmation\|waiting\|children\|scheduled` | 내가 읽을 수 있는 캡슐 목록. 각 항목은 `{ id, title, status, revision, version, parentId, previousId, lastMessage, unreadCount, blockers }` |
 | `GET /v1/capsules/:id` | 캡슐 전체(아래 "캡슐 표현"). 메시지는 최근 50개만 |
 | `GET /v1/capsules/:id/messages?before=<messageId>&limit≤100` | 과거 메시지 페이지 |
 | `GET /v1/organizations/:orgId/calendar?from&to` | 내가 참여한 확정 캡슐의 일정. 확정된 정정 캡슐이 있는 원본 캡슐의 일정은 제외한다(도메인 `getConfirmedEvents`와 같은 규칙) |
 | `GET /v1/events/:eventId.ics` | 일정 1건의 ICS. `makeICS` 결과 |
-| `POST /v1/capsules/:id/read` `{ lastMessageId }` | 읽음 포인터 갱신. 멱등, revision 불필요 |
+| `POST /v1/capsules/:id/read` `{ lastMessageId }` | 읽음 포인터 갱신. 멱등, `expectedVersion` 불필요 |
 
-**캡슐 표현**은 브라우저 저장소 v3의 meeting 객체와 같은 필드 이름을 쓴다(`memberIds`, `confirmationMemberIds`, `draft`, `draftHistory`, `confirmationRecords`, `agendaStatuses`, `policyHistory`, `delegationDisposition`, `conclusions`, `carryover`, `revision`, `memberSetVersion`, `conclusionVersion` 등). 기존 화면 코드가 그대로 렌더링할 수 있게 하기 위함이다. 하위 캡슐의 `messages`/`sourceMessages`는 그 하위 캡슐 참여자에게만 포함한다. 상위 참여자는 `conclusions`만 본다.
+**캡슐 표현**은 브라우저 저장소 v3의 meeting 객체와 같은 필드 이름을 쓴다(`memberIds`, `confirmationMemberIds`, `draft`, `draftHistory`, `confirmationRecords`, `agendaStatuses`, `policyHistory`, `delegationDisposition`, `conclusions`, `carryover`, `revision`, `memberSetVersion`, `conclusionVersion` 등). 기존 화면 코드가 그대로 렌더링할 수 있게 하기 위함이다. 여기에 서버 전용 `version`을 더한다. 하위 캡슐의 `messages`/`sourceMessages`는 그 하위 캡슐 참여자에게만 포함한다. 상위 참여자는 `conclusions`만 본다.
 
 ## 캡슐 명령
 
 ```
 POST /v1/capsules/:id/commands/:command
 Idempotency-Key: <uuid>
-{ "expectedRevision": 12, "payload": { ... } }
+{ "expectedVersion": 12, "payload": { ... } }
 
-200 { "capsule": <캡슐 표현>, "affected": [{ "id": "<부모·후속 캡슐 id>", "revision": 4 }] }
+200 { "capsule": <캡슐 표현>, "affected": [{ "id": "<부모·후속 캡슐 id>", "version": 4 }] }
 ```
 
 생성 명령만 경로가 다르다: `POST /v1/organizations/:orgId/capsules` `{ title, memberIds, description?, startsAt? }`.
@@ -98,7 +99,7 @@ Idempotency-Key: <uuid>
 | 방향 | 메시지 |
 | --- | --- |
 | 클라이언트 → 서버 | `{ "type": "subscribe", "capsuleIds": ["..."] }` 읽기 권한이 있는 것만 구독, 나머지는 조용히 무시 |
-| 서버 → 클라이언트 | `{ "type": "capsule.changed", "capsuleId", "revision" }` |
+| 서버 → 클라이언트 | `{ "type": "capsule.changed", "capsuleId", "version" }` |
 | 서버 → 클라이언트 | `{ "type": "calendar.changed", "orgId" }`, `{ "type": "notification", "id", "text" }` |
 
 알림은 커밋 이후에만 보낸다(`outbox` 테이블 → 발송). 재접속한 클라이언트는 구독 중인 캡슐을 HTTP로 다시 조회한다.
@@ -114,4 +115,4 @@ Idempotency-Key: <uuid>
 
 ## 클라이언트 저장소 어댑터
 
-`public/`은 `createBrowserRepository`와 같은 인터페이스의 `createRemoteRepository({ baseUrl, fetch, WebSocket })`를 추가한다. 화면 코드는 저장소 종류를 몰라야 한다. 로컬 데모 모드(`?demo=1`)와 연습 모드(`?practice=1`)는 기존 브라우저 저장소를 그대로 쓴다.
+`public/remote-repository.js`의 `createRemoteRepository({ baseUrl, fetch })`가 `createBrowserRepository`와 같은 인터페이스(`get`, `status`, `save`, `reload` 등)에 `command(capsuleId, command, payload, expectedVersion)`와 `createCapsule(input)`을 더해 제공한다. 화면 코드는 명령마다 `run()`을 거치며 저장소 종류를 몰라도 된다. 서버 모드는 페이지의 `<meta name="itda-api" content="on">`(운영) 또는 `?api` 쿼리(개발)로 켠다. 연습 모드(`?practice=1`)와 디자인 미리보기는 항상 브라우저 저장소를 쓴다. 개발에서는 `ITDA_API_URL=http://127.0.0.1:8080 npm start`로 정적 서버가 `/v1`을 API로 넘겨 같은 출처가 된다(운영의 Caddy와 같은 구성).

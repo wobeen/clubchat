@@ -23,9 +23,9 @@
 | `send-message` | 참여자 | open, review | review 중 메시지는 "미반영"으로 표시 |
 | `delegate` | 참여자 | open, review | 선택 메시지는 이 캡슐의 메시지여야 함. 담당자는 조직 멤버 |
 | `extract-draft` | 참여자 | open, review | |
-| `update-draft-item` / `remove-draft-item` / `restore-draft` | 참여자 | review | 실제 변경이면 revision +1, 이전 확인 무효 |
-| `resume-conversation` | 참여자 | review | 초안·이력 보존 |
-| `confirm` | 확인 대상 | review | 확인 레코드는 현재 `revision`·`member_set_version`·`conclusion_version`에 묶음 |
+| `update-draft-item` / `remove-draft-item` / `restore-draft` | 참여자 | review | 실제 변경이면 도메인이 `revision` +1, 이전 확인 무효 |
+| `resume-conversation` | 참여자 | review | 상태는 review 그대로(검토 중에도 대화 가능). 검사만 하는 명령이라 보통 변경 없음 |
+| `confirm` | 확인 대상 | review | 확인 레코드는 현재 `revision`·`member_set_version`·`conclusion_version`에 묶음. 중간 확인은 `version`만 +1 하고 `revision`은 그대로라 확인이 누적된다 |
 | `set-confirmation-members` | 진행자 | open, review | 사유 필수, `member_set_version` +1 |
 | `mark-member-departed` | 진행자 | open, review | 진행자 본인은 먼저 이관 |
 | `transfer-facilitator` | 진행자 | open, review | |
@@ -33,7 +33,7 @@
 | `dispose-child` | 상위 캡슐 진행자 | 상위 open, review | 보류는 후속 캡슐 지정 필수 |
 | `create-correction` | 원본 참여자 | confirmed | 원본 불변, 새 캡슐 생성 |
 | `start-scheduled` | 참여자 | scheduled | 예약 작업도 같은 함수 사용 |
-| 읽음 갱신 | 참여자 | 모두 | revision 증가 없음 |
+| 읽음 갱신 | 참여자 | 모두 | `version` 증가 없음 |
 
 ## 조회 범위
 
@@ -53,7 +53,7 @@ stateDiagram-v2
   [*] --> open: 생성
   scheduled --> open: start-scheduled / 예약 작업
   open --> review: extract-draft
-  review --> open: resume-conversation
+  review --> review: send-message / 초안 수정 / 중간 confirm
   review --> confirmed: 마지막 확인 대상의 confirm (하위 미결 없음)
   open --> deferred: 상위의 dispose-child(보류)
   open --> cancelled: 상위의 dispose-child(취소)
@@ -61,6 +61,8 @@ stateDiagram-v2
   review --> cancelled: 상위의 dispose-child(취소)
   confirmed --> [*]
 ```
+
+초안을 만든 뒤에도 대화는 계속된다. 새 메시지는 "미반영"으로 표시되고, `extract-draft`를 다시 실행하면 기존 편집을 보존한 채 반영된다. review에서 open으로 되돌아가는 전이는 없다.
 
 확정 후 변경은 `create-correction`으로 만든 새 캡슐에서만 한다.
 

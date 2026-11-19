@@ -1,5 +1,5 @@
--- ITDA PostgreSQL 16 스키마 계약 v0.1
--- 0001_init.sql 은 v0 그대로 두고, v0.1 추가분은 server/migrations/0002_*.sql 로 만든다. 이 파일과 다르게 만들려면 총괄에게 먼저 요청한다.
+-- ITDA PostgreSQL 16 스키마 계약 v0.2
+-- 0001_init.sql 은 v0 그대로 두고, v0.1·v0.2 추가분은 server/migrations/0002_*.sql 로 만든다. 이 파일과 다르게 만들려면 총괄에게 먼저 요청한다.
 -- 캡슐의 자주 바뀌고 함께 검증되는 하위 구조(draft, draftHistory, agendaStatuses, policyHistory 등)는 JSONB에 두고,
 -- 권한·조회·유일성 제약이 필요한 것(참여자, 메시지, 확인, 일정)은 테이블로 정규화한다.
 
@@ -52,7 +52,8 @@ create table capsules (
   title text not null,
   description text not null default '',
   status text not null check (status in ('open', 'review', 'confirmed', 'scheduled', 'cancelled', 'deferred')),
-  revision int not null default 0,            -- 명령마다 +1. expectedRevision 비교 대상
+  revision int not null default 0,            -- 도메인 초안 버전. 도메인 함수만 바꾼다. 확인 레코드가 여기에 묶인다
+  version int not null default 0,             -- v0.2 서버 동시성 토큰. 상태를 바꾼 명령마다 +1. expectedVersion 비교 대상
   member_set_version int not null default 0,
   conclusion_version int not null default 0,
   facilitator_id uuid references users(id),
