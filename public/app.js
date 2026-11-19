@@ -453,8 +453,12 @@ function renderMembers() {
 }
 function openModal(title, body, footer = '', wide = false) {
   modal.className = wide ? 'wide' : '';
-  modal.innerHTML = `<div class="modal-header"><div><span class="eyebrow">ITDA · CAPSULE</span><h2>${title}</h2></div>${btn('close', icon('close'), 'icon-button', 'aria-label="닫기"')}</div><div class="modal-body">${body}</div>${footer ? `<div class="modal-footer">${footer}</div>` : ''}`;
+  modal.innerHTML = `<div class="modal-header"><div><span class="eyebrow">ITDA · CAPSULE</span><h2 id="modal-title">${title}</h2></div>${btn('close', icon('close'), 'icon-button', 'aria-label="닫기"')}</div><div class="modal-body">${body}</div>${footer ? `<div class="modal-footer">${footer}</div>` : ''}`;
+  modal.removeAttribute('aria-label');
+  modal.setAttribute('aria-labelledby', 'modal-title');
   if (!modal.open) modal.showModal();
+  // Keyboard users start in the first field; the close button comes first in the DOM (audit A-01).
+  modal.querySelector('.modal-body :is(input:not([type="hidden"]), textarea, select)')?.focus();
 }
 const field = (label, name, value = '', type = 'text', attrs = '') =>
   `<label class="field"><span>${label}</span><input name="${name}" type="${type}" value="${esc(value)}" ${attrs}></label>`;

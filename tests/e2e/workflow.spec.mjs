@@ -191,3 +191,11 @@ test('불참과 하위 보류를 사유와 함께 공동 확인에 반영한다'
   await expect(page.locator('.confirmation-banner')).toContainText('1/1');
   await expect(page.locator('.minutes-scroll h2')).toHaveText('함께 확인한 결론');
 });
+
+test('키보드만으로 새 캡슐을 만들 수 있다', async ({ page }) => {
+  await page.goto('/');
+  await page.locator('[data-action="create"]').first().click();
+  await page.keyboard.type('키보드로 만든 캡슐');
+  await page.keyboard.press('Enter');
+  await expect(page.locator('.room-heading h1')).toHaveText('키보드로 만든 캡슐');
+});
