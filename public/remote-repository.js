@@ -73,7 +73,24 @@ export async function createRemoteRepository({
   const emit = () => listeners.forEach((listener) => listener());
   const sentReads = new Map();
 
+  // A parent participant receives a child capsule as metadata only (no messages or draft); give it the
+  // empty collections the screen code expects so it renders as "담당 멤버만 볼 수 있는 캡슐".
+  const COLLECTIONS = [
+    'memberIds',
+    'messages',
+    'sourceMessages',
+    'confirmations',
+    'confirmationRecords',
+    'conclusions',
+    'carryover',
+  ];
+  const complete = (capsule) => {
+    for (const key of COLLECTIONS) capsule[key] ??= [];
+    return capsule;
+  };
+
   function upsert(capsule) {
+    complete(capsule);
     subscribe([capsule]);
     const current = state.meetings.find((m) => m.id === capsule.id);
     if (!current) {
@@ -108,7 +125,7 @@ export async function createRemoteRepository({
         request('GET', `/v1/organizations/${org.id}/members`),
         request('GET', `/v1/organizations/${org.id}/capsules?filter=all`),
       ]);
-      const meetings = await Promise.all(list.map((c) => request('GET', `/v1/capsules/${c.id}`)));
+      const meetings = (await Promise.all(list.map((c) => request('GET', `/v1/capsules/${c.id}`)))).map(complete);
       const reads = {};
       // The server keeps the read pointer; translate its unread count into the local per-capsule marker.
       for (const c of list)

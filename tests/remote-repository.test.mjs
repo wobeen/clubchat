@@ -238,3 +238,26 @@ test('only capsules that can still change are subscribed', async () => {
   assert.deepEqual(FakeSocket.instances[0].sent[0], { type: 'subscribe', capsuleIds: ['c1'] });
   repo.close();
 });
+
+test('a child capsule seen only as metadata loads with empty collections', async () => {
+  const meta = {
+    id: 'c2',
+    title: '하위',
+    status: 'open',
+    version: 1,
+    revision: 0,
+    parentId: 'c1',
+    memberIds: ['someone-else'],
+  };
+  const routes = baseRoutes([capsule('c1', 0)]);
+  routes[`GET /v1/organizations/${org}/capsules?filter=all`] = () => [
+    200,
+    [{ id: 'c1' }, { id: 'c2', unreadCount: 0 }],
+  ];
+  routes['GET /v1/capsules/c2'] = () => [200, meta];
+  const { fetch } = fakeApi(routes);
+  const repo = await createRemoteRepository({ fetch });
+  assert.equal(repo.status.kind, 'ready');
+  const child = repo.get().meetings.find((m) => m.id === 'c2');
+  assert.deepEqual([child.messages, child.sourceMessages, child.conclusions], [[], [], []]);
+});
