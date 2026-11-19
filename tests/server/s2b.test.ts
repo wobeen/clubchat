@@ -1,11 +1,14 @@
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { setTimeout as delay } from 'node:timers/promises';
+import { mkdtemp, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { test } from 'node:test';
 import WebSocket from '../../server/node_modules/ws/wrapper.mjs';
 import { buildApp } from '../../server/src/app.js';
 import type { Config } from '../../server/src/config.js';
-import { createPgDatabase, createPGliteDatabase } from '../../server/src/db.js';
+import { createPgDatabase, createPGliteDatabase, pgPoolConfig } from '../../server/src/db.js';
 import { runDueJobs } from '../../server/src/jobs.js';
 import { migrate } from '../../server/src/migrate.js';
 import { OutboxDispatcher, RealtimeHub } from '../../server/src/realtime.js';
@@ -30,7 +33,7 @@ async function fixture() {
   const db = testUrl ? createPgDatabase(testUrl, schema) : createPGliteDatabase(raw!);
   await migrate(db);
   const hub = new RealtimeHub();
-  const outbox = new OutboxDispatcher(db, (topic, payload) => hub.publish(topic, payload), 25);
+  const outbox = new OutboxDispatcher(db, (topic, payload) => hub.publish(db, topic, payload), 25);
   const app = buildApp({ db, config, realtime: hub, wakeOutbox: () => outbox.wake() });
   const login = async (userId = randomUUID()) => {
     const response = await app.inject({
@@ -391,5 +394,204 @@ test('dispose-child sees open grandchildren, source messages bypass the ordinary
     item: { id: randomUUID(), text: '깨진 초안', evidenceIds: [] },
   });
   assert.equal(internal.statusCode, 500, internal.body);
+  await f.close();
+});
+
+async function socketFixture(f: Awaited<ReturnType<typeof fixture>>) {
+  const address = await f.app.listen({ port: 0, host: '127.0.0.1' });
+  const url = `${address.replace(/^http/, 'ws')}/v1/ws`;
+  f.outbox.start();
+  const sockets: any[] = [];
+  return {
+    // Subscribes in the very same tick the connection opens, before any server-side await can finish.
+    async open(cookie: string, immediate?: string[]) {
+      const socket = new WebSocket(url, { headers: { cookie, origin } });
+      const messages: any[] = [];
+      let closed = false;
+      socket.on('message', (raw: any) => messages.push(JSON.parse(raw.toString())));
+      socket.on('close', () => (closed = true));
+      await new Promise<void>((resolve, reject) => {
+        socket.once('open', () => {
+          if (immediate) socket.send(JSON.stringify({ type: 'subscribe', capsuleIds: immediate }));
+          resolve();
+        });
+        socket.once('error', reject);
+      });
+      sockets.push(socket);
+      return {
+        socket,
+        messages,
+        isClosed: () => closed,
+        subscribe: (capsuleIds: unknown) => socket.send(JSON.stringify({ type: 'subscribe', capsuleIds })),
+      };
+    },
+    closeAll: () => sockets.forEach((socket) => socket.close()),
+  };
+}
+
+const waitFor = async (condition: () => boolean) => {
+  for (let attempt = 0; attempt < 80 && !condition(); attempt++) await delay(25);
+};
+
+test('a subscribe sent immediately after connect is not lost and subscriptions accumulate', async () => {
+  const f = await fixture();
+  const owner = await f.login();
+  const org = await f.organization(owner.cookie);
+  const a = await f.capsule(owner.cookie, org);
+  const b = await f.capsule(owner.cookie, org);
+  const ws = await socketFixture(f);
+  const client = await ws.open(owner.cookie, [a]);
+  await delay(100);
+  client.subscribe(['not-a-uuid', 42, b, randomUUID()]);
+  await delay(100);
+  const first = await f.command(owner.cookie, a, 'send-message', undefined, { text: 'A' });
+  const second = await f.command(owner.cookie, b, 'send-message', undefined, { text: 'B' });
+  assert.equal(first.statusCode, 200);
+  assert.equal(second.statusCode, 200);
+  await waitFor(() => client.messages.length >= 2);
+  assert.deepEqual(client.messages.map((m) => m.capsuleId).sort(), [a, b].sort());
+  ws.closeAll();
+  await f.close();
+});
+
+test('publish re-authorizes: departed members get nothing, logout closes the socket, new orgs are received', async () => {
+  const f = await fixture();
+  const owner = await f.login();
+  const guest = await f.login();
+  const org = await f.organization(owner.cookie);
+  const id = await f.capsule(owner.cookie, org);
+  const ws = await socketFixture(f);
+
+  await f.db.query("insert into org_members (org_id,user_id,role) values ($1,$2,'member')", [org, guest.userId]);
+  await f.db.query('insert into capsule_members (capsule_id,user_id) values ($1,$2)', [id, guest.userId]);
+  const ownerSocket = await ws.open(owner.cookie, [id]);
+  const guestSocket = await ws.open(guest.cookie, [id]);
+  await delay(150);
+  await f.command(owner.cookie, id, 'send-message', undefined, { text: '1' });
+  await waitFor(() => guestSocket.messages.length >= 1 && ownerSocket.messages.length >= 1);
+  assert.equal(guestSocket.messages.length, 1);
+
+  await f.db.query('update capsule_members set departed_at=now() where capsule_id=$1 and user_id=$2', [
+    id,
+    guest.userId,
+  ]);
+  await f.command(owner.cookie, id, 'send-message', undefined, { text: '2' });
+  await waitFor(() => ownerSocket.messages.length >= 2);
+  await delay(100);
+  assert.equal(guestSocket.messages.length, 1);
+
+  // A socket opened before joining an organization receives that organization's events afterwards.
+  const joined = await f.login();
+  const joinedSocket = await ws.open(joined.cookie);
+  await f.db.query("insert into org_members (org_id,user_id,role) values ($1,$2,'member')", [org, joined.userId]);
+  await f.db.query("insert into outbox (topic,payload) values ('calendar.changed',$1)", [
+    JSON.stringify({ orgId: org }),
+  ]);
+  f.outbox.wake();
+  await waitFor(() => joinedSocket.messages.length >= 1);
+  assert.deepEqual(joinedSocket.messages, [{ type: 'calendar.changed', orgId: org }]);
+
+  const logout = await f.app.inject({
+    method: 'POST',
+    url: '/v1/auth/logout',
+    headers: { origin, cookie: owner.cookie },
+  });
+  assert.equal(logout.statusCode, 200);
+  await waitFor(() => ownerSocket.isClosed());
+  assert.equal(ownerSocket.isClosed(), true);
+  ws.closeAll();
+  await f.close();
+});
+
+test('invite creation never stores the plaintext code and a replay is a 409', async () => {
+  const f = await fixture();
+  const admin = await f.login();
+  const org = await f.organization(admin.cookie);
+  const key = randomUUID();
+  const request = () =>
+    f.app.inject({
+      method: 'POST',
+      url: `/v1/organizations/${org}/invites`,
+      headers: { origin, cookie: admin.cookie, 'idempotency-key': key },
+      payload: { expiresInHours: 24 },
+    });
+  const created = await request();
+  assert.equal(created.statusCode, 200, created.body);
+  const code = created.json().code;
+  assert.ok(code);
+  const stored = await f.db.query<any>('select response::text r from idempotency_keys where key=$1', [key]);
+  assert.ok(!stored.rows[0].r.includes(code));
+  assert.ok(!stored.rows[0].r.includes('invite='));
+  const replay = await request();
+  assert.equal(replay.statusCode, 409);
+  assert.equal(replay.json().error.code, 'invite_already_issued');
+  await f.close();
+});
+
+test('member updates re-check the requester role on the locked rows', async () => {
+  const f = await fixture();
+  const first = await f.login();
+  const second = await f.login();
+  const org = await f.organization(first.cookie);
+  await f.db.query("insert into org_members (org_id,user_id,role) values ($1,$2,'admin')", [org, second.userId]);
+  const demote = (actor: { cookie: string }, target: string) =>
+    f.app.inject({
+      method: 'PATCH',
+      url: `/v1/organizations/${org}/members/${target}`,
+      headers: { origin, cookie: actor.cookie, 'idempotency-key': randomUUID() },
+      payload: { role: 'member' },
+    });
+  const results = await Promise.all([demote(first, second.userId), demote(second, first.userId)]);
+  assert.deepEqual(results.map((r) => r.statusCode).sort(), [200, 403]);
+  const admins = await f.db.query<any>("select count(*)::int n from org_members where org_id=$1 and role='admin'", [
+    org,
+  ]);
+  assert.equal(admins.rows[0].n, 1);
+  await f.close();
+});
+
+test('cleanup removes outbox rows sent more than a day ago', async () => {
+  const f = await fixture();
+  const now = new Date('2027-01-01T00:00:00Z');
+  await f.db.query(
+    `insert into outbox (topic,payload,sent_at) values
+       ('calendar.changed','{}','2026-12-30T00:00:00Z'),('calendar.changed','{}','2026-12-31T23:00:00Z'),
+       ('calendar.changed','{}',null)`,
+  );
+  await f.db.query("insert into jobs (kind,payload,run_at) values ('cleanup',$1,$2)", [JSON.stringify({}), now]);
+  await runDueJobs(f.db, now);
+  assert.equal((await f.db.query<any>('select count(*)::int n from outbox')).rows[0].n, 2);
+  await f.close();
+});
+
+test('DATABASE_CA_FILE strips sslmode and enables verified TLS in the pg config', async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'itda-ca-'));
+  const caFile = join(dir, 'ca.pem');
+  await writeFile(caFile, '-----BEGIN CERTIFICATE-----\nTEST\n-----END CERTIFICATE-----\n');
+  const withCa: any = pgPoolConfig(
+    'postgres://u:p@db.example:5432/app?sslmode=no-verify&application_name=itda',
+    undefined,
+    caFile,
+  );
+  assert.ok(!withCa.connectionString.includes('sslmode'));
+  assert.ok(withCa.connectionString.includes('application_name=itda'));
+  assert.equal(withCa.ssl.rejectUnauthorized, true);
+  assert.match(withCa.ssl.ca, /TEST/);
+  const without: any = pgPoolConfig('postgres://u:p@db.example:5432/app?sslmode=require', undefined, undefined);
+  assert.ok(without.connectionString.includes('sslmode=require'));
+  assert.equal(without.ssl, undefined);
+});
+
+test('an empty JSON body is a 400, not a 500', async () => {
+  const f = await fixture();
+  const user = await f.login();
+  const response = await f.app.inject({
+    method: 'POST',
+    url: '/v1/organizations',
+    headers: { origin, cookie: user.cookie, 'idempotency-key': randomUUID(), 'content-type': 'application/json' },
+    payload: '',
+  });
+  assert.equal(response.statusCode, 400, response.body);
+  assert.equal(response.json().error.code, 'invalid_request');
   await f.close();
 });

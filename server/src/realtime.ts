@@ -1,49 +1,111 @@
 import websocket from '@fastify/websocket';
 import type { FastifyInstance } from 'fastify';
 import type { WebSocket } from 'ws';
-import { currentUser } from './auth.js';
-import { canReadCapsule } from './capsules.js';
+import { cookies, currentUser, sessionHash } from './auth.js';
+import { isUuid } from './idempotency.js';
 import type { Config } from './config.js';
 import { ApiError } from './errors.js';
 import type { Database } from './types.js';
 
+export const MAX_SUBSCRIPTIONS = 500;
+
 interface Client {
   socket: WebSocket;
   userId: string;
-  orgIds: Set<string>;
+  sessionId: string;
   capsuleIds: Set<string>;
+  expiryTimer?: NodeJS.Timeout;
 }
 
 export class RealtimeHub {
   private readonly clients = new Set<Client>();
 
-  add(socket: WebSocket, userId: string, orgIds: string[]): Client {
-    const client = { socket, userId, orgIds: new Set(orgIds), capsuleIds: new Set<string>() };
+  add(socket: WebSocket, userId: string, sessionId: string, expiresAt?: Date): Client {
+    const client: Client = { socket, userId, sessionId, capsuleIds: new Set<string>() };
     this.clients.add(client);
-    socket.once('close', () => this.clients.delete(client));
+    if (expiresAt) {
+      // setTimeout overflows past ~24.8 days; re-arm in slices.
+      const arm = () => {
+        const remaining = expiresAt.getTime() - Date.now();
+        if (remaining <= 0) return socket.close();
+        client.expiryTimer = setTimeout(arm, Math.min(remaining, 2 ** 30));
+        client.expiryTimer.unref?.();
+      };
+      arm();
+    }
+    socket.once('close', () => {
+      if (client.expiryTimer) clearTimeout(client.expiryTimer);
+      this.clients.delete(client);
+    });
     return client;
   }
 
+  /** Accumulates readable capsule ids; non-UUIDs and unreadable ids are ignored. */
   async subscribe(db: Database, client: Client, capsuleIds: unknown): Promise<void> {
     if (!Array.isArray(capsuleIds)) return;
-    const allowed = new Set<string>();
-    for (const id of capsuleIds)
-      if (typeof id === 'string' && (await canReadCapsule(db, id, client.userId))) allowed.add(id);
-    client.capsuleIds = allowed;
+    const wanted = [...new Set(capsuleIds.filter(isUuid).map((id) => id.toLowerCase()))].filter(
+      (id) => !client.capsuleIds.has(id),
+    );
+    if (!wanted.length) return;
+    const readable = await db.query<{ capsule_id: string }>(
+      `select capsule_id from capsule_members
+       where capsule_id = any($1::uuid[]) and user_id=$2 and departed_at is null`,
+      [wanted, client.userId],
+    );
+    for (const row of readable.rows) {
+      if (client.capsuleIds.size >= MAX_SUBSCRIPTIONS) break;
+      client.capsuleIds.add(row.capsule_id);
+    }
   }
 
-  publish(topic: string, payload: any): void {
-    for (const client of this.clients) {
-      let message: any;
-      if (topic === 'capsule.changed' && client.capsuleIds.has(payload.capsuleId))
-        message = { type: topic, capsuleId: payload.capsuleId, version: payload.version };
-      else if (topic === 'calendar.changed' && client.orgIds.has(payload.orgId))
-        message = { type: topic, orgId: payload.orgId };
-      else if (topic === 'notification' && client.userId === payload.userId)
-        message = { type: topic, id: payload.id, text: payload.text };
-      if (!message || client.socket.readyState !== client.socket.OPEN) continue;
+  closeSession(sessionId: string): void {
+    for (const client of this.clients) if (client.sessionId === sessionId) client.socket.close();
+  }
+
+  /** Re-authorizes every recipient at publish time. */
+  async publish(db: Database, topic: string, payload: any): Promise<void> {
+    let candidates = [...this.clients].filter((client) => client.socket.readyState === client.socket.OPEN);
+    let build: (client: Client) => unknown;
+    let allowedUsers: Set<string>;
+    if (topic === 'capsule.changed') {
+      candidates = candidates.filter((client) => client.capsuleIds.has(payload.capsuleId));
+      if (!candidates.length) return;
+      const rows = await db.query<{ user_id: string }>(
+        `select cm.user_id from capsule_members cm
+         join capsules c on c.id=cm.capsule_id
+         join org_members om on om.org_id=c.org_id and om.user_id=cm.user_id and om.left_at is null
+         where cm.capsule_id=$1 and cm.departed_at is null`,
+        [payload.capsuleId],
+      );
+      allowedUsers = new Set(rows.rows.map((row) => row.user_id));
+      build = () => ({ type: topic, capsuleId: payload.capsuleId, version: payload.version });
+    } else if (topic === 'calendar.changed') {
+      if (!candidates.length) return;
+      const rows = await db.query<{ user_id: string }>(
+        'select user_id from org_members where org_id=$1 and left_at is null',
+        [payload.orgId],
+      );
+      allowedUsers = new Set(rows.rows.map((row) => row.user_id));
+      build = () => ({ type: topic, orgId: payload.orgId });
+    } else if (topic === 'notification') {
+      candidates = candidates.filter((client) => client.userId === payload.userId);
+      allowedUsers = new Set([payload.userId]);
+      build = () => ({ type: topic, id: payload.id, text: payload.text });
+    } else return;
+    candidates = candidates.filter((client) => allowedUsers.has(client.userId));
+    if (!candidates.length) return;
+    const sessions = await db.query<{ id: string }>(
+      'select id from sessions where id=any($1::text[]) and expires_at > now()',
+      [[...new Set(candidates.map((client) => client.sessionId))]],
+    );
+    const live = new Set(sessions.rows.map((row) => row.id));
+    for (const client of candidates) {
+      if (!live.has(client.sessionId)) {
+        client.socket.close();
+        continue;
+      }
       try {
-        client.socket.send(JSON.stringify(message));
+        client.socket.send(JSON.stringify(build(client)));
       } catch {
         client.socket.close();
       }
@@ -70,27 +132,29 @@ export function registerRealtime(app: FastifyInstance, db: Database, config: Con
           if (!user) throw new ApiError(401, 'unauthenticated', '로그인이 필요해요.');
         },
       },
-      async (socket, request) => {
-        const user = await currentUser(db, request);
-        if (!user) return socket.close();
-        const organizations = await db.query<{ org_id: string }>(
-          'select org_id from org_members where user_id=$1 and left_at is null',
-          [user.id],
-        );
-        const client = hub.add(
-          socket,
-          user.id,
-          organizations.rows.map((row) => row.org_id),
-        );
+      (socket, request) => {
+        // Attach the listener synchronously: @fastify/websocket drops messages that arrive before it exists.
+        const ready = (async () => {
+          const user = await currentUser(db, request);
+          const token = cookies(request.headers.cookie).itda_session;
+          if (!user || !token) throw new Error('unauthenticated');
+          const session = await db.query<{ expires_at: Date | string }>('select expires_at from sessions where id=$1', [
+            sessionHash(token),
+          ]);
+          return hub.add(socket, user.id, sessionHash(token), new Date(session.rows[0]?.expires_at ?? Date.now()));
+        })();
+        ready.catch(() => socket.close());
+        let queue: Promise<unknown> = ready.catch(() => {});
         socket.on('message', (raw) => {
-          void (async () => {
+          queue = queue.then(async () => {
             try {
+              const client = await ready;
               const message = JSON.parse(raw.toString());
               if (message?.type === 'subscribe') await hub.subscribe(db, client, message.capsuleIds);
             } catch {
               // Malformed and unauthorized subscriptions are deliberately ignored.
             }
-          })();
+          });
         });
       },
     );
@@ -104,7 +168,7 @@ export class OutboxDispatcher {
 
   constructor(
     private readonly db: Database,
-    private readonly publish: (topic: string, payload: any) => void,
+    private readonly publish: (topic: string, payload: any) => void | Promise<void>,
     private readonly intervalMs = 500,
   ) {}
 
@@ -116,7 +180,13 @@ export class OutboxDispatcher {
           `select id,topic,payload from outbox where sent_at is null
            order by id for update skip locked limit 100`,
         );
-        for (const row of rows.rows) this.publish(row.topic, row.payload);
+        for (const row of rows.rows) {
+          try {
+            await this.publish(row.topic, row.payload);
+          } catch {
+            // A failed delivery must not block later events; sockets resync on reconnect.
+          }
+        }
         if (rows.rowCount)
           await tx.query('update outbox set sent_at=now() where id=any($1::bigint[])', [
             rows.rows.map((row) => row.id),

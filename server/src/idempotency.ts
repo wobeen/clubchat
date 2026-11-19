@@ -37,6 +37,7 @@ export async function withIdempotency<T>(
   key: string,
   request: unknown,
   run: (tx: Database) => Promise<T>,
+  options: { store?: (response: T) => unknown; replay?: (stored: any) => T } = {},
 ): Promise<T> {
   const hash = requestHash(request);
   return db.transaction(async (tx) => {
@@ -48,14 +49,14 @@ export async function withIdempotency<T>(
     if (prior.rows[0]) {
       if (prior.rows[0].request_hash !== hash)
         throw new ApiError(400, 'invalid_request', '같은 Idempotency-Key에 다른 요청을 보낼 수 없어요.');
-      return prior.rows[0].response as T;
+      return options.replay ? options.replay(prior.rows[0].response) : (prior.rows[0].response as T);
     }
     const response = await run(tx);
     await tx.query('insert into idempotency_keys (user_id,key,request_hash,status,response) values ($1,$2,$3,200,$4)', [
       userId,
       key,
       hash,
-      response,
+      options.store ? options.store(response) : response,
     ]);
     return response;
   });

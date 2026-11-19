@@ -9,7 +9,7 @@ const config = loadConfig();
 const db = createPgDatabase(config.databaseUrl);
 await migrate(db);
 const realtime = new RealtimeHub();
-const outbox = new OutboxDispatcher(db, (topic, payload) => realtime.publish(topic, payload));
+const outbox = new OutboxDispatcher(db, (topic, payload) => realtime.publish(db, topic, payload));
 const jobs = new JobWorker(db, () => outbox.wake());
 const app = buildApp({ db, config, logger: true, realtime, wakeOutbox: () => outbox.wake() });
 await app.listen({ port: config.port, host: '0.0.0.0' });

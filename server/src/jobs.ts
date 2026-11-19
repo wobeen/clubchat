@@ -27,6 +27,9 @@ async function cleanup(tx: Database, now: Date): Promise<void> {
   await tx.query(`delete from idempotency_keys where created_at <= $1::timestamptz - interval '24 hours'`, [
     now.toISOString(),
   ]);
+  await tx.query(`delete from outbox where sent_at is not null and sent_at <= $1::timestamptz - interval '24 hours'`, [
+    now.toISOString(),
+  ]);
   await tx.query('delete from invites where expires_at <= $1 or revoked_at is not null', [now.toISOString()]);
 }
 

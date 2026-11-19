@@ -33,8 +33,14 @@
 1. **데이터베이스 만들기** → 같은 서울 리전, 엔진 PostgreSQL(**16 이상 최신**), 플랜 선택. 마스터 사용자·비밀번호 기록.
 2. 데이터베이스 → **네트워킹** → **공개 모드 끄기**(사설 전용).
 3. 같은 리전·같은 계정의 인스턴스는 VPC 피어링으로 **엔드포인트(사설 호스트명)**에 접속된다. 계정 설정 → **고급 → VPC 피어링 사용**이 꺼져 있으면 켠다.
-4. 연결 문자열을 `.env`의 `DATABASE_URL`에 넣는다. 서버 코드는 `pg`에 연결 문자열을 그대로 넘긴다(`server/src/db.ts`).
-   - 관리형 DB는 TLS를 요구한다. Lightsail DB 인증서(Amazon CA)를 Node가 신뢰하지 않으면 `sslmode=require`에서 인증서 오류가 날 수 있다. 사설 연결이므로 우선 `?sslmode=no-verify`를 쓰되, CA 번들을 마운트해 검증하는 방식은 서버 코드 변경이 필요하다(보고 참고).
+4. 연결 문자열을 `.env`의 `DATABASE_URL`에 넣는다. 서버 코드는 `pg`에 연결 문자열을 넘긴다(`server/src/db.ts`).
+   - 관리형 DB는 TLS를 요구한다. Lightsail DB 인증서는 Amazon RDS CA가 발급하므로 CA 번들로 인증서를 **검증**한다(`no-verify`는 쓰지 않는다).
+     ```sh
+     mkdir -p /opt/itda/certs
+     curl -fsSL -o /opt/itda/certs/global-bundle.pem https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem
+     ```
+     출처는 Amazon RDS 인증서 번들(글로벌, 모든 리전 CA 포함, PEM)이다. `.env`에 `DATABASE_CA_FILE=/certs/global-bundle.pem`을 넣으면 compose가 `./certs`를 `/certs`로 마운트하고, 서버가 `rejectUnauthorized: true`로 연결한다.
+   - `DATABASE_URL`에는 `sslmode`를 붙이지 않아도 된다. CA 파일이 있으면 서버가 URL의 `sslmode`를 제거하고 위 설정을 적용한다(node-postgres는 URL의 sslmode가 `ssl` 설정을 덮어쓰기 때문).
 5. 마이그레이션은 api 시작 시 자동 적용된다(`server/src/index.ts`의 `migrate`). 별도 작업 없음. 빈 DB 하나(`dbname`)만 만들어 두면 된다.
 
 ### 2.4 DNS

@@ -42,16 +42,31 @@ function adapter(queryable: Queryable): Database {
   };
 }
 
+/**
+ * node-postgres lets the connection string's sslmode override config.ssl, so with a CA file the
+ * sslmode (and related ssl*) parameters are removed and verified TLS is configured explicitly.
+ */
+export function pgPoolConfig(connectionString: string, searchPath?: string, caFile = process.env.DATABASE_CA_FILE) {
+  let url = connectionString;
+  if (caFile) {
+    const parsed = new URL(connectionString);
+    for (const key of ['sslmode', 'ssl', 'sslcert', 'sslkey', 'sslrootcert', 'uselibpqcompat'])
+      parsed.searchParams.delete(key);
+    url = parsed.toString();
+  }
+  return {
+    connectionString: url,
+    ...(searchPath ? { options: `-c search_path=${searchPath}` } : {}),
+    ...(caFile ? { ssl: { ca: readFileSync(caFile, 'utf8'), rejectUnauthorized: true } } : {}),
+  };
+}
+
 export function createPgDatabase(
   connectionString: string,
   searchPath?: string,
   caFile = process.env.DATABASE_CA_FILE,
 ): Database {
-  const pool = new pg.Pool({
-    connectionString,
-    ...(searchPath ? { options: `-c search_path=${searchPath}` } : {}),
-    ...(caFile ? { ssl: { ca: readFileSync(caFile, 'utf8'), rejectUnauthorized: true } } : {}),
-  });
+  const pool = new pg.Pool(pgPoolConfig(connectionString, searchPath, caFile));
   return {
     async query<Row>(sql: string, params: unknown[] = []) {
       const result = await pool.query(sql, params);
