@@ -86,7 +86,7 @@ export function renderRoomList(ctx) {
     )
     .join(
       '',
-    )}</nav></div><div class="room-list-rows" aria-label="캡슐 목록">${previews || '<div class="list-empty">조건에 맞는 캡슐이 없어요.<br>다른 필터로 확인해보세요.</div>'}</div><div class="list-bottom"><span class="mini-brand">${icon('link')} 잇다</span><p>함께 확인한 결정은 다음으로 이어져요.</p><span>로컬 데모</span></div>`;
+    )}</nav></div><div class="room-list-rows" aria-label="캡슐 목록">${previews || '<div class="list-empty">조건에 맞는 캡슐이 없어요.<br>다른 필터로 확인해보세요.</div>'}</div><div class="list-bottom"><span class="mini-brand">${icon('link')} 잇다</span><p>함께 확인한 결정은 다음으로 이어져요.</p><span>${ctx.remote ? '서버 저장' : '로컬 데모'}</span></div>`;
 }
 export function renderDesktop(ctx) {
   const { state, page, btn, icon, avatar, roomContent, workspaceContent } = ctx;

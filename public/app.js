@@ -225,6 +225,7 @@ function markRead(m) {
   if (m && canRead(m, state.profileId)) {
     state.reads ??= {};
     state.reads[`${state.profileId}:${m.id}`] = m.messages.length;
+    if (repo.remote && m.messages.length) repo.markRead(m.id, m.messages.at(-1).id);
   }
 }
 function tutorialEvent(event, id = activeId) {
@@ -265,6 +266,7 @@ function layoutContext() {
   const m = meeting();
   return {
     state,
+    remote: Boolean(repo.remote),
     activeId,
     page,
     listFilter,
@@ -577,7 +579,9 @@ function inviteDialog() {
 function settingsDialog() {
   openModal(
     '더보기 · 설정',
-    `<div class="settings-profile">${avatar(state.profileId)}<div><strong>${esc(memberName(state, state.profileId))}</strong><p>${esc(state.organization)} · 시연 참여자</p></div></div><label class="field settings-select"><span>시연 참여자 전환</span><select id="profile-select" aria-label="시연 참여자 전환">${state.members.map((p) => `<option value="${p.id}" ${p.id === state.profileId ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}</select></label><div class="settings-links"><button type="button" data-action="preview">${icon('phone')} PC·안드로이드 디자인 미리보기</button><a href="/android" target="_blank" rel="noopener">${icon('phone')} 안드로이드 전용 UI 열기</a><button type="button" data-action="guide">${icon('file')} 이용 가이드</button><button type="button" data-action="notifications">${icon('bell')} 알림 확인</button><button type="button" data-action="storage-recovery">저장 데이터 복구</button><button type="button" data-action="storage-export">현재 데이터 내보내기</button><a href="/?practice=1">첫 캡슐 다시 연습하기</a><button type="button" data-action="reset">${icon('clock')} 데모 초기화</button></div><p class="settings-note">실제 로그인이 없는 로컬 데모입니다. 참여자를 바꿔 공동 확인 흐름을 시연할 수 있어요.</p>`,
+    repo.remote
+      ? `<div class="settings-profile">${avatar(state.profileId)}<div><strong>${esc(memberName(state, state.profileId))}</strong><p>${esc(state.organization)}</p></div></div><div class="settings-links"><button type="button" data-action="guide">${icon('file')} 이용 가이드</button><button type="button" data-action="notifications">${icon('bell')} 알림 확인</button><a href="/?practice=1">첫 캡슐 연습하기 (내 데이터와 분리)</a><button type="button" data-action="logout">로그아웃</button></div><p class="settings-note">캡슐과 대화는 서버에 저장되고 참여자에게만 보여요.</p>`
+      : `<div class="settings-profile">${avatar(state.profileId)}<div><strong>${esc(memberName(state, state.profileId))}</strong><p>${esc(state.organization)} · 시연 참여자</p></div></div><label class="field settings-select"><span>시연 참여자 전환</span><select id="profile-select" aria-label="시연 참여자 전환">${state.members.map((p) => `<option value="${p.id}" ${p.id === state.profileId ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}</select></label><div class="settings-links"><button type="button" data-action="preview">${icon('phone')} PC·안드로이드 디자인 미리보기</button><a href="/android" target="_blank" rel="noopener">${icon('phone')} 안드로이드 전용 UI 열기</a><button type="button" data-action="guide">${icon('file')} 이용 가이드</button><button type="button" data-action="notifications">${icon('bell')} 알림 확인</button><button type="button" data-action="storage-recovery">저장 데이터 복구</button><button type="button" data-action="storage-export">현재 데이터 내보내기</button><a href="/?practice=1">첫 캡슐 다시 연습하기</a><button type="button" data-action="reset">${icon('clock')} 데모 초기화</button></div><p class="settings-note">실제 로그인이 없는 로컬 데모입니다. 참여자를 바꿔 공동 확인 흐름을 시연할 수 있어요.</p>`,
     btn('close', '닫기', 'primary'),
   );
 }
@@ -692,6 +696,11 @@ document.addEventListener('click', async (e) => {
     }
     if (action === 'settings') {
       settingsDialog();
+      return;
+    }
+    if (action === 'logout') {
+      await repo.logout();
+      location.reload();
       return;
     }
     if (action === 'room-info') {
@@ -953,7 +962,7 @@ document.addEventListener('click', async (e) => {
           .map(([t, d], i) => `<article><b>${i + 1}</b><div><h3>${t}</h3><p>${d}</p></div></article>`)
           .join(
             '',
-          )}</div><div class="privacy-callout">${icon('shield')} 지금은 로그인·외부 AI·카카오 연동이 없는 로컬 데모예요. 멤버 전환은 실제 인증이 아니며, 내용은 이 브라우저에만 저장돼요.</div>`,
+          )}</div><div class="privacy-callout">${icon('shield')} ${repo.remote ? '카카오 계정으로 로그인했어요. 캡슐 내용은 서버에 저장되고 참여자에게만 보여요. 회의록 초안은 정해진 형식의 문장을 규칙으로 정리해요.' : '지금은 로그인·외부 AI·카카오 연동이 없는 로컬 데모예요. 멤버 전환은 실제 인증이 아니며, 내용은 이 브라우저에만 저장돼요.'}</div>`,
         btn('close', '시작해볼게요 ' + icon('arrow'), 'primary'),
       );
       return;
@@ -1176,10 +1185,14 @@ window.addEventListener('popstate', () => {
   render();
 });
 window.addEventListener('beforeunload', (event) => {
-  if (['unsaved', 'conflict', 'recovery', 'unavailable'].includes(repo.status.kind)) {
+  if (!repo.remote && ['unsaved', 'conflict', 'recovery', 'unavailable'].includes(repo.status.kind)) {
     event.preventDefault();
     event.returnValue = '';
   }
+});
+// Server mode: re-render when another participant's change arrives (input and scroll survive via ui-state).
+repo.onChange?.(() => {
+  if (!composing && !actionBusy) render();
 });
 render();
 await checkScheduled();

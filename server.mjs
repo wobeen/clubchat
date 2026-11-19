@@ -81,6 +81,28 @@ const server = http.createServer(async (req, res) => {
     res.end('Unable to load ITDA');
   }
 });
+// WebSocket upgrades for /v1/ws take the same route as other API requests.
+server.on('upgrade', (req, socket, head) => {
+  if (!apiUrl || !new URL(req.url, 'http://localhost').pathname.startsWith('/v1/')) {
+    socket.destroy();
+    return;
+  }
+  const upstream = http.request(new URL(req.url, apiUrl), { method: req.method, headers: req.headers });
+  upstream.on('upgrade', (answer, upstreamSocket, upstreamHead) => {
+    const lines = [`HTTP/1.1 ${answer.statusCode} ${answer.statusMessage}`];
+    for (let i = 0; i < answer.rawHeaders.length; i += 2)
+      lines.push(`${answer.rawHeaders[i]}: ${answer.rawHeaders[i + 1]}`);
+    socket.write(lines.join('\r\n') + '\r\n\r\n');
+    if (upstreamHead.length) socket.write(upstreamHead);
+    if (head.length) upstreamSocket.write(head);
+    upstreamSocket.pipe(socket).pipe(upstreamSocket);
+    upstreamSocket.on('error', () => socket.destroy());
+    socket.on('error', () => upstreamSocket.destroy());
+  });
+  upstream.on('response', (answer) => socket.end(`HTTP/1.1 ${answer.statusCode} ${answer.statusMessage}\r\n\r\n`));
+  upstream.on('error', () => socket.destroy());
+  upstream.end();
+});
 server.on('error', (err) => {
   console.error(
     err.code === 'EADDRINUSE' ? `포트 ${port}이 사용 중입니다. PORT 환경변수로 다른 포트를 지정해주세요.` : err.message,
