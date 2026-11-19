@@ -696,8 +696,10 @@ document.addEventListener('click', async (e) => {
       if (modal.open) modal.close();
       selectMeeting(target.dataset.id, target.dataset.view || 'chat');
       if (practice && meeting()?.previousId === state.tutorial?.meetingId) tutorialEvent('next');
-      await persist();
+      // Navigation is not a data change: show the capsule and keep input enabled while the read marker saves.
+      // Saves are serialized by the repository, so a message sent meanwhile is written after this one.
       render();
+      persist().catch((error) => toast(error.message));
       return;
     }
     if (action === 'workspace') {
