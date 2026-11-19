@@ -1,32 +1,141 @@
-/* White surfaces throughout. State is conveyed by text, weight and outlines. */
-:root{color-scheme:light;--blue:#222;--blue-hover:#111;--pale-blue:#fff;--light-blue:#fff;--ink:#222;--muted:#666;--line:#ddd;--bg:#fff;--yellow:#fff}
-html,body{background:#fff!important;color:#222!important}
-:root body *,
-:root body :is(#app,#modal,#tutorial-host,#storage-status,#toast),
-:root body :is(#app,#modal,#tutorial-host,#storage-status,#toast) *{
- background-color:#fff!important;
- background-image:none!important;
- color:#222!important;
- border-color:#ddd!important;
- box-shadow:none!important;
- text-shadow:none!important;
- accent-color:#333!important;
+/* White surfaces with warm beige zones. State is conveyed by text, weight, outlines and beige fills. */
+:root {
+  color-scheme: light;
+  --paper: #fffdf9;
+  --beige-50: #faf6ef;
+  --beige-100: #f4ecdf;
+  --beige-200: #eadfcb;
+  --beige-300: #dccaa9;
+  --beige-500: #b59a70;
+  --beige-700: #7c6446;
+  --ink: #2e2a24;
+  --muted: #6e665b;
+  --line: #e7dccb;
+  --blue: var(--beige-700);
+  --blue-hover: #5f4b33;
+  --pale-blue: var(--beige-100);
+  --light-blue: var(--beige-50);
+  --bg: var(--paper);
+  --yellow: var(--beige-200);
 }
-:root body *::before,:root body *::after{background-image:none!important;background-color:transparent!important;border-color:#ddd!important;color:#222!important}
-:root body .icon{filter:grayscale(1)}
-:root body :is(.primary,.send-button,.capsule-next-action button,.tutorial-actions>button:first-child){border:1px solid #333!important;font-weight:700}
-:root body :is(.room-list-row.selected,.room-menu-views>button.active){box-shadow:inset 3px 0 #333!important}
-:root body :is(.list-filters>button.active,.talk-rail button.active,.android-bottom-nav>button.active){outline:1px solid #999;outline-offset:-1px;font-weight:700}
-:root body .capsule-view-switch button[aria-current=page]{border-bottom-color:#222!important;font-weight:700}
-:root body :is(.avatar,.group-avatar i,.unread-badge,.status-badge,.current-capsule,.live-dot){border:1px solid #ccc!important}
-:root body :is(.muted,.room-heading p,.room-list-preview,.message-meta time,.item-meta,.nothing,.form-note,.settings-note){color:#666!important}
-:root body :is(button,a,summary,input,textarea,select):focus-visible{outline:2px solid #333!important;outline-offset:3px}
-:root body .capsule-progress li:not(:last-child)::after{background:#ddd!important}
-:root body :is(.tutorial-banner,.practice-entry,#storage-status,#toast){border-bottom:1px solid #ddd!important}
-:root body #toast{border:1px solid #333!important}
-dialog::backdrop{background:rgb(0 0 0 / 18%)}
-:root body #app .capsule-view-switch button{border-bottom-color:transparent!important}
-:root body #app .capsule-view-switch button[aria-current=page]{border-bottom-color:#222!important}
-:root body #app .room-list-row.selected{box-shadow:inset 3px 0 #333!important}
-:root body #app :is(.primary,.send-button,.capsule-next-action button){border-color:#555!important}
-:root body #app :is(.room-list-preview,.message-meta time,.item-meta,.nothing){color:#666!important}
+html,
+body {
+  background: var(--beige-50) !important;
+  color: var(--ink) !important;
+}
+:root body *,
+:root body :is(#app, #modal, #tutorial-host, #storage-status, #toast),
+:root body :is(#app, #modal, #tutorial-host, #storage-status, #toast) * {
+  background-color: var(--paper) !important;
+  background-image: none !important;
+  color: var(--ink) !important;
+  border-color: var(--line) !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+  accent-color: var(--beige-700) !important;
+}
+:root body *::before,
+:root body *::after {
+  background-image: none !important;
+  background-color: transparent !important;
+  border-color: var(--line) !important;
+  color: var(--ink) !important;
+}
+:root
+  body
+  #app
+  :is(
+    .messages :not(.message-bubble):not(.avatar):not(.live-dot),
+    .conversation-header,
+    .conversation-header *:not(.live-dot)
+  ) {
+  background-color: transparent !important;
+}
+:root body .icon {
+  filter: grayscale(1) sepia(0.35);
+}
+/* Beige zones: navigation rails, list panels and the conversation backdrop. */
+:root body #app :is(.talk-rail, .talk-list, .android-bottom-nav, .android-list, .room-list-rows) {
+  background-color: var(--beige-50) !important;
+}
+:root body #app :is(.messages, .talk-main, .chat-room) {
+  background-color: var(--beige-50) !important;
+}
+:root body :is(.primary, .send-button, .capsule-next-action button, .tutorial-actions > button:first-child) {
+  border: 1px solid var(--beige-700) !important;
+  font-weight: 700;
+}
+:root body :is(.room-list-row.selected, .room-menu-views > button.active) {
+  box-shadow: inset 3px 0 var(--beige-700) !important;
+}
+:root body :is(.list-filters > button.active, .talk-rail button.active, .android-bottom-nav > button.active) {
+  outline: 1px solid var(--beige-500);
+  outline-offset: -1px;
+  font-weight: 700;
+}
+:root
+  body
+  #app
+  :is(
+    .list-filters > button.active,
+    .talk-rail button.active,
+    .android-bottom-nav > button.active,
+    .room-list-row.selected
+  ) {
+  background-color: var(--beige-100) !important;
+}
+:root body .capsule-view-switch button[aria-current='page'] {
+  border-bottom-color: var(--ink) !important;
+  font-weight: 700;
+}
+:root body :is(.avatar, .group-avatar i, .unread-badge, .status-badge, .current-capsule, .live-dot) {
+  border: 1px solid var(--beige-300) !important;
+}
+:root body #app :is(.unread-badge, .status-badge, .live-dot) {
+  background-color: var(--beige-200) !important;
+}
+:root
+  body
+  :is(
+    .muted,
+    .room-heading p,
+    .room-list-preview,
+    .message-meta time,
+    .item-meta,
+    .nothing,
+    .form-note,
+    .settings-note
+  ) {
+  color: var(--muted) !important;
+}
+:root body :is(button, a, summary, input, textarea, select):focus-visible {
+  outline: 2px solid var(--beige-700) !important;
+  outline-offset: 3px;
+}
+:root body .capsule-progress li:not(:last-child)::after {
+  background: var(--beige-300) !important;
+}
+:root body :is(.tutorial-banner, .practice-entry, #storage-status, #toast) {
+  border-bottom: 1px solid var(--line) !important;
+}
+:root body #toast {
+  border: 1px solid var(--beige-700) !important;
+}
+dialog::backdrop {
+  background: rgb(60 45 25 / 18%);
+}
+:root body #app .capsule-view-switch button {
+  border-bottom-color: transparent !important;
+}
+:root body #app .capsule-view-switch button[aria-current='page'] {
+  border-bottom-color: var(--ink) !important;
+}
+:root body #app .room-list-row.selected {
+  box-shadow: inset 3px 0 var(--beige-700) !important;
+}
+:root body #app :is(.primary, .send-button, .capsule-next-action button) {
+  border-color: var(--beige-700) !important;
+}
+:root body #app :is(.room-list-preview, .message-meta time, .item-meta, .nothing) {
+  color: var(--muted) !important;
+}
