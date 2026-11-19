@@ -105,8 +105,12 @@ export async function capsuleRepresentation(
   const messages = includeMessages
     ? await db.query<any>(
         `select * from (
-          select id,capsule_id,author_id,text,is_source,source_message_id,created_at
-          from messages where capsule_id=$1 order by created_at desc,id desc limit $2
+          (select id,capsule_id,author_id,text,is_source,source_message_id,created_at
+           from messages where capsule_id=$1 and not is_source
+           order by created_at desc,id desc limit $2)
+          union all
+          (select id,capsule_id,author_id,text,is_source,source_message_id,created_at
+           from messages where capsule_id=$1 and is_source)
         ) selected order by created_at,id`,
         [id, messageLimit],
       )
@@ -128,7 +132,7 @@ export async function relatedCapsuleIds(
      join capsules related on related.org_id=target.org_id and (
        related.id=target.id or related.id=target.parent_id or related.id=target.previous_id or
        related.id=target.correction_of or related.parent_id=target.id or related.previous_id=target.id or
-       related.correction_of=target.id or related.id=any($2::uuid[])
+       related.correction_of=target.id or related.id=any($2::uuid[]) or related.parent_id=any($2::uuid[])
      ) order by related.id`,
     [capsuleId, extraCapsuleIds],
   );

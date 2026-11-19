@@ -19,7 +19,7 @@
 	}
 
 	handle /health {
-		respond `{"status":"ok","app":"itda"}` 200
+		reverse_proxy api:8080
 	}
 
 	# 정적 파일. server.mjs 의 라우트와 같은 결과.
