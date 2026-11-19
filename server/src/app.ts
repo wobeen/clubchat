@@ -8,6 +8,9 @@ import { assertCanRead, capsuleRepresentation, domainState } from './capsules.js
 import { executeCommand } from './commands.js';
 import { isUuid, requireIdempotencyKey, withIdempotency } from './idempotency.js';
 import { RealtimeHub, registerRealtime } from './realtime.js';
+import { createProviderExtractor } from './extract/provider.js';
+import type { Extractor } from './extract/types.js';
+import { createDraftSuggestion } from './suggestions.js';
 // @ts-expect-error shared domain module is intentionally plain JavaScript
 import * as domain from '../../public/domain.js';
 
@@ -18,6 +21,8 @@ export interface AppOptions {
   logger?: boolean;
   realtime?: RealtimeHub;
   wakeOutbox?: () => void;
+  /** Model extractor. Omitted: built from config.ai.apiKey when set. null: AI disabled. */
+  extractor?: Extractor | null;
 }
 const body = (request: any) => (request.body && typeof request.body === 'object' ? (request.body as any) : {});
 const pathId = (value: unknown): string => {
@@ -33,6 +38,7 @@ export function buildApp({
   logger = false,
   realtime = new RealtimeHub(),
   wakeOutbox = () => {},
+  extractor = config.ai?.apiKey ? createProviderExtractor(config.ai, config.nodeEnv, fetchImpl) : null,
 }: AppOptions): FastifyInstance {
   const app = Fastify({
     logger: logger
@@ -678,6 +684,16 @@ export function buildApp({
       at: event.rows[0].at,
       location: event.rows[0].location,
     });
+  });
+
+  app.post('/v1/capsules/:id/draft-suggestions', async (request) => {
+    const user = await requireUser(db, request);
+    const key = requireIdempotencyKey(request.headers['idempotency-key']);
+    return createDraftSuggestion(
+      db,
+      { extractor, ai: config.ai },
+      { userId: user.id, capsuleId: pathId((request.params as any).id), key },
+    );
   });
 
   app.post('/v1/capsules/:id/commands/:command', async (request, reply) => {
