@@ -399,7 +399,7 @@ function renderMinutes(m) {
  }</section>
  ${m.conclusions.length ? `<section class="minutes-group"><h3>합류한 하위 결론</h3>${m.conclusions.map(renderConclusion).join('')}</section>` : ''}
  ${renderPolicyHistory(m)}<p class="minutes-policy">근거가 결론을 뒷받침하는지는 참여자가 확인해주세요.</p></div>
- <div class="review-footer"><p>${confirmed ? '확정 기록' : esc(getMeetingBlockers(state, m).join(' · ') || '확인할 준비가 됐어요.')}</p><div>${confirmed ? btn('correction', '정정본 만들기', 'outline') + btn('view', '확정 일정', 'primary', 'data-view="result"') : editable ? btn('confirm', m.confirmations.includes(state.profileId) ? '내 확인 완료' : '이 버전 확인', 'primary', `data-revision="${m.revision}" ${m.confirmations.includes(state.profileId) || !targets.includes(state.profileId) ? 'disabled' : ''}`) : ''}</div></div>`;
+ <div class="review-footer"><p id="confirm-status">${confirmed ? '확정 기록' : esc([...(validationErrors(state, m).length ? [`확인 필요 사항 ${validationErrors(state, m).length}건을 보완하거나 항목을 제외해주세요.`] : []), ...getMeetingBlockers(state, m)].join(' · ') || '확인할 준비가 됐어요.')}</p><div>${confirmed ? btn('correction', '정정본 만들기', 'outline') + btn('view', '확정 일정', 'primary', 'data-view="result"') : editable ? btn('confirm', m.confirmations.includes(state.profileId) ? '내 확인 완료' : '이 버전 확인', 'primary', `data-revision="${m.revision}" aria-describedby="confirm-status" ${validationErrors(state, m).length || getPendingMessageCount(m) ? 'aria-disabled="true"' : ''} ${m.confirmations.includes(state.profileId) || !targets.includes(state.profileId) ? 'disabled' : ''}`) : ''}</div></div>`;
 }
 function renderPolicyHistory(m) {
   return (m.policyHistory || []).length
@@ -765,6 +765,17 @@ document.addEventListener('click', async (e) => {
       return;
     }
     if (action === 'confirm') {
+      if (target.getAttribute('aria-disabled') === 'true') {
+        // Audit A-02: take the user to what blocks confirmation instead of a transient error.
+        const issue = document.querySelector('.minute-item.needs-review');
+        if (issue) {
+          issue.tabIndex = -1;
+          issue.focus();
+          issue.scrollIntoView({ block: 'center' });
+        }
+        toast(document.querySelector('#confirm-status')?.textContent || '확인할 수 없는 상태예요.');
+        return;
+      }
       const expectedRevision = Number(target.dataset.revision ?? m.revision);
       const done = await run(
         'confirm',

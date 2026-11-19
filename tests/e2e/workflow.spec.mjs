@@ -199,3 +199,18 @@ test('키보드만으로 새 캡슐을 만들 수 있다', async ({ page }) => {
   await page.keyboard.press('Enter');
   await expect(page.locator('.room-heading h1')).toHaveText('키보드로 만든 캡슐');
 });
+
+test('확인할 수 없는 초안은 막힌 이유와 항목으로 안내한다', async ({ page }) => {
+  await page.goto('/');
+  await create(page, '확인 차단');
+  await send(page, '할 일: 포스터 제작');
+  await draft(page);
+  const confirm = page.locator('.review-footer [data-action="confirm"]');
+  await expect(confirm).toHaveAttribute('aria-disabled', 'true');
+  await expect(page.locator('#confirm-status')).toContainText('확인 필요 사항 2건');
+  // aria-disabled stays focusable and activatable on purpose; Playwright's click() would wait for "enabled".
+  await confirm.focus();
+  await page.keyboard.press('Enter');
+  await expect(page.locator('.minute-item.needs-review')).toBeFocused();
+  await expect(page.locator('.minutes-scroll h2')).toHaveText('결론 검토');
+});
