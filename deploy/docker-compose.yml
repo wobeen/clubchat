@@ -1,0 +1,64 @@
+# ITDA 운영 스택: api + caddy. DB는 Lightsail 관리형 PostgreSQL이라 여기에 없다.
+# 서버의 /opt/itda 에서 실행한다: TAG=<이미지 태그> docker compose --env-file .env up -d
+name: itda
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: '10m'
+    max-file: '5'
+
+services:
+  api:
+    image: ghcr.io/wobeen/clubchat-api:${TAG:?TAG is required}
+    build:
+      context: ..
+      dockerfile: server/Dockerfile
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      PORT: '8080'
+    expose:
+      - '8080' # 내부 네트워크 전용. ports 로 공개하지 않는다.
+    networks: [internal]
+    # TODO(S2b): /health 가 생기면 아래를 fetch('http://127.0.0.1:8080/health') 검사로 교체한다.
+    # 지금 서버에는 /health 가 없어 TCP 연결만 확인한다. node-slim 이미지에는 curl 이 없다.
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "require('net').connect(8080,'127.0.0.1').on('connect',()=>process.exit(0)).on('error',()=>process.exit(1))"
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    logging: *logging
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - '80:80'
+      - '443:443'
+      - '443:443/udp'
+    environment:
+      DOMAIN: ${DOMAIN:?DOMAIN is required}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./public:/srv/public:ro # build-static.mjs 결과물(서버의 /opt/itda/public)
+      - caddy_data:/data
+      - caddy_config:/config
+    networks: [internal, default]
+    logging: *logging
+
+networks:
+  internal: {}
+
+volumes:
+  caddy_data:
+  caddy_config:
