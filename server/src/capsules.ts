@@ -32,13 +32,13 @@ export async function capsuleRepresentation(
     ),
     includeMessages
       ? db.query<any>(
-          `select * from (select id, author_id, text, created_at from messages where capsule_id=$1 and not is_source order by created_at desc, id desc limit $2) x order by created_at, id`,
+          `select * from (select id, author_id, text, created_at, source_message_id from messages where capsule_id=$1 and not is_source order by created_at desc, id desc limit $2) x order by created_at, id`,
           [id, messageLimit],
         )
       : Promise.resolve({ rows: [] }),
     includeMessages
       ? db.query<any>(
-          'select id, author_id, text, created_at from messages where capsule_id=$1 and is_source order by created_at, id',
+          'select id, author_id, text, created_at, source_message_id from messages where capsule_id=$1 and is_source order by created_at, id',
           [id],
         )
       : Promise.resolve({ rows: [] }),
@@ -47,13 +47,20 @@ export async function capsuleRepresentation(
       [id],
     ),
   ]);
-  const mapMessage = (m: any) => ({ id: m.id, authorId: m.author_id, text: m.text, createdAt: iso(m.created_at) });
+  const mapMessage = (m: any) => ({
+    id: m.id,
+    authorId: m.author_id,
+    text: m.text,
+    createdAt: iso(m.created_at),
+    ...(m.source_message_id ? { sourceMessageId: m.source_message_id } : {}),
+  });
   return {
     id: c.id,
     title: c.title,
     description: c.description,
     status: c.status,
     revision: c.revision,
+    version: c.version,
     memberSetVersion: c.member_set_version,
     conclusionVersion: c.conclusion_version,
     facilitatorId: c.facilitator_id,
@@ -85,6 +92,10 @@ export async function capsuleRepresentation(
     agendaStatuses: c.agenda_statuses,
     policyHistory: c.policy_history,
     delegationDisposition: c.delegation_disposition,
+    scheduledFrom: c.scheduled_from,
+    confirmedSnapshot: c.confirmed_snapshot,
+    correctionReason: c.correction_reason,
+    correctionImpacts: c.correction_impacts,
   };
 }
 
@@ -93,6 +104,7 @@ export async function domainState(
   capsuleId: string,
   profileId: string,
   messageCapsuleIds: string[] = [capsuleId],
+  extraCapsuleIds: string[] = [],
 ): Promise<any> {
   const row = await db.query<any>('select org_id from capsules where id=$1', [capsuleId]);
   if (!row.rows[0]) throw notFound();
@@ -105,7 +117,7 @@ export async function domainState(
     ),
     db.query<any>(
       `with recursive related(id) as (
-      select id from capsules where id=$1
+      select id from capsules where id=any($2::uuid[]) and org_id=(select org_id from capsules where id=$1)
       union
       select c.id from capsules c join related r on
         c.parent_id=r.id or c.id=(select parent_id from capsules where id=r.id) or
@@ -113,19 +125,37 @@ export async function domainState(
         c.correction_of=r.id or c.id=(select correction_of from capsules where id=r.id) or
         c.deferred_from=r.id or c.id=(select deferred_from from capsules where id=r.id)
     ) select id from related`,
-      [capsuleId],
+      [capsuleId, [...new Set([capsuleId, ...extraCapsuleIds])]],
     ),
   ]);
   const meetings = [];
   for (const c of capsuleRows.rows)
     meetings.push(await capsuleRepresentation(db, c.id, 1000000, messageCapsuleIds.includes(c.id)));
+  const ids = capsuleRows.rows.map((item) => item.id);
+  const events = ids.length
+    ? await db.query<any>(
+        `select id,capsule_id,source_id,kind,text,at,location,participant_ids,corrects_event_id
+         from calendar_events where capsule_id=any($1::uuid[]) order by at,id`,
+        [ids],
+      )
+    : { rows: [] };
   return {
     version: 3,
     profileId,
     organization: org.rows[0].name,
     members: memberRows.rows,
     meetings,
-    calendar: [],
+    calendar: events.rows.map((event: any) => ({
+      id: event.id,
+      meetingId: event.capsule_id,
+      sourceId: event.source_id,
+      kind: event.kind,
+      text: event.text,
+      at: iso(event.at),
+      location: event.location,
+      participantIds: event.participant_ids,
+      correctsEventId: event.corrects_event_id,
+    })),
     notifications: [],
   };
 }

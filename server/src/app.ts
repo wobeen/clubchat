@@ -235,9 +235,17 @@ export function buildApp({
     const filter = (request.query as any).filter || 'all';
     if (!['all', 'scheduled'].includes(filter)) throw new ApiError(400, 'invalid_request', '지원하지 않는 필터예요.');
     const rows = await db.query<any>(
-      `select c.*, (select row_to_json(x) from (select m.id,m.author_id as "authorId",m.text,m.created_at as "createdAt" from messages m where m.capsule_id=c.id and not m.is_source order by m.created_at desc,m.id desc limit 1)x) last_message
-      from capsules c join capsule_members cm on cm.capsule_id=c.id and cm.user_id=$2 and cm.departed_at is null
-      where c.org_id=$1 and ($3='all' or c.status='scheduled') order by c.created_at desc`,
+      `select c.*, case when direct.user_id is not null then
+        (select row_to_json(x) from (select m.id,m.author_id as "authorId",m.text,m.created_at as "createdAt"
+          from messages m where m.capsule_id=c.id and not m.is_source order by m.created_at desc,m.id desc limit 1)x)
+        else null end last_message
+      from capsules c
+      left join capsule_members direct on direct.capsule_id=c.id and direct.user_id=$2 and direct.departed_at is null
+      where c.org_id=$1 and ($3='all' or c.status='scheduled') and
+        (direct.user_id is not null or exists (
+          select 1 from capsule_members parent_member
+          where parent_member.capsule_id=c.parent_id and parent_member.user_id=$2 and parent_member.departed_at is null
+        )) order by c.created_at desc`,
       [orgId, user.id, filter],
     );
     return rows.rows.map((c) => ({
@@ -245,6 +253,7 @@ export function buildApp({
       title: c.title,
       status: c.status,
       revision: c.revision,
+      version: c.version,
       parentId: c.parent_id,
       previousId: c.previous_id,
       lastMessage: c.last_message,
@@ -256,8 +265,32 @@ export function buildApp({
   app.get('/v1/capsules/:id', async (request) => {
     const user = await requireUser(db, request);
     const id = pathId((request.params as any).id);
-    await assertCanRead(db, id, user.id);
-    return capsuleRepresentation(db, id);
+    const direct = await db.query(
+      'select 1 from capsule_members where capsule_id=$1 and user_id=$2 and departed_at is null',
+      [id, user.id],
+    );
+    if (direct.rowCount) return capsuleRepresentation(db, id);
+    const inherited = await db.query(
+      `select 1 from capsules child join capsule_members pm on pm.capsule_id=child.parent_id
+       where child.id=$1 and pm.user_id=$2 and pm.departed_at is null`,
+      [id, user.id],
+    );
+    if (!inherited.rowCount) throw notFound();
+    const capsule = await capsuleRepresentation(db, id, 0, false);
+    return {
+      id: capsule.id,
+      title: capsule.title,
+      description: capsule.description,
+      status: capsule.status,
+      revision: capsule.revision,
+      version: capsule.version,
+      parentId: capsule.parentId,
+      previousId: capsule.previousId,
+      startsAt: capsule.startsAt,
+      confirmedAt: capsule.confirmedAt,
+      createdAt: capsule.createdAt,
+      conclusions: capsule.conclusions,
+    };
   });
   app.get('/v1/capsules/:id/messages', async (request) => {
     const user = await requireUser(db, request);
@@ -290,16 +323,16 @@ export function buildApp({
     }));
   });
 
-  app.post('/v1/capsules/:id/commands/send-message', async (request, reply) => {
+  app.post('/v1/capsules/:id/commands/:command', async (request, reply) => {
     const user = await requireUser(db, request);
     const key = requireIdempotencyKey(request.headers['idempotency-key']);
     const b = body(request);
     const result = await executeCommand(db, {
       userId: user.id,
       capsuleId: pathId((request.params as any).id),
-      command: 'send-message',
+      command: (request.params as any).command,
       key,
-      expectedRevision: b.expectedRevision,
+      expectedVersion: b.expectedVersion,
       payload: b.payload,
     });
     return reply.status(result.status).send(result.body);
