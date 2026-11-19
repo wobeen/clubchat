@@ -139,3 +139,21 @@ dialog::backdrop {
 :root body #app :is(.room-list-preview, .message-meta time, .item-meta, .nothing) {
   color: var(--muted) !important;
 }
+/* Audit A-06/A-07: form fields need a 3:1 boundary and readable placeholders. */
+:root body :is(#app, #modal) :is(input:not([type='checkbox']):not([type='radio']), textarea, select) {
+  border: 1px solid var(--beige-700) !important;
+}
+:root body :is(#app, #modal) :is(input, textarea)::placeholder {
+  color: var(--muted) !important;
+}
+/* Audit A-04: repeated small controls get a 44px touch area on phones. */
+@media (max-width: 700px) {
+  :root body #app :is(.message-delegate, .item-edit, .evidence-button, .list-action, .icon-button),
+  :root body #modal [data-action='close'] {
+    min-width: 44px;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
