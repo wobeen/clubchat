@@ -19,6 +19,8 @@ services:
     environment:
       NODE_ENV: production
       PORT: '8080'
+    volumes:
+      - ./certs:/certs:ro # DATABASE_CA_FILE 용 CA 번들(서버의 /opt/itda/certs)
     expose:
       - '8080' # 내부 네트워크 전용. ports 로 공개하지 않는다.
     networks: [internal]

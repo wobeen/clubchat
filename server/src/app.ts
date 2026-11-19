@@ -34,7 +34,22 @@ export function buildApp({
   realtime = new RealtimeHub(),
   wakeOutbox = () => {},
 }: AppOptions): FastifyInstance {
-  const app = Fastify({ logger });
+  const app = Fastify({
+    logger: logger
+      ? {
+          serializers: {
+            req(request) {
+              return {
+                method: request.method,
+                url: String(request.url).replace(/^(\/v1\/invites\/)[^/?]+/, '$1[redacted]'),
+                host: request.host,
+                remoteAddress: request.ip,
+              };
+            },
+          },
+        }
+      : false,
+  });
   app.addHook('onRequest', async (request) => {
     if (!['GET', 'HEAD', 'OPTIONS'].includes(request.method) && request.headers.origin !== config.appOrigin)
       throw new ApiError(403, 'bad_origin', '허용되지 않은 출처예요.');
@@ -45,6 +60,11 @@ export function buildApp({
         .status(error.status)
         .send({ error: { code: error.code, message: error.message, details: error.details } });
     if ((error as any).validation)
+      return reply
+        .status(400)
+        .send({ error: { code: 'invalid_request', message: '요청 형식이 올바르지 않아요.', details: {} } });
+    const statusCode = (error as any).statusCode;
+    if (Number.isInteger(statusCode) && statusCode >= 400 && statusCode < 500)
       return reply
         .status(400)
         .send({ error: { code: 'invalid_request', message: '요청 형식이 올바르지 않아요.', details: {} } });
@@ -75,7 +95,10 @@ export function buildApp({
 
   app.post('/v1/auth/logout', async (request, reply) => {
     const token = cookies(request.headers.cookie).itda_session;
-    if (token) await db.query('delete from sessions where id=$1', [sessionHash(token)]);
+    if (token) {
+      await db.query('delete from sessions where id=$1', [sessionHash(token)]);
+      realtime.closeSession(sessionHash(token));
+    }
     reply.header('set-cookie', 'itda_session=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0');
     return { ok: true };
   });
@@ -210,12 +233,15 @@ export function buildApp({
       requireIdempotencyKey(request.headers['idempotency-key']),
       { path: request.url, body: b },
       async (tx) => {
-        await requireAdmin(tx, orgId, user.id);
         const admins = await tx.query<any>(
           `select user_id,role from org_members where org_id=$1 and left_at is null
            order by user_id for update`,
           [orgId],
         );
+        // Re-check on the locked rows: a concurrent demotion may have committed since the request began.
+        const requester = admins.rows.find((row: any) => row.user_id === user.id);
+        if (!requester) throw notFound();
+        if (requester.role !== 'admin') throw new ApiError(403, 'forbidden', '조직 관리자만 실행할 수 있어요.');
         const target = admins.rows.find((row: any) => row.user_id === targetId);
         if (!target) throw notFound();
         if (
@@ -279,6 +305,13 @@ export function buildApp({
           url: `${config.appOrigin.replace(/\/$/, '')}/?invite=${encodeURIComponent(code)}`,
           expiresAt: new Date(invite.rows[0].expires_at).toISOString(),
         };
+      },
+      {
+        // The plaintext code must never be persisted; a replay cannot reproduce it.
+        store: ({ code: _code, url: _url, ...rest }: any) => ({ ...rest, issued: true }),
+        replay: () => {
+          throw new ApiError(409, 'invite_already_issued', '이미 발급된 초대예요. 새 요청으로 다시 만들어주세요.');
+        },
       },
     );
   });
