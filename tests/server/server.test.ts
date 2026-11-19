@@ -100,10 +100,12 @@ test('migration applies to an empty database and is safe to rerun', async () => 
   const db = f.db;
   await migrate(db);
   const migrations = await db.query<any>('select name from schema_migrations');
-  const tables = await db.query<any>("select table_name from information_schema.tables where table_schema='public'");
+  const tables = await db.query<any>(
+    'select table_name from information_schema.tables where table_schema=current_schema()',
+  );
   assert.deepEqual(
     migrations.rows.map((x) => x.name),
-    ['0001_init.sql', '0002_capsule_domain_fields.sql'],
+    ['0001_init.sql', '0002_capsule_domain_fields.sql', '0003_relation_indexes.sql'],
   );
   assert.ok(tables.rows.some((x) => x.table_name === 'capsules'));
   await f.close();
@@ -166,15 +168,33 @@ test('every command hides capsules from nonparticipants and rejects disallowed s
   const org = await f.organization(owner.cookie);
   await f.addMember(org, member.userId);
   const id = await f.capsule(owner.cookie, org, [member.userId]);
+  const validPayloads: Record<string, any> = {
+    'send-message': { text: '메시지' },
+    delegate: { title: '하위', messageIds: [randomUUID()], memberIds: [owner.userId] },
+    'extract-draft': {},
+    'update-draft-item': { type: 'decisions', item: { id: randomUUID(), text: '항목', evidenceIds: [] } },
+    'remove-draft-item': { type: 'decisions', id: randomUUID() },
+    'restore-draft': { revision: 0 },
+    'resume-conversation': {},
+    confirm: {},
+    'set-confirmation-members': { memberIds: [owner.userId], reason: '사유' },
+    'mark-member-departed': { memberId: member.userId, reason: '사유' },
+    'transfer-facilitator': { memberId: member.userId, reason: '사유' },
+    'set-agenda-status': { agendaId: randomUUID(), status: 'resolved', reason: '사유' },
+    'dispose-child': { childId: randomUUID(), status: 'cancelled', reason: '사유' },
+    'create-correction': { reason: '사유' },
+    'start-scheduled': {},
+  };
+  const validPayload = (name: string) => structuredClone(validPayloads[name]);
   for (const name of ['set-confirmation-members', 'mark-member-departed', 'transfer-facilitator', 'dispose-child']) {
-    const denied = await f.command(member.cookie, id, name, 0, {});
+    const denied = await f.command(member.cookie, id, name, 0, validPayload(name));
     assert.equal(denied.statusCode, 403, `${name}: ${denied.body}`);
   }
   await f.db.query("update capsules set status='cancelled' where id=$1", [id]);
   for (const name of capsuleCommands) {
-    const hidden = await f.command(outsider.cookie, id, name, 0, {});
+    const hidden = await f.command(outsider.cookie, id, name, 0, validPayload(name));
     assert.equal(hidden.statusCode, 404, `${name}: ${hidden.body}`);
-    const invalid = await f.command(owner.cookie, id, name, 0, {});
+    const invalid = await f.command(owner.cookie, id, name, 0, validPayload(name));
     assert.equal(invalid.statusCode, 422, `${name}: ${invalid.body}`);
   }
   await f.close();
@@ -308,6 +328,170 @@ test('last confirmation and draft edit with one expectedVersion have one winner'
   await f.close();
 });
 
+test('two child confirmations concurrently preserve both parent conclusions and calendar events', async () => {
+  const f = await fixture();
+  const owner = await f.login();
+  const org = await f.organization(owner.cookie);
+  const parent = await f.capsule(owner.cookie, org);
+  const children = [await f.capsule(owner.cookie, org), await f.capsule(owner.cookie, org)];
+  await f.db.query('update capsules set parent_id=$1 where id=any($2::uuid[])', [parent, children]);
+
+  const versions: number[] = [];
+  for (let index = 0; index < children.length; index++) {
+    let response = await f.command(owner.cookie, children[index], 'send-message', undefined, {
+      text: `결정: 하위 결론 ${index + 1}`,
+    });
+    response = await f.command(owner.cookie, children[index], 'send-message', undefined, {
+      text: `일정: 하위 일정 ${index + 1} | 12월 ${index + 3}일 19:00 | 회의실 | 전원`,
+    });
+    response = await f.command(owner.cookie, children[index], 'extract-draft', response.json().capsule.version, {});
+    versions.push(response.json().capsule.version);
+  }
+
+  const confirmations = await Promise.all(
+    children.map((child, index) => f.command(owner.cookie, child, 'confirm', versions[index], {})),
+  );
+  for (const response of confirmations) assert.equal(response.statusCode, 200, response.body);
+  const parentResponse = await f.app.inject({
+    method: 'GET',
+    url: `/v1/capsules/${parent}`,
+    headers: { cookie: owner.cookie },
+  });
+  assert.deepEqual(
+    parentResponse
+      .json()
+      .conclusions.map((item: any) => item.meetingId)
+      .sort(),
+    [...children].sort(),
+  );
+  const calendar = await f.db.query<any>('select capsule_id from calendar_events where capsule_id=any($1::uuid[])', [
+    children,
+  ]);
+  assert.equal(calendar.rowCount, 2);
+  await f.close();
+});
+
+test('a parent draft edit racing a child confirmation is never lost', async () => {
+  const f = await fixture();
+  const owner = await f.login();
+  const org = await f.organization(owner.cookie);
+  const parent = await f.capsule(owner.cookie, org);
+  const child = await f.capsule(owner.cookie, org);
+  await f.db.query('update capsules set parent_id=$1 where id=$2', [parent, child]);
+
+  let response = await f.command(owner.cookie, parent, 'send-message', undefined, { text: '결정: 상위 원안' });
+  response = await f.command(owner.cookie, parent, 'extract-draft', response.json().capsule.version, {});
+  const parentVersion = response.json().capsule.version;
+  const parentItem = response.json().capsule.draft.decisions[0];
+  response = await f.command(owner.cookie, child, 'send-message', undefined, { text: '결정: 하위 결론' });
+  response = await f.command(owner.cookie, child, 'extract-draft', response.json().capsule.version, {});
+  const childVersion = response.json().capsule.version;
+
+  const [edit, confirm] = await Promise.all([
+    f.command(owner.cookie, parent, 'update-draft-item', parentVersion, {
+      type: 'decisions',
+      item: { ...parentItem, text: '상위 수정안' },
+    }),
+    f.command(owner.cookie, child, 'confirm', childVersion, {}),
+  ]);
+  assert.equal(confirm.statusCode, 200, confirm.body);
+  assert.ok([200, 409].includes(edit.statusCode), edit.body);
+  const latest = await f.app.inject({
+    method: 'GET',
+    url: `/v1/capsules/${parent}`,
+    headers: { cookie: owner.cookie },
+  });
+  assert.equal(latest.json().conclusions.length, 1);
+  assert.equal(latest.json().draft.decisions[0].text, edit.statusCode === 200 ? '상위 수정안' : '상위 원안');
+  await f.close();
+});
+
+test('invalid draft items and payloads return 400 without poisoning a later confirmation', async () => {
+  const f = await fixture();
+  const owner = await f.login();
+  const org = await f.organization(owner.cookie);
+  const id = await f.capsule(owner.cookie, org);
+  let response = await f.command(owner.cookie, id, 'send-message', undefined, { text: '결정: 확정 가능' });
+  response = await f.command(owner.cookie, id, 'extract-draft', response.json().capsule.version, {});
+  const version = response.json().capsule.version;
+  const invalidPayload = await f.command(owner.cookie, id, 'update-draft-item', version, { type: 'decisions' });
+  const invalidId = await f.command(owner.cookie, id, 'update-draft-item', version, {
+    type: 'events',
+    item: { id: 'not-a-uuid', at: '2026-12-01', participantIds: [owner.userId] },
+  });
+  const invalidDate = await f.command(owner.cookie, id, 'update-draft-item', version, {
+    type: 'events',
+    item: { id: randomUUID(), at: 'not-a-date', participantIds: [owner.userId] },
+  });
+  assert.deepEqual([invalidPayload.statusCode, invalidId.statusCode, invalidDate.statusCode], [400, 400, 400]);
+  response = await f.command(owner.cookie, id, 'confirm', version, {});
+  assert.equal(response.statusCode, 200, response.body);
+  assert.equal(response.json().capsule.status, 'confirmed');
+  await f.close();
+});
+
+test('malformed cookies do not cause 500 and parent-only readers receive 403 for child commands', async () => {
+  const f = await fixture();
+  const malformed = await f.app.inject({ method: 'GET', url: '/v1/me', headers: { cookie: 'itda_session=%' } });
+  assert.equal(malformed.statusCode, 401);
+
+  const owner = await f.login();
+  const reader = await f.login();
+  const org = await f.organization(owner.cookie);
+  await f.addMember(org, reader.userId);
+  const parent = await f.capsule(owner.cookie, org, [reader.userId]);
+  const child = await f.capsule(owner.cookie, org);
+  await f.db.query('update capsules set parent_id=$1 where id=$2', [parent, child]);
+  const metadata = await f.app.inject({
+    method: 'GET',
+    url: `/v1/capsules/${child}`,
+    headers: { cookie: reader.cookie },
+  });
+  const forbidden = await f.command(reader.cookie, child, 'send-message', undefined, { text: '허용 안 됨' });
+  assert.equal(metadata.statusCode, 200);
+  assert.equal(forbidden.statusCode, 403, forbidden.body);
+  assert.equal(forbidden.json().error.code, 'forbidden');
+  await f.close();
+});
+
+test('capsule list filters and blockers reflect confirmation and relationship state', async () => {
+  const f = await fixture();
+  const owner = await f.login();
+  const member = await f.login();
+  const org = await f.organization(owner.cookie);
+  await f.addMember(org, member.userId);
+  const review = await f.capsule(owner.cookie, org, [member.userId]);
+  let response = await f.command(owner.cookie, review, 'send-message', undefined, { text: '결정: 검토 안건' });
+  response = await f.command(owner.cookie, review, 'extract-draft', response.json().capsule.version, {});
+  let version = response.json().capsule.version;
+
+  const list = async (filter: string) =>
+    f.app.inject({
+      method: 'GET',
+      url: `/v1/organizations/${org}/capsules?filter=${filter}`,
+      headers: { cookie: owner.cookie },
+    });
+  let filtered = await list('needs_my_confirmation');
+  assert.ok(filtered.json().some((item: any) => item.id === review && item.blockers.length > 0));
+  response = await f.command(owner.cookie, review, 'confirm', version, {});
+  version = response.json().capsule.version;
+  filtered = await list('waiting');
+  assert.ok(filtered.json().some((item: any) => item.id === review));
+
+  const child = await f.capsule(owner.cookie, org);
+  await f.db.query('update capsules set parent_id=$1 where id=$2', [review, child]);
+  filtered = await list('children');
+  assert.ok(filtered.json().some((item: any) => item.id === child));
+  const scheduled = await f.capsule(owner.cookie, org);
+  await f.db.query("update capsules set status='scheduled',starts_at=now() where id=$1", [scheduled]);
+  filtered = await list('scheduled');
+  assert.deepEqual(
+    filtered.json().map((item: any) => item.id),
+    [scheduled],
+  );
+  await f.close();
+});
+
 test('domain errors roll back rows and versions', async () => {
   const f = await fixture();
   const owner = await f.login();
@@ -357,6 +541,7 @@ test('the remaining capsule commands persist their domain changes', async () => 
   response = await f.command(owner.cookie, draftCapsule, 'restore-draft', version, { revision: 1 });
   version = response.json().capsule.version;
   assert.equal(response.json().capsule.draft.decisions.length, 2);
+  assert.ok(Array.isArray(response.json().capsule.draftHistory));
   response = await f.command(owner.cookie, draftCapsule, 'resume-conversation', version, {});
   assert.equal(response.json().capsule.version, version);
 
@@ -379,6 +564,7 @@ test('the remaining capsule commands persist their domain changes', async () => 
     reason: '담당자 확인',
   });
   version = response.json().capsule.version;
+  assert.ok(Array.isArray(response.json().capsule.policyHistory));
   response = await f.command(owner.cookie, peopleCapsule, 'transfer-facilitator', version, {
     memberId: member.userId,
     reason: '진행 이관',
@@ -427,6 +613,16 @@ test('the remaining capsule commands persist their domain changes', async () => 
   });
   assert.equal(response.statusCode, 200, response.body);
   assert.equal(response.json().affected.length, 2);
+  const jsonbArrays = await f.db.query<any>(
+    `select draft_history,policy_history,carryover from capsules
+     where id=any($1::uuid[]) order by id`,
+    [[draftCapsule, peopleCapsule, response.json().affected.find((item: any) => item.id !== child).id]],
+  );
+  for (const row of jsonbArrays.rows) {
+    assert.ok(Array.isArray(row.draft_history));
+    assert.ok(Array.isArray(row.policy_history));
+    assert.ok(Array.isArray(row.carryover));
+  }
   await f.close();
 });
 

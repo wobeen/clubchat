@@ -3,11 +3,11 @@ import type { Config } from './config.js';
 import type { Database } from './types.js';
 import { ApiError, notFound } from './errors.js';
 import { cookies, currentUser, issueSession, requireUser, sessionHash, signState, verifyState } from './auth.js';
-import { assertCanRead, capsuleRepresentation } from './capsules.js';
+import { assertCanRead, capsuleRepresentation, domainState } from './capsules.js';
 import { executeCommand } from './commands.js';
 import { isUuid, requireIdempotencyKey, withIdempotency } from './idempotency.js';
 // @ts-expect-error shared domain module is intentionally plain JavaScript
-import { createMeeting } from '../../public/domain.js';
+import * as domain from '../../public/domain.js';
 
 export interface AppOptions {
   db: Database;
@@ -187,7 +187,11 @@ export function buildApp({
     const state = { profileId: user.id, members: orgMembers.rows, meetings: [] };
     let meeting: any;
     try {
-      meeting = createMeeting(state, { title: b.title, memberIds: b.memberIds, description: b.description || '' });
+      meeting = domain.createMeeting(state, {
+        title: b.title,
+        memberIds: b.memberIds,
+        description: b.description || '',
+      });
     } catch (error) {
       throw new ApiError(422, 'domain_rule', error instanceof Error ? error.message : String(error));
     }
@@ -233,7 +237,8 @@ export function buildApp({
     const user = await requireUser(db, request);
     const orgId = pathId((request.params as any).orgId);
     const filter = (request.query as any).filter || 'all';
-    if (!['all', 'scheduled'].includes(filter)) throw new ApiError(400, 'invalid_request', '지원하지 않는 필터예요.');
+    if (!['all', 'needs_my_confirmation', 'waiting', 'children', 'scheduled'].includes(filter))
+      throw new ApiError(400, 'invalid_request', '지원하지 않는 필터예요.');
     const rows = await db.query<any>(
       `select c.*, case when direct.user_id is not null then
         (select row_to_json(x) from (select m.id,m.author_id as "authorId",m.text,m.created_at as "createdAt"
@@ -241,25 +246,46 @@ export function buildApp({
         else null end last_message
       from capsules c
       left join capsule_members direct on direct.capsule_id=c.id and direct.user_id=$2 and direct.departed_at is null
-      where c.org_id=$1 and ($3='all' or c.status='scheduled') and
+      where c.org_id=$1 and
         (direct.user_id is not null or exists (
           select 1 from capsule_members parent_member
           where parent_member.capsule_id=c.parent_id and parent_member.user_id=$2 and parent_member.departed_at is null
         )) order by c.created_at desc`,
-      [orgId, user.id, filter],
+      [orgId, user.id],
     );
-    return rows.rows.map((c) => ({
-      id: c.id,
-      title: c.title,
-      status: c.status,
-      revision: c.revision,
-      version: c.version,
-      parentId: c.parent_id,
-      previousId: c.previous_id,
-      lastMessage: c.last_message,
-      unreadCount: 0,
-      blockers: [],
-    }));
+    if (!rows.rowCount) return [];
+    const ids = rows.rows.map((row) => row.id);
+    const state = await domainState(db, ids[0], user.id, ids, ids);
+    return rows.rows
+      .map((c) => {
+        const meeting = state.meetings.find((item: any) => item.id === c.id);
+        const needsConfirmation =
+          meeting.status === 'review' &&
+          meeting.confirmationMemberIds.includes(user.id) &&
+          !meeting.confirmations.includes(user.id);
+        return {
+          id: c.id,
+          title: c.title,
+          status: c.status,
+          revision: c.revision,
+          version: c.version,
+          parentId: c.parent_id,
+          previousId: c.previous_id,
+          lastMessage: c.last_message,
+          unreadCount: 0,
+          blockers: domain.getMeetingBlockers(state, meeting),
+          needsConfirmation,
+        };
+      })
+      .filter(
+        (capsule) =>
+          filter === 'all' ||
+          (filter === 'needs_my_confirmation' && capsule.needsConfirmation) ||
+          (filter === 'waiting' && capsule.status === 'review' && !capsule.needsConfirmation) ||
+          (filter === 'children' && capsule.parentId) ||
+          (filter === 'scheduled' && capsule.status === 'scheduled'),
+      )
+      .map(({ needsConfirmation: _needsConfirmation, ...capsule }) => capsule);
   });
 
   app.get('/v1/capsules/:id', async (request) => {
