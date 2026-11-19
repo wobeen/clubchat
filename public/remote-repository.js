@@ -74,7 +74,7 @@ export async function createRemoteRepository({
   const sentReads = new Map();
 
   function upsert(capsule) {
-    subscribe([capsule.id]);
+    subscribe([capsule]);
     const current = state.meetings.find((m) => m.id === capsule.id);
     if (!current) {
       state.meetings.unshift(capsule);
@@ -125,7 +125,7 @@ export async function createRemoteRepository({
       });
       syncConfirmedCalendar(state);
       status = { kind: 'ready', message: '' };
-      subscribe(meetings.map((m) => m.id));
+      subscribe(meetings);
       return { ok: true, code: 'loaded', message: '' };
     } catch (error) {
       if (error.status !== 401) status = { kind: 'unavailable', message: error.message };
@@ -138,7 +138,11 @@ export async function createRemoteRepository({
   let delay = reconnectDelay;
   let closed = false;
   let connectedBefore = false;
-  function subscribe(capsuleIds) {
+  // Only capsules that can still change are watched; the server caps subscriptions per socket, and
+  // finished capsules (confirmed, cancelled, deferred) would otherwise crowd out active ones.
+  const LIVE = new Set(['open', 'review', 'scheduled']);
+  function subscribe(capsules) {
+    const capsuleIds = capsules.filter((c) => LIVE.has(c.status)).map((c) => c.id);
     if (socket?.readyState === 1 && capsuleIds.length) socket.send(JSON.stringify({ type: 'subscribe', capsuleIds }));
   }
   function connect() {
@@ -149,7 +153,7 @@ export async function createRemoteRepository({
       delay = reconnectDelay;
       if (!connectedBefore) {
         connectedBefore = true;
-        subscribe(state.meetings.map((m) => m.id));
+        subscribe(state.meetings);
         return;
       }
       // Changes made while disconnected were never announced: reload, which also resubscribes.

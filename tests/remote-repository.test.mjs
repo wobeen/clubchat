@@ -229,3 +229,12 @@ test('the read pointer starts from the server unread count and is sent once per 
   assert.equal(reads.length, 1);
   assert.deepEqual(reads[0].body, { lastMessageId: 'm3' });
 });
+
+test('only capsules that can still change are subscribed', async () => {
+  FakeSocket.instances = [];
+  const { fetch } = fakeApi(baseRoutes([capsule('c1', 0), capsule('c2', 4, { status: 'confirmed' })]));
+  const repo = await createRemoteRepository({ fetch, WebSocket: FakeSocket, socketUrl: 'ws://test/v1/ws' });
+  FakeSocket.instances[0].open();
+  assert.deepEqual(FakeSocket.instances[0].sent[0], { type: 'subscribe', capsuleIds: ['c1'] });
+  repo.close();
+});
