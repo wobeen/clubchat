@@ -86,6 +86,10 @@ create index on capsules (org_id, status);
 create index on capsules (parent_id);
 create unique index on capsules (scheduled_from) where scheduled_from is not null;
 create index on capsules (status, starts_at) where status = 'scheduled';
+-- v0.2 (migration 0003): 관련 캡슐 조회용
+create index on capsules (previous_id);
+create index on capsules (correction_of);
+create index on capsules (deferred_from);
 
 create table capsule_members (
   capsule_id uuid not null references capsules(id) on delete cascade,
