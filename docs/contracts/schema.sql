@@ -1,5 +1,5 @@
--- ITDA PostgreSQL 16 스키마 계약 v0
--- 구현은 server/migrations/0001_init.sql 로 옮긴다. 이 파일과 다르게 만들려면 총괄에게 먼저 요청한다.
+-- ITDA PostgreSQL 16 스키마 계약 v0.1
+-- 0001_init.sql 은 v0 그대로 두고, v0.1 추가분은 server/migrations/0002_*.sql 로 만든다. 이 파일과 다르게 만들려면 총괄에게 먼저 요청한다.
 -- 캡슐의 자주 바뀌고 함께 검증되는 하위 구조(draft, draftHistory, agendaStatuses, policyHistory 등)는 JSONB에 두고,
 -- 권한·조회·유일성 제약이 필요한 것(참여자, 메시지, 확인, 일정)은 테이블로 정규화한다.
 
@@ -70,6 +70,11 @@ create table capsules (
   agenda_statuses jsonb not null default '{}',
   policy_history jsonb not null default '[]',
   delegation_disposition jsonb,
+  -- v0.1 (migration 0002): 도메인 함수가 만드는 필드
+  scheduled_from text,                        -- 다음 캡슐을 만든 초안 일정 항목 id. 중복 예약 방지
+  confirmed_snapshot jsonb,                   -- 확정 당시 버전·참여·확인·하위 처리 기록
+  correction_reason text,                     -- 정정 캡슐의 사유
+  correction_impacts jsonb not null default '[]',
   created_by uuid not null references users(id),
   created_at timestamptz not null default now(),
   check (status <> 'scheduled' or starts_at is not null),
@@ -78,6 +83,7 @@ create table capsules (
 );
 create index on capsules (org_id, status);
 create index on capsules (parent_id);
+create unique index on capsules (scheduled_from) where scheduled_from is not null;
 create index on capsules (status, starts_at) where status = 'scheduled';
 
 create table capsule_members (
@@ -120,6 +126,7 @@ create table calendar_events (
   at timestamptz not null,
   location text,
   participant_ids uuid[] not null,
+  corrects_event_id text,                     -- v0.1: 정정 캡슐의 일정이 대체하는 원본 일정 source_id
   unique (capsule_id, source_id)
 );
 create index on calendar_events (org_id, at);

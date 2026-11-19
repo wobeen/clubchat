@@ -1,4 +1,4 @@
-# API 계약 v0
+# API 계약 v0.1
 
 기본 경로 `/v1`. 요청·응답은 JSON(UTF-8). 시각은 ISO 8601 UTC 문자열, 조직 시간대는 `organizations.time_zone`(기본 `Asia/Seoul`).
 
@@ -51,7 +51,7 @@
 | `GET /v1/organizations/:orgId/capsules?filter=all\|needs_my_confirmation\|waiting\|children\|scheduled` | 내가 읽을 수 있는 캡슐 목록. 각 항목은 `{ id, title, status, revision, parentId, previousId, lastMessage, unreadCount, blockers }` |
 | `GET /v1/capsules/:id` | 캡슐 전체(아래 "캡슐 표현"). 메시지는 최근 50개만 |
 | `GET /v1/capsules/:id/messages?before=<messageId>&limit≤100` | 과거 메시지 페이지 |
-| `GET /v1/organizations/:orgId/calendar?from&to` | 내가 참여한 확정 캡슐의 일정 |
+| `GET /v1/organizations/:orgId/calendar?from&to` | 내가 참여한 확정 캡슐의 일정. 확정된 정정 캡슐이 있는 원본 캡슐의 일정은 제외한다(도메인 `getConfirmedEvents`와 같은 규칙) |
 | `GET /v1/events/:eventId.ics` | 일정 1건의 ICS. `makeICS` 결과 |
 | `POST /v1/capsules/:id/read` `{ lastMessageId }` | 읽음 포인터 갱신. 멱등, revision 불필요 |
 

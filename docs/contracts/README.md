@@ -1,6 +1,8 @@
-# ITDA 서비스 전환 계약 v0
+# ITDA 서비스 전환 계약 v0.1
 
 상태: **승인됨** · 2026-11-19. 인프라는 AWS Lightsail 서울(ap-northeast-2)로 확정했다. 계약은 업체 중립을 유지해 다른 컨테이너 호스트로도 옮길 수 있게 한다.
+
+v0.1 (2026-11-19): 도메인 함수가 만드는 캡슐 필드 `scheduledFrom`, `confirmedSnapshot`, `correctionReason`, `correctionImpacts`와 일정의 `correctsEventId`를 스키마·캡슐 표현에 추가했다(migration `0002`). 이 밖에도 도메인 함수가 만드는 필드를 발견하면 버리지 말고 총괄에게 묻는다.
 
 이 폴더는 여러 AI 작업자가 병렬로 개발할 때 따르는 **유일한 기준**이다. 다른 기획 문서와 충돌하면 이 폴더가 우선한다. 계약 변경은 총괄(Claude)만 하며, 변경 시 버전을 올리고 모든 작업자에게 알린다.
 
