@@ -621,6 +621,10 @@ function renderCapsulePanel(m) {
         targets.filter((id) => !m.confirmations.includes(id)),
       ) +
       group(
+        '확인 완료',
+        m.memberIds.filter((id) => m.confirmations.includes(id)),
+      ) +
+      group(
         '확인 대상 아님',
         m.memberIds.filter((id) => !targets.includes(id) && !m.confirmations.includes(id)),
       )

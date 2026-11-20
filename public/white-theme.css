@@ -91,17 +91,7 @@ body {
 :root body #app :is(.unread-badge, .status-badge, .live-dot) {
   background-color: var(--accent-200) !important;
 }
-:root
-  body
-  :is(
-    .muted,
-    .room-heading p,
-    .message-meta time,
-    .item-meta,
-    .nothing,
-    .form-note,
-    .settings-note
-  ) {
+:root body :is(.muted, .room-heading p, .message-meta time, .item-meta, .nothing, .form-note, .settings-note) {
   color: var(--muted) !important;
 }
 :root body :is(button, a, summary, input, textarea, select):focus-visible {
