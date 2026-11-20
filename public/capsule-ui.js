@@ -66,7 +66,53 @@ export function getCapsuleAction(state, meeting, { errorCount = 0 } = {}) {
   };
 }
 
+const STAGES = ['예약', '논의', '공동 확인', '확정'];
+function stageOf(meeting) {
+  if (['deferred', 'cancelled'].includes(meeting.status)) return -1;
+  return { scheduled: 0, open: 1, review: 2 }[meeting.status] ?? 3;
+}
+
+/**
+ * Compact bar above the conversation: content tabs, the current stage (opens the capsule panel) and the one
+ * next action. Everything else about the capsule lives in the side panel (renderCapsuleOverview).
+ */
 export function renderCapsuleNavigation(state, meeting, options = {}) {
+  const action = getCapsuleAction(state, meeting, options);
+  const stage = stageOf(meeting);
+  const stageLabel = stage < 0 ? (meeting.status === 'deferred' ? '보류' : '취소') : STAGES[stage];
+  const tabs = meeting.memberIds.includes(state.profileId)
+    ? `<nav class="capsule-view-switch" aria-label="현재 캡슐 내용">${[
+        ['chat', '대화'],
+        ['minutes', '결론'],
+        ['result', '확정 일정'],
+      ]
+        .map(([view, label]) =>
+          button(
+            'view',
+            label,
+            `data-view="${view}" aria-current="${(options.view || 'chat') === view ? 'page' : 'false'}"`,
+          ),
+        )
+        .join('')}</nav>`
+    : '';
+  const hint = escape(action.label);
+  return `<div class="capsule-navigation capsule-bar">${tabs}<div class="capsule-bar-side">${button(
+    'room-info',
+    `${stageLabel} 단계`,
+    `class="capsule-stage" aria-label="캡슐 정보 열기 · ${escape(stageLabel)} 단계 · ${hint}" title="${hint}"`,
+  )}${
+    action.action
+      ? `<div class="capsule-next-action">${button(
+          action.action,
+          action.button,
+          `title="${hint}" ${action.view ? `data-view="${action.view}"` : ''} ${action.id ? `data-id="${escape(action.id)}"` : ''}`,
+        )}</div>`
+      : ''
+  }</div></div>`;
+}
+
+/** Full capsule state for the side panel: relations, delegated capsules, progress and what to do next. */
+export function renderCapsuleOverview(state, meeting, options = {}) {
   const action = getCapsuleAction(state, meeting, options);
   const accessible = (m) => m.memberIds.includes(state.profileId);
   const related = (id, label) => {
@@ -79,32 +125,6 @@ export function renderCapsuleNavigation(state, meeting, options = {}) {
       m.status
     ] || '논의 중';
   const next = state.meetings.filter((m) => m.previousId === meeting.id);
-  const closed = ['deferred', 'cancelled'].includes(meeting.status);
-  const stage = closed
-    ? -1
-    : meeting.status === 'scheduled'
-      ? 0
-      : meeting.status === 'open'
-        ? 1
-        : meeting.status === 'review'
-          ? 2
-          : 3;
-  const stages = ['예약', '논의', '공동 확인', '확정'];
-  return `<div class="capsule-navigation"><nav class="capsule-relations" aria-label="캡슐 사이의 관계">${related(meeting.previousId, '이전')}${related(meeting.parentId, '상위')}<span class="current-capsule">현재 캡슐</span>${next.map((m) => related(m.id, '다음')).join('')}${children.length ? `<details class="capsule-branches"><summary>위임 ${children.length}개 · 합류 ${children.filter((m) => m.status === 'confirmed').length}개</summary><div>${children.map((m) => (accessible(m) ? button('open', `${m.title} · ${childLabel(m)}`, `data-id="${escape(m.id)}"`) : `<span>담당 멤버의 하위 캡슐 · ${childLabel(m)}</span>`)).join('')}</div></details>` : ''}</nav><ol class="capsule-progress" aria-label="캡슐 진행 단계">${stages.map((label, i) => `<li class="${i < stage ? 'done' : i === stage ? 'current' : ''}" ${i === stage ? 'aria-current="step"' : ''}>${i < stage ? '✓ ' : ''}${label}</li>`).join('')}</ol><div class="capsule-next-action"><p>${escape(action.label)}</p>${action.action ? button(action.action, action.button, `${action.view ? `data-view="${action.view}"` : ''} ${action.id ? `data-id="${escape(action.id)}"` : ''}`) : ''}</div>${
-    accessible(meeting)
-      ? `<nav class="capsule-view-switch" aria-label="현재 캡슐 내용">${[
-          ['chat', '대화'],
-          ['minutes', '결론'],
-          ['result', '확정 일정'],
-        ]
-          .map(([view, label]) =>
-            button(
-              'view',
-              label,
-              `data-view="${view}" aria-current="${(options.view || 'chat') === view ? 'page' : 'false'}"`,
-            ),
-          )
-          .join('')}</nav>`
-      : ''
-  }</div>`;
+  const stage = stageOf(meeting);
+  return `<section class="capsule-overview" aria-label="캡슐 상태"><nav class="capsule-relations" aria-label="캡슐 사이의 관계">${related(meeting.previousId, '이전')}${related(meeting.parentId, '상위')}<span class="current-capsule">현재 캡슐</span>${next.map((m) => related(m.id, '다음')).join('')}${children.length ? `<details class="capsule-branches" open><summary>위임 ${children.length}개 · 합류 ${children.filter((m) => m.status === 'confirmed').length}개</summary><div>${children.map((m) => (accessible(m) ? button('open', `${m.title} · ${childLabel(m)}`, `data-id="${escape(m.id)}"`) : `<span>담당 멤버의 하위 캡슐 · ${childLabel(m)}</span>`)).join('')}</div></details>` : ''}</nav><ol class="capsule-progress" aria-label="캡슐 진행 단계">${STAGES.map((label, i) => `<li class="${i < stage ? 'done' : i === stage ? 'current' : ''}" ${i === stage ? 'aria-current="step"' : ''}>${i < stage ? '✓ ' : ''}${label}</li>`).join('')}</ol><p class="capsule-overview-next">${escape(action.label)}</p></section>`;
 }

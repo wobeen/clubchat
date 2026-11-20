@@ -12,14 +12,16 @@ async function send(page, text) {
   await expect(page.locator('.message-bubble').last()).toHaveText(text);
 }
 async function draft(page) {
-  await page
-    .locator('.capsule-next-action [data-action="draft"], .chat-bottom-actions [data-action="draft"]')
-    .first()
-    .click();
+  await page.locator('.capsule-next-action [data-action="draft"]').click();
   await expect(page.locator('.minutes-scroll h2')).toHaveText('결론 검토');
 }
 async function view(page, value) {
   await page.locator(`.capsule-view-switch [data-view="${value}"]`).click();
+}
+/** Opens the capsule side panel (relations, progress, delegation, participants). */
+async function panel(page) {
+  await page.locator('.capsule-stage').click();
+  await expect(page.locator('#modal.drawer')).toBeVisible();
 }
 
 test('연습을 완료하고 실제 저장소와 분리한다', async ({ page }) => {
@@ -59,7 +61,8 @@ test('생성 위임 합류 공동확인 후 다음 캡슐까지 잇는다', asyn
   await view(page, 'chat');
   await expect(page.locator('#composer textarea')).toHaveValue('아직 전송하지 않은 메모');
   await page.locator('#composer textarea').fill('');
-  await page.locator('.composer-delegate').click();
+  await panel(page);
+  await page.locator('#modal [data-action="delegate"]').click();
   await page.locator('#delegate-form input[name="title"]').fill('가격 검토');
   await page.locator('input[name="delegate-message"]').first().check();
   await page.locator('input[name="delegate-member"][value="minsu"]').check();
@@ -70,6 +73,7 @@ test('생성 위임 합류 공동확인 후 다음 캡슐까지 잇는다', asyn
   await draft(page);
   await page.locator('.review-footer [data-action="confirm"]').click();
   await expect(page.locator('.minutes-scroll h2')).toHaveText('함께 확인한 결론');
+  await panel(page);
   await page.locator('.capsule-relations button').filter({ hasText: '상위' }).click();
   await draft(page);
   await expect(page.locator('.minutes-scroll')).toContainText('가격은 4000원');
@@ -84,6 +88,7 @@ test('생성 위임 합류 공동확인 후 다음 캡슐까지 잇는다', asyn
   await expect(page.locator('.minutes-scroll')).toContainText('추가 합의도 반영');
   await page.locator('.review-footer [data-action="confirm"]').click();
   await expect(page.locator('.minutes-scroll h2')).toHaveText('함께 확인한 결론');
+  await panel(page);
   await page.locator('.capsule-relations button').filter({ hasText: '다음' }).click();
   await expect(page.locator('.carryover-banner')).toContainText('예산 검토');
   await expect(page.locator('#storage-status')).toBeHidden();
@@ -169,18 +174,19 @@ test('불참과 하위 보류를 사유와 함께 공동 확인에 반영한다'
   await page.locator('#create-submit').click();
   await expect(page.locator('.room-heading h1')).toHaveText('예외 처리');
   await send(page, '결정: 이번 안건 확정');
-  await page.locator('.composer-delegate').click();
+  await panel(page);
+  await page.locator('#modal [data-action="delegate"]').click();
   await page.locator('#delegate-form input[name="title"]').fill('나중에 검토');
   await page.locator('input[name="delegate-message"]').first().check();
   await page.locator('input[name="delegate-member"][value="minsu"]').check();
   await page.locator('button[form="delegate-form"]').click();
   await expect(page.locator('.child-card')).toContainText('나중에 검토');
-  await page.locator('[data-action="room-info"]').click();
+  await panel(page);
   await page.locator('[data-action="policy"]').click();
   await page.locator('input[name="target"][value="jieun"]').uncheck();
   await page.locator('#policy-form input[name="reason"]').fill('이번 회의 불참');
   await page.locator('button[form="policy-form"]').click();
-  await page.locator('[data-action="room-info"]').click();
+  await panel(page);
   await page.locator('[data-action="disposition"]').click();
   await page.locator('#disposition-form input[name="reason"]').fill('별도 후속 캡슐에서 논의');
   await page.locator('button[form="disposition-form"]').click();

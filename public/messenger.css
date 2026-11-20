@@ -776,22 +776,6 @@ button:hover {
   border-top: 1px solid #e5e8eb;
   flex-shrink: 0;
 }
-.chat-room .chat-hint {
-  font-size: 0;
-  margin: 0;
-  min-height: 0;
-  height: 0;
-}
-.chat-room .chat-hint > .icon {
-  display: none;
-}
-.chat-room .chat-hint > .text-button {
-  font-size: 10px;
-  margin: 5px 0 0 auto;
-}
-.chat-room .chat-hint:has(.text-button) {
-  height: 27px;
-}
 .chat-room .composer {
   padding: 16px 0 10px;
   border: 0;
@@ -816,17 +800,6 @@ button:hover {
   font-size: 9px;
   color: #bdbdbd;
 }
-.chat-room .composer-delegate {
-  font-size: 10px;
-  color: #8b8b8b;
-  background: #f6f6f6;
-  padding: 7px 10px;
-  min-height: 30px;
-}
-.chat-room .composer-delegate > .icon {
-  width: 14px;
-  height: 14px;
-}
 .chat-room .send-button {
   background: var(--yellow);
   color: #554e20;
@@ -844,19 +817,6 @@ button:hover {
 .chat-room .chat-bottom-actions {
   padding: 1px 0 11px;
   min-height: 30px;
-}
-.chat-room .chat-bottom-actions > .text-button {
-  font-size: 10px;
-  gap: 5px;
-  color: #7d8490;
-}
-.chat-room .chat-bottom-actions > .text-button > .icon {
-  width: 13px;
-  height: 13px;
-}
-.chat-room .chat-bottom-actions > span {
-  font-size: 8px;
-  color: #c0c0c0;
 }
 .chat-room.record-view {
   background: #f9fafb;
@@ -1632,11 +1592,6 @@ button:hover {
   width: 100%;
   justify-content: space-between;
 }
-.android-ui .composer-delegate {
-  min-height: 37px;
-  padding: 8px 10px;
-  font-size: 11px;
-}
 .android-ui .send-button {
   min-height: 37px;
   width: 45px;
@@ -1644,13 +1599,6 @@ button:hover {
 .android-ui .chat-bottom-actions {
   padding: 0 0 8px;
   min-height: 34px;
-}
-.android-ui .chat-bottom-actions > .text-button {
-  font-size: 11px;
-  min-height: 35px;
-}
-.android-ui .chat-bottom-actions > span {
-  font-size: 7px;
 }
 .android-ui .chat-room .minutes-scroll {
   padding: 22px 18px;
@@ -2118,9 +2066,6 @@ button:hover {
   }
   .chat-room .composer > div > span {
     font-size: 8px;
-  }
-  .chat-room .chat-bottom-actions > span {
-    font-size: 7px;
   }
   .chat-room .minutes-scroll {
     padding: 23px 20px;

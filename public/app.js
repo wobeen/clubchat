@@ -32,7 +32,7 @@ import {
 } from './domain.js';
 import { createBrowserRepository } from './browser-repository.js';
 import { createRemoteRepository } from './remote-repository.js';
-import { renderCapsuleNavigation } from './capsule-ui.js';
+import { renderCapsuleNavigation, renderCapsuleOverview } from './capsule-ui.js';
 import { createTutorial, advanceTutorial, renderTutorial } from './tutorial.js';
 import { captureView, restoreView, clearComposer } from './ui-state.js';
 import { createWorkflowActions } from './workflow-actions.js';
@@ -340,7 +340,7 @@ function renderChat(m) {
           .map((c) => renderConclusion(c))
           .join('')
       : ''
-  }</div>${['open', 'review'].includes(m.status) ? `<div class="chat-bottom"><div class="chat-hint">${icon('shield')} 메시지는 참여자에게만 보여요.${practice ? btn('practice-example', '연습 예문 채우기', 'text-button') : ''}</div><form id="composer" class="composer"><textarea name="message" aria-label="메시지 입력" placeholder="${m.parentId ? '집중해서 논의할 내용을 남겨주세요' : '메시지를 입력하고, 우리의 다음을 이어가요…'}" rows="2" maxlength="4000" required></textarea><div><span>Enter 전송 <b>·</b> Shift + Enter 줄바꿈</span><div>${btn('delegate', icon('branch') + ' 하위 캡슐', 'composer-delegate')}<button class="send-button" aria-label="메시지 보내기">${icon('arrow')}</button></div></div></form><div class="chat-bottom-actions">${btn('draft', icon('spark') + (m.draft ? ' 새 대화 반영' : ' 결론 초안 만들기'), 'text-button')}${practice ? btn('practice-example', '연습 예문 넣기', 'outline') : '<span>근거가 연결되는 결론</span>'}</div></div>` : m.status === 'scheduled' ? `<div class="closed-bar"><span>${icon('clock')} ${date(m.startsAt)}에 시작 예정</span>${btn('start-scheduled', '지금 시작하기', 'primary')}</div>` : `<div class="closed-bar"><span>${icon(m.status === 'confirmed' ? 'check' : 'file')} ${m.status === 'confirmed' ? '확정된 회의는 읽기 전용이에요.' : '대화를 바탕으로 초안이 준비됐어요.'}</span>${btn('view', m.status === 'confirmed' ? '확정 기록 보기' : '회의록 확인하기', 'primary', 'data-view="minutes"')}${m.status === 'review' ? btn('reopen', '대화 이어가기', 'quiet') : ''}</div>`}`;
+  }</div>${['open', 'review'].includes(m.status) ? `<div class="chat-bottom">${practice ? `<div class="chat-bottom-actions">${btn('practice-example', '연습 예문 넣기', 'outline')}</div>` : ''}<form id="composer" class="composer"><textarea name="message" aria-label="메시지 입력" aria-describedby="composer-privacy" placeholder="${m.parentId ? '집중해서 논의할 내용을 남겨주세요' : '메시지를 입력하고, 우리의 다음을 이어가요…'}" rows="2" maxlength="4000" required></textarea><div><span class="composer-keys">Enter 전송 <b>·</b> Shift + Enter 줄바꿈</span><div><button class="send-button" aria-label="메시지 보내기">${icon('arrow')}</button></div></div><span id="composer-privacy" class="sr-only">메시지는 참여자에게만 보여요.</span></form></div>` : m.status === 'scheduled' ? `<div class="closed-bar"><span>${icon('clock')} ${date(m.startsAt)}에 시작 예정</span>${btn('start-scheduled', '지금 시작하기', 'primary')}</div>` : `<div class="closed-bar"><span>${icon(m.status === 'confirmed' ? 'check' : 'file')} ${m.status === 'confirmed' ? '확정된 회의는 읽기 전용이에요.' : '대화를 바탕으로 초안이 준비됐어요.'}</span>${btn('view', m.status === 'confirmed' ? '확정 기록 보기' : '회의록 확인하기', 'primary', 'data-view="minutes"')}${m.status === 'review' ? btn('reopen', '대화 이어가기', 'quiet') : ''}</div>`}`;
 }
 function renderMessage(x, m) {
   return `<article class="message ${x.authorId === state.profileId ? 'own' : ''}" id="message-${esc(x.id)}">${avatar(x.authorId)}<div class="message-content"><div class="message-meta"><strong>${esc(memberName(state, x.authorId))}</strong><time>${time(x.createdAt)}</time>${['open', 'review'].includes(m.status) ? btn('delegate', icon('branch'), 'message-delegate', `data-anchor="${esc(x.id)}" aria-label="${esc(memberName(state, x.authorId))} ${time(x.createdAt)} '${esc(x.text.slice(0, 20))}'부터 하위 캡슐로 분리" title="하위 캡슐로 분리"`) : ''}</div><div class="message-bubble">${esc(x.text)}</div></div></article>`;
@@ -585,23 +585,17 @@ function settingsDialog() {
     btn('close', '닫기', 'primary'),
   );
 }
+/** Side panel (drawer) with everything about the capsule that is not the conversation itself. */
 function roomInfoDialog() {
   const m = meeting();
+  const participant = canRead(m, state.profileId);
+  const facilitator = state.profileId === (m.facilitatorId || m.memberIds[0]);
   openModal(
-    '채팅방 정보',
-    `<div class="settings-profile">${groupAvatar(m, { state, esc })}<div><strong>${esc(m.title)}</strong><p>${esc(m.description)}</p></div></div><nav class="room-menu-views" aria-label="이 채팅방의 내용">${[
-      ['chat', 'chat', '대화'],
-      ['minutes', 'file', '회의록'],
-      ['result', 'calendar', '확정 일정'],
-    ]
-      .map(([v, ic, label]) =>
-        btn('view', icon(ic) + label + (view === v ? ' ✓' : ''), view === v ? 'active' : '', `data-view="${v}"`),
-      )
-      .join(
-        '',
-      )}</nav><p class="room-scope-note">이 메뉴에서는 현재 채팅방의 내용만 확인해요.</p><div class="form-section-label">대화 상대 <span>${m.memberIds.length}명</span></div><div class="participant-list">${m.memberIds.map((id) => `<div>${avatar(id, 'small')}<span>${esc(memberName(state, id))}</span><small>${m.confirmations.includes(id) ? '✓ 확인 완료' : id === state.profileId ? '나' : '참여자'}</small></div>`).join('')}</div><div class="settings-links">${['open', 'review'].includes(m.status) && state.profileId === (m.facilitatorId || m.memberIds[0]) ? btn('policy', '참여 · 확인 대상 관리', 'outline') + btn('disposition', '하위 캡슐 보류 · 취소', 'outline') : ''}${btn('delegate', icon('branch') + ' 대화를 하위 캡슐로 위임')}${btn('invite', icon('link') + ' 초대 링크')}${btn('settings', icon('users') + ' 시연 참여자 전환')}${m.parentId ? btn('open', icon('back') + ' 상위 회의로 돌아가기', '', `data-id="${m.parentId}"`) : ''}</div>`,
+    '캡슐 정보',
+    `<div class="settings-profile">${groupAvatar(m, { state, esc })}<div><strong>${esc(m.title)}</strong><p>${esc(m.description)}</p></div></div>${renderCapsuleOverview(state, m, { errorCount: participant ? validationErrors(state, m).length : 0 })}${participant && ['open', 'review'].includes(m.status) ? `<div class="drawer-actions">${btn('delegate', icon('branch') + ' 하위 캡슐 만들기', 'primary')}<p class="form-note">고른 메시지와 담당 멤버만 하위 캡슐로 넘어가요. 하위의 결론만 이 캡슐로 돌아와요.</p></div>` : ''}<p class="form-note">${icon('shield')} 메시지는 참여자에게만 보여요.</p><div class="form-section-label">대화 상대 <span>${m.memberIds.length}명</span></div><div class="participant-list">${m.memberIds.map((id) => `<div>${avatar(id, 'small')}<span>${esc(memberName(state, id))}</span><small>${m.confirmations.includes(id) ? '✓ 확인 완료' : id === state.profileId ? '나' : '참여자'}</small></div>`).join('')}</div><div class="settings-links">${['open', 'review'].includes(m.status) && facilitator ? btn('policy', '참여 · 확인 대상 관리', 'outline') + btn('disposition', '하위 캡슐 보류 · 취소', 'outline') : ''}${btn('invite', icon('link') + ' 초대 링크')}${repo.remote ? '' : btn('settings', icon('users') + ' 시연 참여자 전환')}</div>`,
     btn('close', '닫기', 'primary'),
   );
+  modal.classList.add('drawer');
 }
 const workflow = createWorkflowActions({
   repo,

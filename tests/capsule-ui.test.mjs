@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { getCapsuleAction, renderCapsuleNavigation } from '../public/capsule-ui.js';
+import { getCapsuleAction, renderCapsuleNavigation, renderCapsuleOverview } from '../public/capsule-ui.js';
 import { renderRoomList } from '../public/messenger-layouts.js';
 
 const capsule = (overrides = {}) => ({
@@ -73,7 +73,7 @@ test('관계 렌더링은 비참여 하위 이름을 숨기고 참여 캡슐 제
   const m = capsule(),
     privateChild = capsule({ id: 'secret', parentId: m.id, memberIds: ['b'], title: '비밀 안건' }),
     publicChild = capsule({ id: 'visible', parentId: m.id, title: '<script>악성</script>' });
-  const html = renderCapsuleNavigation(stateFor(m, privateChild, publicChild), m);
+  const html = renderCapsuleOverview(stateFor(m, privateChild, publicChild), m);
   assert.doesNotMatch(html, /비밀 안건|data-id="secret"|<script>/);
   assert.match(html, /&lt;script&gt;/);
   assert.match(html, /aria-current="step"/);
@@ -83,7 +83,8 @@ test('취소/보류는 확정으로 오표시하지 않고 비참여자는 원�
     s = stateFor(m);
   assert.match(getCapsuleAction(s, m).label, /취소/);
   assert.equal(getCapsuleAction(s, m).action, null);
-  assert.doesNotMatch(renderCapsuleNavigation(s, m), /aria-current="step"/);
+  assert.doesNotMatch(renderCapsuleOverview(s, m), /aria-current="step"/);
+  assert.match(renderCapsuleNavigation(s, m), /취소 단계/);
   m.memberIds = ['b'];
   assert.equal(getCapsuleAction(s, m).action, null);
 });

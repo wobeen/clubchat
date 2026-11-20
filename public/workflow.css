@@ -59,9 +59,6 @@
   flex-wrap: wrap;
   gap: 8px;
 }
-.chat-room .chat-bottom-actions > span {
-  font-size: 11px;
-}
 .settings-links .outline {
   justify-content: flex-start;
 }
@@ -132,9 +129,6 @@
   }
   .capsule-next-action {
     padding: 8px 0;
-  }
-  .capsule-next-action p {
-    font-size: 12px;
   }
   .tutorial-banner p {
     max-height: 4.5em;

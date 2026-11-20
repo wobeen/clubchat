@@ -403,10 +403,6 @@ body {
 .chat-room .conversation-header strong {
   font-size: 11px;
 }
-.chat-room .chat-hint {
-  font-size: 11px;
-  color: #526959;
-}
 .android-ui .message-meta strong {
   font-size: 12px;
 }
@@ -423,8 +419,6 @@ body {
   font-size: 12px;
 }
 .android-ui .send-button,
-.android-ui .composer-delegate,
-.android-ui .chat-bottom-actions > .text-button,
 .android-ui .event-actions .outline {
   min-height: 44px;
 }
@@ -440,10 +434,6 @@ body {
 .room-list-tag.cancelled {
   background: #e9e9e4;
   color: #575d57;
-}
-.capsule-next-action p {
-  margin: 0;
-  overflow-wrap: anywhere;
 }
 .capsule-relations button:hover,
 .capsule-view-switch button:hover {
@@ -469,9 +459,6 @@ summary:focus-visible {
   outline-offset: 3px;
 }
 @media (max-width: 700px) {
-  .capsule-next-action p {
-    line-height: 1.5;
-  }
   .tutorial-banner {
     padding: 10px 16px;
   }

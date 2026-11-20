@@ -946,22 +946,6 @@ main {
   padding: 0 21px 0;
   flex-shrink: 0;
 }
-.chat-hint {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 8px;
-  color: #b3bac5;
-  margin: 8px 5px;
-}
-.chat-hint .icon {
-  width: 11px;
-  height: 11px;
-}
-.chat-hint .text-button {
-  margin-left: auto;
-  font-size: 9px;
-}
 .composer {
   border: 1px solid #dee5ef;
   border-radius: 10px;
@@ -1004,20 +988,6 @@ main {
   align-items: center;
   gap: 8px;
 }
-.composer-delegate {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  color: #91a2ba;
-  background: #f2f5f9;
-  border-radius: 6px;
-  padding: 7px 9px;
-  font-size: 9px;
-}
-.composer-delegate .icon {
-  width: 12px;
-  height: 12px;
-}
 .send-button {
   display: flex;
   align-items: center;
@@ -1041,17 +1011,6 @@ main {
   align-items: center;
   justify-content: space-between;
   padding: 8px 3px 10px;
-}
-.chat-bottom-actions > .text-button {
-  font-size: 10px;
-}
-.chat-bottom-actions .icon {
-  width: 13px;
-  height: 13px;
-}
-.chat-bottom-actions > span {
-  font-size: 8px;
-  color: #b3bdca;
 }
 .context-panel {
   display: flex;
@@ -2749,10 +2708,6 @@ dialog[open] ~ #toast {
   .message-content {
     max-width: 89%;
   }
-  .composer-delegate {
-    font-size: 8px;
-    padding: 6px;
-  }
   .composer > div > span {
     font-size: 7px;
   }
@@ -2765,12 +2720,6 @@ dialog[open] ~ #toast {
   }
   .composer > div > div {
     gap: 5px;
-  }
-  .chat-bottom-actions > span {
-    font-size: 7px;
-  }
-  .chat-bottom-actions > .text-button {
-    font-size: 9px;
   }
   .workspace-page {
     padding: 28px;
@@ -2826,16 +2775,6 @@ dialog[open] ~ #toast {
   }
   .composer > div > span {
     font-size: 8px;
-  }
-  .composer-delegate {
-    font-size: 9px;
-    padding: 7px 10px;
-  }
-  .chat-bottom-actions > span {
-    font-size: 8px;
-  }
-  .chat-bottom-actions > .text-button {
-    font-size: 10px;
   }
   .conversation-header strong {
     font-size: 9px;
@@ -3243,14 +3182,6 @@ dialog[open] ~ #toast {
   .chat-bottom {
     padding: 0 11px;
   }
-  .chat-hint {
-    font-size: 7px;
-    margin: 6px 3px;
-  }
-  .chat-hint .icon {
-    width: 9px;
-    height: 9px;
-  }
   .composer textarea {
     font-size: 10px;
     min-height: 35px;
@@ -3258,14 +3189,6 @@ dialog[open] ~ #toast {
   }
   .composer > div > span {
     font-size: 6px;
-  }
-  .composer-delegate {
-    font-size: 8px;
-    padding: 6px 7px;
-  }
-  .composer-delegate > .icon {
-    width: 10px;
-    height: 10px;
   }
   .send-button {
     height: 27px;
@@ -3277,17 +3200,6 @@ dialog[open] ~ #toast {
   }
   .chat-bottom-actions {
     padding: 6px 2px 7px;
-  }
-  .chat-bottom-actions > .text-button {
-    font-size: 9px;
-    gap: 5px;
-  }
-  .chat-bottom-actions > .text-button .icon {
-    width: 11px;
-    height: 11px;
-  }
-  .chat-bottom-actions > span {
-    font-size: 6px;
   }
   .app-footer {
     padding: 8px 15px;
