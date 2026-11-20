@@ -121,9 +121,13 @@
   background-color: transparent !important;
   background-image: none !important;
 }
-:root body #modal :is(.modal-header, .modal-body, .modal-footer),
+:root body #modal .modal-body,
 :root body .tutorial-banner :is(p, strong, .tutorial-actions, .tutorial-heading) {
   background: transparent !important;
+}
+/* Header and footer stay put while the body scrolls, so they must hide what passes underneath. */
+:root body #modal :is(.modal-header, .modal-footer) {
+  background: var(--paper) !important;
 }
 
 /* Notes, chips and buttons: small matte paper pieces. */
@@ -260,11 +264,30 @@
   height: 100dvh;
   max-height: 100dvh;
   border-radius: 0;
+  overflow: hidden;
+}
+/* Only the body scrolls; header and footer never cover it. */
+:root body #modal.drawer[open] {
+  display: flex;
+  flex-direction: column;
+}
+:root body #modal.drawer :is(.modal-header, .modal-footer) {
+  position: static;
+  flex: none;
+}
+:root body #modal.drawer .modal-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overflow-wrap: anywhere;
 }
 :root body #modal.drawer .capsule-overview {
   margin: 4px 0 16px;
 }
 :root body #modal.drawer .capsule-progress {
+  flex-wrap: wrap;
+  row-gap: 6px;
   margin: 14px 0 6px;
 }
 :root body #modal.drawer .drawer-actions {
