@@ -1,26 +1,28 @@
-/* White surfaces with bright green zones. State is conveyed by text, weight, outlines and green fills. */
+/* White surfaces; green only on objects (primary actions, own messages, selection, badges, focus). */
 :root {
   color-scheme: light;
-  --paper: #fdfffc;
+  --paper: #ffffff;
   --accent-50: #f2faf1;
   --accent-100: #e2f5df;
   --accent-200: #c8ecc2;
   --accent-300: #a3dc9b;
   --accent-500: #4fbf47;
   --accent-700: #2b7a27;
-  --ink: #1f2a22;
-  --muted: #5c6a60;
-  --line: #dcebd8;
+  --ink: #1f2421;
+  --muted: #5f6661;
+  --line: #e4e7e4;
+  /* Form-field boundary: neutral grey with >=3:1 contrast on white. */
+  --field-edge: #7d867f;
   --blue: var(--accent-700);
   --blue-hover: #1f5f1c;
   --pale-blue: var(--accent-100);
-  --light-blue: var(--accent-50);
+  --light-blue: var(--paper);
   --bg: var(--paper);
   --yellow: var(--accent-200);
 }
 html,
 body {
-  background: var(--accent-50) !important;
+  background: var(--paper) !important;
   color: var(--ink) !important;
 }
 :root body *,
@@ -54,12 +56,12 @@ body {
 :root body .icon {
   filter: grayscale(1);
 }
-/* Green zones: navigation rails, list panels and the conversation backdrop. */
+/* Rails, list panels and the conversation backdrop stay white. */
 :root body #app :is(.talk-rail, .talk-list, .android-bottom-nav, .android-list, .room-list-rows) {
-  background-color: var(--accent-50) !important;
+  background-color: var(--paper) !important;
 }
 :root body #app :is(.messages, .talk-main, .chat-room) {
-  background-color: var(--accent-50) !important;
+  background-color: var(--paper) !important;
 }
 :root body :is(.primary, .send-button, .capsule-next-action button, .tutorial-actions > button:first-child) {
   border: 1px solid var(--accent-700) !important;
@@ -73,22 +75,17 @@ body {
   outline-offset: -1px;
   font-weight: 700;
 }
-:root
-  body
-  #app
-  :is(
-    .list-filters > button.active,
-    .talk-rail button.active,
-    .android-bottom-nav > button.active,
-    .room-list-row.selected
-  ) {
+:root body #app :is(.list-filters > button.active, .talk-rail button.active, .android-bottom-nav > button.active) {
   background-color: var(--accent-100) !important;
 }
 :root body .capsule-view-switch button[aria-current='page'] {
   border-bottom-color: var(--ink) !important;
   font-weight: 700;
 }
-:root body :is(.avatar, .group-avatar i, .unread-badge, .status-badge, .current-capsule, .live-dot) {
+:root body :is(.avatar, .group-avatar i, .current-capsule) {
+  border: 1px solid var(--line) !important;
+}
+:root body :is(.unread-badge, .status-badge, .live-dot) {
   border: 1px solid var(--accent-300) !important;
 }
 :root body #app :is(.unread-badge, .status-badge, .live-dot) {
@@ -119,7 +116,7 @@ body {
   border-bottom: 1px solid var(--line) !important;
 }
 :root body #toast {
-  border: 1px solid var(--accent-700) !important;
+  border: 1px solid var(--ink) !important;
 }
 dialog::backdrop {
   background: rgb(20 50 25 / 18%);
@@ -141,7 +138,7 @@ dialog::backdrop {
 }
 /* Audit A-06/A-07: form fields need a 3:1 boundary and readable placeholders. */
 :root body :is(#app, #modal) :is(input:not([type='checkbox']):not([type='radio']), textarea, select) {
-  border: 1px solid var(--accent-700) !important;
+  border: 1px solid var(--field-edge) !important;
 }
 :root body :is(#app, #modal) :is(input, textarea)::placeholder {
   color: var(--muted) !important;
