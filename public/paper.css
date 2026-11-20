@@ -1,0 +1,214 @@
+/* Paper: matte sheets on a warm desk. Flat colour plus a faint fibre grain, thin ink-brown edges and a soft
+   lift shadow instead of gloss, gradients or blur. Loaded after white-theme.css, which owns the palette. */
+:root {
+  --sheet: #fffdf8;
+  --kraft: #efe3cc;
+  --sheet-edge: #ddd0b8;
+  --lift: 0 1px 0 rgba(60, 45, 25, 0.06), 0 2px 6px rgba(60, 45, 25, 0.05);
+  /* Fractal-noise fibre, tinted ink-brown at low alpha; tiles seamlessly. */
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.42 0 0 0 0 0.34 0 0 0 0 0.24 0 0 0 0.16 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  --grain-strong: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.4 0 0 0 0 0.32 0 0 0 0 0.22 0 0 0 0.24 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Desk: rails, lists and the conversation backdrop. */
+:root body {
+  background: var(--beige-50) var(--grain-strong) !important;
+}
+:root
+  body
+  #app
+  :is(.talk-rail, .talk-list, .android-bottom-nav, .android-list, .room-list-rows, .messages, .talk-main, .chat-room) {
+  background-color: var(--beige-50) !important;
+  background-image: var(--grain-strong) !important;
+}
+
+/* Sheets: cards, panels and dialogs. */
+:root
+  body
+  #app
+  :is(
+    .room-header,
+    .capsule-navigation,
+    .chat-bottom,
+    .closed-bar,
+    .minute-item,
+    .child-card,
+    .event-card,
+    .archive-card,
+    .member-card,
+    .surface,
+    .confirmation-banner,
+    .change-summary,
+    .policy-history
+  ),
+:root body :is(#modal, #toast, .tutorial-banner, .practice-entry, #storage-status) {
+  background-color: var(--sheet) !important;
+  background-image: var(--grain) !important;
+  border: 1px solid var(--sheet-edge) !important;
+  box-shadow: var(--lift) !important;
+  border-radius: 10px;
+}
+:root body #app :is(.room-header, .capsule-navigation, .chat-bottom, .closed-bar) {
+  margin: 8px 12px;
+  flex-shrink: 0;
+}
+:root body #app .room-header {
+  padding: 12px 16px;
+}
+:root body #app .capsule-navigation {
+  padding: 12px 16px 0;
+  overflow: visible;
+}
+:root body #app .chat-bottom {
+  padding: 0 14px 4px;
+}
+/* Tabs read like a ruled line under the heading, not a raised strip. */
+:root body #app .capsule-view-switch {
+  padding: 0 12px;
+  margin: 8px 0 10px;
+  border: 0 !important;
+  border-bottom: 1px solid var(--sheet-edge) !important;
+  border-radius: 0;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+/* Contents sit directly on the sheet. */
+:root
+  body
+  #app
+  :is(
+    .composer,
+    .chat-hint,
+    .chat-bottom-actions,
+    .room-heading,
+    .room-header-actions,
+    .capsule-relations,
+    .capsule-progress,
+    .capsule-next-action,
+    .message-content,
+    .message-meta,
+    .minute-item-content,
+    .item-meta,
+    .evidence-row,
+    .review-footer > div
+  ) {
+  background-color: transparent !important;
+}
+:root
+  body
+  #app
+  :is(
+    .room-list-row,
+    .room-header,
+    .capsule-navigation,
+    .minute-item,
+    .child-card,
+    .event-card,
+    .archive-card,
+    .confirmation-banner
+  )
+  :is(span, p, h1, h2, h3, strong, small, time, li, div) {
+  background-color: transparent !important;
+  background-image: none !important;
+}
+:root body #modal :is(.modal-header, .modal-body, .modal-footer),
+:root body .tutorial-banner :is(p, strong, .tutorial-actions, .tutorial-heading) {
+  background: transparent !important;
+}
+
+/* Notes, chips and buttons: small matte paper pieces. */
+:root
+  body
+  #app
+  :is(.message-bubble, .current-capsule, .capsule-relations button, .room-list-row, .avatar, .group-avatar i) {
+  background-color: var(--sheet) !important;
+  background-image: var(--grain) !important;
+  border: 1px solid var(--sheet-edge) !important;
+  box-shadow: var(--lift) !important;
+}
+:root body #app .message-bubble {
+  padding: 11px 14px;
+  border-radius: 4px 12px 12px 12px;
+}
+:root body #app .message.own .message-bubble {
+  background-color: var(--kraft) !important;
+  border-color: var(--beige-300) !important;
+  border-radius: 12px 4px 12px 12px;
+}
+:root body #app :is(.primary, .send-button, .capsule-next-action button),
+:root body :is(.tutorial-actions > button:first-child, #modal .primary) {
+  background-color: var(--kraft) !important;
+  background-image: var(--grain) !important;
+  border: 1px solid var(--beige-700) !important;
+  box-shadow: 0 1px 0 rgba(60, 45, 25, 0.12) !important;
+  border-radius: 8px;
+}
+:root body #app :is(.primary, .send-button, .capsule-next-action button):hover {
+  background-color: var(--beige-200) !important;
+}
+:root body #app :is(.primary, .send-button, .capsule-next-action button) {
+  transition:
+    background-color 0.15s,
+    transform 0.1s;
+}
+:root body #app :is(.primary, .send-button, .capsule-next-action button):active {
+  transform: translateY(1px);
+  box-shadow: none !important;
+}
+:root body #app .room-list-row {
+  margin: 8px 12px;
+  width: calc(100% - 24px);
+  border-radius: 8px;
+}
+/* The selected capsule is marked like a bookmark ribbon on the sheet edge. */
+:root body #app .room-list-row.selected {
+  background-color: var(--beige-100) !important;
+  border-color: var(--beige-500) !important;
+  box-shadow:
+    inset 4px 0 var(--beige-700),
+    var(--lift) !important;
+}
+
+:root body #app .chat-hint {
+  height: auto;
+  min-height: 20px;
+  margin: 5px 0;
+  font-size: 11px;
+}
+:root body #app .chat-hint > .icon {
+  display: inline-block;
+}
+@media (max-width: 700px) {
+  :root body #app :is(.room-header, .capsule-navigation, .chat-bottom, .closed-bar) {
+    margin: 5px 8px;
+  }
+  :root body #app .room-header {
+    padding: 6px 9px;
+    min-height: 60px;
+  }
+  :root body #app .capsule-navigation {
+    padding: 7px 10px 0;
+  }
+  :root body #app .capsule-view-switch {
+    margin: 5px 0 6px;
+    min-height: 40px;
+  }
+  :root body #app .capsule-view-switch button {
+    min-height: 40px;
+  }
+  :root body #app .capsule-progress {
+    margin: 5px 0;
+  }
+  :root body #app .capsule-next-action {
+    padding: 3px 0 5px;
+  }
+}
+/* Print and high-contrast users get flat sheets without grain. */
+@media print, (prefers-contrast: more) {
+  :root body,
+  :root body #app *,
+  :root body #modal {
+    background-image: none !important;
+  }
+}
