@@ -1,26 +1,26 @@
-/* White surfaces with warm beige zones. State is conveyed by text, weight, outlines and beige fills. */
+/* White surfaces with bright green zones. State is conveyed by text, weight, outlines and green fills. */
 :root {
   color-scheme: light;
-  --paper: #fffdf9;
-  --beige-50: #faf6ef;
-  --beige-100: #f4ecdf;
-  --beige-200: #eadfcb;
-  --beige-300: #dccaa9;
-  --beige-500: #b59a70;
-  --beige-700: #7c6446;
-  --ink: #2e2a24;
-  --muted: #6e665b;
-  --line: #e7dccb;
-  --blue: var(--beige-700);
-  --blue-hover: #5f4b33;
-  --pale-blue: var(--beige-100);
-  --light-blue: var(--beige-50);
+  --paper: #fdfffc;
+  --accent-50: #f2faf1;
+  --accent-100: #e2f5df;
+  --accent-200: #c8ecc2;
+  --accent-300: #a3dc9b;
+  --accent-500: #4fbf47;
+  --accent-700: #2b7a27;
+  --ink: #1f2a22;
+  --muted: #5c6a60;
+  --line: #dcebd8;
+  --blue: var(--accent-700);
+  --blue-hover: #1f5f1c;
+  --pale-blue: var(--accent-100);
+  --light-blue: var(--accent-50);
   --bg: var(--paper);
-  --yellow: var(--beige-200);
+  --yellow: var(--accent-200);
 }
 html,
 body {
-  background: var(--beige-50) !important;
+  background: var(--accent-50) !important;
   color: var(--ink) !important;
 }
 :root body *,
@@ -32,7 +32,7 @@ body {
   border-color: var(--line) !important;
   box-shadow: none !important;
   text-shadow: none !important;
-  accent-color: var(--beige-700) !important;
+  accent-color: var(--accent-700) !important;
 }
 :root body *::before,
 :root body *::after {
@@ -52,24 +52,24 @@ body {
   background-color: transparent !important;
 }
 :root body .icon {
-  filter: grayscale(1) sepia(0.35);
+  filter: grayscale(1);
 }
-/* Beige zones: navigation rails, list panels and the conversation backdrop. */
+/* Green zones: navigation rails, list panels and the conversation backdrop. */
 :root body #app :is(.talk-rail, .talk-list, .android-bottom-nav, .android-list, .room-list-rows) {
-  background-color: var(--beige-50) !important;
+  background-color: var(--accent-50) !important;
 }
 :root body #app :is(.messages, .talk-main, .chat-room) {
-  background-color: var(--beige-50) !important;
+  background-color: var(--accent-50) !important;
 }
 :root body :is(.primary, .send-button, .capsule-next-action button, .tutorial-actions > button:first-child) {
-  border: 1px solid var(--beige-700) !important;
+  border: 1px solid var(--accent-700) !important;
   font-weight: 700;
 }
 :root body :is(.room-list-row.selected, .room-menu-views > button.active) {
-  box-shadow: inset 3px 0 var(--beige-700) !important;
+  box-shadow: inset 3px 0 var(--accent-700) !important;
 }
 :root body :is(.list-filters > button.active, .talk-rail button.active, .android-bottom-nav > button.active) {
-  outline: 1px solid var(--beige-500);
+  outline: 1px solid var(--accent-500);
   outline-offset: -1px;
   font-weight: 700;
 }
@@ -82,17 +82,17 @@ body {
     .android-bottom-nav > button.active,
     .room-list-row.selected
   ) {
-  background-color: var(--beige-100) !important;
+  background-color: var(--accent-100) !important;
 }
 :root body .capsule-view-switch button[aria-current='page'] {
   border-bottom-color: var(--ink) !important;
   font-weight: 700;
 }
 :root body :is(.avatar, .group-avatar i, .unread-badge, .status-badge, .current-capsule, .live-dot) {
-  border: 1px solid var(--beige-300) !important;
+  border: 1px solid var(--accent-300) !important;
 }
 :root body #app :is(.unread-badge, .status-badge, .live-dot) {
-  background-color: var(--beige-200) !important;
+  background-color: var(--accent-200) !important;
 }
 :root
   body
@@ -109,20 +109,20 @@ body {
   color: var(--muted) !important;
 }
 :root body :is(button, a, summary, input, textarea, select):focus-visible {
-  outline: 2px solid var(--beige-700) !important;
+  outline: 2px solid var(--accent-700) !important;
   outline-offset: 3px;
 }
 :root body .capsule-progress li:not(:last-child)::after {
-  background: var(--beige-300) !important;
+  background: var(--accent-300) !important;
 }
 :root body :is(.tutorial-banner, .practice-entry, #storage-status, #toast) {
   border-bottom: 1px solid var(--line) !important;
 }
 :root body #toast {
-  border: 1px solid var(--beige-700) !important;
+  border: 1px solid var(--accent-700) !important;
 }
 dialog::backdrop {
-  background: rgb(60 45 25 / 18%);
+  background: rgb(20 50 25 / 18%);
 }
 :root body #app .capsule-view-switch button {
   border-bottom-color: transparent !important;
@@ -131,17 +131,17 @@ dialog::backdrop {
   border-bottom-color: var(--ink) !important;
 }
 :root body #app .room-list-row.selected {
-  box-shadow: inset 3px 0 var(--beige-700) !important;
+  box-shadow: inset 3px 0 var(--accent-700) !important;
 }
 :root body #app :is(.primary, .send-button, .capsule-next-action button) {
-  border-color: var(--beige-700) !important;
+  border-color: var(--accent-700) !important;
 }
 :root body #app :is(.room-list-preview, .message-meta time, .item-meta, .nothing) {
   color: var(--muted) !important;
 }
 /* Audit A-06/A-07: form fields need a 3:1 boundary and readable placeholders. */
 :root body :is(#app, #modal) :is(input:not([type='checkbox']):not([type='radio']), textarea, select) {
-  border: 1px solid var(--beige-700) !important;
+  border: 1px solid var(--accent-700) !important;
 }
 :root body :is(#app, #modal) :is(input, textarea)::placeholder {
   color: var(--muted) !important;
@@ -162,9 +162,9 @@ dialog::backdrop {
   display: inline-block;
   margin-right: 6px;
   padding: 1px 8px;
-  border: 1px solid var(--beige-700) !important;
+  border: 1px solid var(--accent-700) !important;
   border-radius: 999px;
-  background-color: var(--beige-100) !important;
+  background-color: var(--accent-100) !important;
   font-size: 11px;
   font-weight: 700;
 }

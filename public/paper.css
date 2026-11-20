@@ -1,24 +1,24 @@
-/* Paper: matte sheets on a warm desk. Flat colour plus a faint fibre grain, thin ink-brown edges and a soft
+/* Paper: matte sheets on a light green desk. Flat colour plus a faint fibre grain, thin green edges and a soft
    lift shadow instead of gloss, gradients or blur. Loaded after white-theme.css, which owns the palette. */
 :root {
-  --sheet: #fffdf8;
-  --kraft: #efe3cc;
-  --sheet-edge: #ddd0b8;
-  --lift: 0 1px 0 rgba(60, 45, 25, 0.06), 0 2px 6px rgba(60, 45, 25, 0.05);
-  /* Fractal-noise fibre, tinted ink-brown at low alpha; tiles seamlessly. */
-  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.42 0 0 0 0 0.34 0 0 0 0 0.24 0 0 0 0.16 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  --grain-strong: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.4 0 0 0 0 0.32 0 0 0 0 0.22 0 0 0 0.24 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  --sheet: #fdfffc;
+  --tint: #e4f6e0;
+  --sheet-edge: #cfe5ca;
+  --lift: 0 1px 0 rgba(20, 60, 25, 0.06), 0 2px 6px rgba(20, 60, 25, 0.05);
+  /* Fractal-noise fibre, tinted green-grey at low alpha; tiles seamlessly. */
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.2 0 0 0 0 0.34 0 0 0 0 0.22 0 0 0 0.16 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  --grain-strong: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.18 0 0 0 0 0.32 0 0 0 0 0.2 0 0 0 0.22 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
 /* Desk: rails, lists and the conversation backdrop. */
 :root body {
-  background: var(--beige-50) var(--grain-strong) !important;
+  background: var(--accent-50) var(--grain-strong) !important;
 }
 :root
   body
   #app
   :is(.talk-rail, .talk-list, .android-bottom-nav, .android-list, .room-list-rows, .messages, .talk-main, .chat-room) {
-  background-color: var(--beige-50) !important;
+  background-color: var(--accent-50) !important;
   background-image: var(--grain-strong) !important;
 }
 
@@ -73,6 +73,17 @@
   background: transparent !important;
 }
 
+/* Secondary buttons inside a sheet are printed on it, not separate flat patches over the grain. */
+:root
+  body
+  #app
+  :is(.room-header, .capsule-navigation, .chat-bottom, .capsule-view-switch)
+  button:not(.primary):not(.send-button):not(.current-capsule) {
+  background-color: transparent !important;
+}
+:root body #app .chat-bottom :not(textarea):not(.send-button):not(.primary) {
+  background-color: transparent !important;
+}
 /* Contents sit directly on the sheet. */
 :root
   body
@@ -132,20 +143,20 @@
   border-radius: 4px 12px 12px 12px;
 }
 :root body #app .message.own .message-bubble {
-  background-color: var(--kraft) !important;
-  border-color: var(--beige-300) !important;
+  background-color: var(--tint) !important;
+  border-color: var(--accent-300) !important;
   border-radius: 12px 4px 12px 12px;
 }
 :root body #app :is(.primary, .send-button, .capsule-next-action button),
 :root body :is(.tutorial-actions > button:first-child, #modal .primary) {
-  background-color: var(--kraft) !important;
+  background-color: var(--tint) !important;
   background-image: var(--grain) !important;
-  border: 1px solid var(--beige-700) !important;
-  box-shadow: 0 1px 0 rgba(60, 45, 25, 0.12) !important;
+  border: 1px solid var(--accent-700) !important;
+  box-shadow: 0 1px 0 rgba(20, 60, 25, 0.12) !important;
   border-radius: 8px;
 }
 :root body #app :is(.primary, .send-button, .capsule-next-action button):hover {
-  background-color: var(--beige-200) !important;
+  background-color: var(--accent-200) !important;
 }
 :root body #app :is(.primary, .send-button, .capsule-next-action button) {
   transition:
@@ -163,10 +174,10 @@
 }
 /* The selected capsule is marked like a bookmark ribbon on the sheet edge. */
 :root body #app .room-list-row.selected {
-  background-color: var(--beige-100) !important;
-  border-color: var(--beige-500) !important;
+  background-color: var(--accent-100) !important;
+  border-color: var(--accent-500) !important;
   box-shadow:
-    inset 4px 0 var(--beige-700),
+    inset 4px 0 var(--accent-700),
     var(--lift) !important;
 }
 
