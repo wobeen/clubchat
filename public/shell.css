@@ -1,0 +1,363 @@
+/* Discord-style structure: 모임 rail | capsule list (series = category, rounds and delegated capsules = channels)
+   | conversation | capsule panel. Layout only; colours and paper come from white-theme.css and paper.css.
+   Loaded last. */
+
+/* Desktop grid */
+:root body #app .messenger-shell {
+  grid-template-columns: 72px 272px minmax(0, 1fr);
+  max-width: none;
+}
+:root body #app .messenger-shell.with-panel {
+  grid-template-columns: 72px 272px minmax(0, 1fr) 300px;
+}
+
+/* 모임 rail */
+:root body #app .org-rail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 0;
+  border-right: 1px solid var(--line) !important;
+}
+:root body #app .org-rail .rail-logo {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  border: 1px solid var(--line) !important;
+}
+:root body #app .rail-separator {
+  width: 28px;
+  height: 1px;
+  margin: 2px 0;
+  background-color: var(--line) !important;
+}
+:root body #app .org-icon {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  font-size: 17px;
+  font-weight: 800;
+  border: 1px solid var(--accent-700) !important;
+  background-color: var(--tint) !important;
+}
+/* Discord's pill beside the current server, in green. */
+:root body #app .org-icon.active::before {
+  content: '';
+  position: absolute;
+  left: -14px;
+  width: 4px;
+  height: 28px;
+  border-radius: 0 4px 4px 0;
+  background-color: var(--accent-700) !important;
+}
+:root body #app .org-icon:hover .rail-tooltip,
+:root body #app .org-icon:focus-visible .rail-tooltip {
+  display: block;
+}
+
+/* Capsule list (Discord's channel sidebar) */
+:root body #app .talk-list {
+  border-right: 1px solid var(--line) !important;
+}
+:root body #app .talk-list .list-top {
+  padding: 0 0 6px;
+}
+:root body #app .org-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 56px;
+  padding: 0 8px 0 16px;
+  border-bottom: 1px solid var(--line) !important;
+}
+:root body #app .org-header h1 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 800;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+:root body #app .org-header > div {
+  display: flex;
+  gap: 2px;
+}
+:root body #app .org-header .list-action {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+}
+:root body #app .org-pages {
+  display: grid;
+  gap: 2px;
+  padding: 8px 8px 4px;
+}
+:root body #app .org-page {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 38px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 14px;
+  text-align: left;
+  color: var(--muted) !important;
+}
+:root body #app .org-page .icon {
+  width: 18px;
+  height: 18px;
+}
+:root body #app .org-page.active {
+  font-weight: 700;
+  color: var(--ink) !important;
+  background-color: var(--accent-100) !important;
+}
+:root body #app .talk-list .room-search {
+  margin: 4px 10px;
+}
+:root body #app .talk-list .list-filters {
+  display: flex;
+  gap: 6px;
+  margin: 0;
+  padding: 6px 10px 2px;
+  overflow-x: auto;
+}
+:root body #app .talk-list .list-filters > button {
+  min-height: 32px;
+  padding: 4px 10px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+:root body #app .room-list-rows {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0 8px 12px;
+}
+:root body #app .series {
+  margin-top: 12px;
+}
+:root body #app .series-title {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  min-height: 30px;
+  padding: 2px 4px;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: left;
+  color: var(--muted) !important;
+  background-color: transparent !important;
+  border: 0 !important;
+}
+:root body #app .series-title span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* The chevron icon points right: expanded categories turn it down. */
+:root body #app .series-title .icon {
+  flex: none;
+  width: 12px;
+  height: 12px;
+  transform: rotate(90deg);
+  transition: transform 0.15s;
+}
+:root body #app .series-title.closed .icon {
+  transform: none;
+}
+:root body #app .room-list-rows > .room-list-row:first-child {
+  margin-top: 8px;
+}
+:root body #app .series + .room-list-row.channel {
+  margin-top: 8px;
+}
+:root body #app .room-list-row.channel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 38px;
+  margin: 1px 0;
+  padding: 6px 8px 6px calc(8px + var(--depth, 0) * 16px);
+  border-radius: 6px;
+  font-size: 14px;
+}
+/* Unselected channels are printed on the sidebar; only the current one is a paper slip with the ribbon. */
+:root body #app .room-list-row.channel:not(.selected) {
+  background-color: transparent !important;
+  background-image: none !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+:root body #app .room-list-row.channel:not(.selected):hover {
+  background-color: #f4f6f4 !important;
+}
+:root body #app .channel-mark {
+  flex: none;
+  width: 16px;
+  text-align: center;
+  font-weight: 700;
+  color: var(--muted) !important;
+}
+:root body #app .room-list-row.channel .room-list-title {
+  display: block;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 500;
+}
+:root body #app .room-list-row.channel.selected .room-list-title {
+  font-weight: 700;
+}
+:root body #app .room-list-row.channel .room-list-tag {
+  flex: none;
+  align-self: center;
+  margin: 0;
+  padding: 0;
+  font-size: 11px;
+  line-height: 1.2;
+  border: 0 !important;
+  background-color: transparent !important;
+  color: var(--muted) !important;
+}
+:root body #app .room-list-row.channel .room-list-tag.attention {
+  font-weight: 700;
+  color: var(--accent-700) !important;
+}
+:root body #app .room-list-row.channel .unread-badge {
+  display: grid;
+  place-items: center;
+  flex: none;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  font-size: 11px;
+}
+:root body #app .user-panel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  padding: 8px 10px;
+  border-top: 1px solid var(--line) !important;
+}
+:root body #app .user-panel-profile {
+  padding: 0;
+  border: 0 !important;
+  background-color: transparent !important;
+}
+:root body #app .user-panel-name {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  line-height: 1.25;
+}
+:root body #app .user-panel-name strong {
+  font-size: 13px;
+}
+:root body #app .user-panel-name small {
+  font-size: 11px;
+  color: var(--muted) !important;
+}
+:root body #app .user-panel .icon-button {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+}
+
+/* Conversation header (Discord's channel header): # name │ topic, panel toggle on the right. */
+:root body #app .room-header .channel-mark {
+  width: 24px;
+  font-size: 22px;
+  font-weight: 600;
+}
+:root body #app .desktop-ui .room-header {
+  min-height: 56px;
+  padding: 8px 14px;
+}
+:root body #app .desktop-ui .room-heading {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  min-width: 0;
+}
+:root body #app .desktop-ui .room-heading h1 {
+  flex: none;
+  font-size: 17px;
+  white-space: nowrap;
+}
+:root body #app .desktop-ui .room-heading p {
+  min-width: 0;
+  padding-left: 10px;
+  border-left: 1px solid var(--line);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+:root body #app .room-header-actions .icon-button.active {
+  background-color: var(--accent-100) !important;
+}
+
+/* Capsule panel (Discord's member list): state, relations, delegation and people. */
+:root body #app .capsule-panel {
+  min-height: 0;
+  overflow-y: auto;
+  padding: 14px 16px;
+  border-left: 1px solid var(--line) !important;
+  overflow-wrap: anywhere;
+}
+:root body #app .capsule-panel .settings-links {
+  display: grid;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+/* Phone: rail + capsule list side by side; a capsule opens full screen; pages get a back button. */
+:root body #app .android-home {
+  flex-direction: row;
+}
+:root body #app .android-home .org-rail {
+  flex: none;
+  width: 64px;
+}
+:root body #app .android-home .android-list {
+  flex: 1;
+  min-width: 0;
+}
+:root body #app .android-ui .room-list-row.channel {
+  min-height: 44px;
+}
+:root body #app .android-list .list-top {
+  padding: 0 0 6px;
+}
+:root body #app .android-page-header {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--line) !important;
+}
+:root body #app .android-page-header h1 {
+  font-size: 18px;
+}
+:root body #app .android-page .android-workspace {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}

@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { getCapsuleAction, renderCapsuleNavigation, renderCapsuleOverview } from '../public/capsule-ui.js';
-import { renderRoomList } from '../public/messenger-layouts.js';
+import { capsuleSeries, renderRoomList } from '../public/messenger-layouts.js';
 
 const capsule = (overrides = {}) => ({
   id: 'parent',
@@ -30,15 +30,39 @@ const escape = (x) =>
 function list(state, listFilter) {
   return renderRoomList({
     state,
+    page: 'meeting',
     listFilter,
     listSearch: '',
     activeId: '',
     esc: escape,
     icon: () => '',
+    avatar: () => '',
     btn: (action, label, cls, attrs) => `<button ${attrs || ''}>${label}</button>`,
     canRead: (m, id) => m.memberIds.includes(id),
   });
 }
+
+test('안건 묶음은 회차를 차례로 세고 하위 캡슐을 위임한 회차 아래에 둔다', () => {
+  const first = capsule({ id: 'r1', status: 'confirmed' }),
+    child = capsule({ id: 'c1', parentId: 'r1', status: 'confirmed' }),
+    second = capsule({ id: 'r2', previousId: 'r1', status: 'open' }),
+    lone = capsule({ id: 'solo', status: 'open' });
+  const series = capsuleSeries([second, lone, child, first]);
+  assert.equal(series.length, 2);
+  const festival = series.find((s) => s.root.id === 'r1');
+  assert.deepEqual(
+    festival.rows.map((r) => [r.m.id, r.depth, r.round]),
+    [
+      ['r1', 0, 1],
+      ['c1', 1, 0],
+      ['r2', 0, 2],
+    ],
+  );
+  assert.deepEqual(
+    series.find((s) => s.root.id === 'solo').rows.map((r) => r.round),
+    [0],
+  );
+});
 
 test('하위 대기 중에도 내 확인을 먼저 안내하고 완료한 하위는 대기로 세지 않는다', () => {
   const parent = capsule(),

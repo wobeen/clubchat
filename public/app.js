@@ -83,10 +83,15 @@ const mobileQuery = window.matchMedia('(max-width: 700px)');
 let mobileScreen = requested ? 'room' : 'list',
   listFilter = 'all',
   listSearch = '',
-  searchOpen = false;
+  searchOpen = false,
+  panelOpen = true;
+const collapsedSeries = new Set();
+// The capsule panel sits beside the conversation only on wide screens; elsewhere it opens as a drawer.
+const panelQuery = window.matchMedia('(min-width: 1100px)');
 function useAndroid() {
   return isAndroidRoute || mobileQuery.matches;
 }
+const sidePanel = () => !useAndroid() && panelQuery.matches;
 let delegationSelection = new Set(),
   delegationMembers = new Set(),
   creationMembers = new Set(),
@@ -273,11 +278,14 @@ function layoutContext() {
     listSearch,
     searchOpen,
     mobileScreen,
+    panelOpen,
+    collapsedSeries,
     esc,
     icon,
     btn,
     avatar,
     canRead,
+    panelContent: m && page === 'meeting' && sidePanel() ? renderCapsulePanel(m) : '',
     roomContent: m
       ? renderMeeting(m)
       : empty(
@@ -308,7 +316,15 @@ function render() {
 }
 function renderMeeting(m) {
   const access = canRead(m, state.profileId);
-  const header = `<header class="room-header">${btn('room-back', icon('back'), 'room-back', 'aria-label="캡슐 목록으로 돌아가기"')}${groupAvatar(m, { state, esc })}<div class="room-heading"><h1>${esc(m.title)}</h1><p>${esc(state.organization)} · ${labels[m.status]}</p></div><div class="room-header-actions">${btn('room-info', icon('menu'), 'icon-button', 'aria-label="캡슐 정보"')}</div></header>`;
+  const panelToggle = sidePanel()
+    ? btn(
+        'room-info',
+        icon('users'),
+        `icon-button ${panelOpen ? 'active' : ''}`,
+        `data-toggle="1" aria-pressed="${panelOpen}" aria-label="캡슐 정보·참여자 패널" title="캡슐 정보·참여자 패널"`,
+      )
+    : btn('room-info', icon('menu'), 'icon-button', 'aria-label="캡슐 정보"');
+  const header = `<header class="room-header">${btn('room-back', icon('back'), 'room-back', 'aria-label="캡슐 목록으로 돌아가기"')}<span class="channel-mark" aria-hidden="true">${m.parentId ? '↳' : '#'}</span><div class="room-heading"><h1>${esc(m.title)}</h1><p>${esc(m.description || state.organization)} · ${labels[m.status]}</p></div><div class="room-header-actions">${panelToggle}</div></header>`;
   const navigation =
     renderCapsuleNavigation(state, m, { view, errorCount: validationErrors(state, m).length }) +
     (!useAndroid() && access && m.draft
@@ -585,16 +601,34 @@ function settingsDialog() {
     btn('close', '닫기', 'primary'),
   );
 }
-/** Side panel (drawer) with everything about the capsule that is not the conversation itself. */
-function roomInfoDialog() {
-  const m = meeting();
+/**
+ * Everything about the capsule that is not the conversation: state, relations, delegation, privacy, people.
+ * Wide screens show it beside the conversation (Discord's member list); narrow screens open it as a drawer.
+ */
+function renderCapsulePanel(m) {
   const participant = canRead(m, state.profileId);
   const facilitator = state.profileId === (m.facilitatorId || m.memberIds[0]);
-  openModal(
-    '캡슐 정보',
-    `<div class="settings-profile">${groupAvatar(m, { state, esc })}<div><strong>${esc(m.title)}</strong><p>${esc(m.description)}</p></div></div>${renderCapsuleOverview(state, m, { errorCount: participant ? validationErrors(state, m).length : 0 })}${participant && ['open', 'review'].includes(m.status) ? `<div class="drawer-actions">${btn('delegate', icon('branch') + ' 하위 캡슐 만들기', 'primary')}<p class="form-note">고른 메시지와 담당 멤버만 하위 캡슐로 넘어가요. 하위의 결론만 이 캡슐로 돌아와요.</p></div>` : ''}<p class="form-note">${icon('shield')} 메시지는 참여자에게만 보여요.</p><div class="form-section-label">대화 상대 <span>${m.memberIds.length}명</span></div><div class="participant-list">${m.memberIds.map((id) => `<div>${avatar(id, 'small')}<span>${esc(memberName(state, id))}</span><small>${m.confirmations.includes(id) ? '✓ 확인 완료' : id === state.profileId ? '나' : '참여자'}</small></div>`).join('')}</div><div class="settings-links">${['open', 'review'].includes(m.status) && facilitator ? btn('policy', '참여 · 확인 대상 관리', 'outline') + btn('disposition', '하위 캡슐 보류 · 취소', 'outline') : ''}${btn('invite', icon('link') + ' 초대 링크')}${repo.remote ? '' : btn('settings', icon('users') + ' 시연 참여자 전환')}</div>`,
-    btn('close', '닫기', 'primary'),
-  );
+  const person = (id) =>
+    `<div>${avatar(id, 'small')}<span>${esc(memberName(state, id))}</span><small>${id === state.profileId ? '나' : ''}</small></div>`;
+  const group = (label, ids) =>
+    ids.length
+      ? `<div class="form-section-label">${label} <span>— ${ids.length}</span></div><div class="participant-list">${ids.map(person).join('')}</div>`
+      : '';
+  const targets = m.status === 'review' ? getConfirmationTargets(m) : [];
+  const people = targets.length
+    ? group(
+        '확인 대기',
+        targets.filter((id) => !m.confirmations.includes(id)),
+      ) +
+      group(
+        '확인 대상 아님',
+        m.memberIds.filter((id) => !targets.includes(id) && !m.confirmations.includes(id)),
+      )
+    : group('참여자', m.memberIds);
+  return `<div class="settings-profile">${groupAvatar(m, { state, esc })}<div><strong>${esc(m.title)}</strong><p>${esc(m.description)}</p></div></div>${renderCapsuleOverview(state, m, { errorCount: participant ? validationErrors(state, m).length : 0 })}${participant && ['open', 'review'].includes(m.status) ? `<div class="panel-actions">${btn('delegate', icon('branch') + ' 하위 캡슐 만들기', 'primary')}<p class="form-note">고른 메시지와 담당 멤버만 하위 캡슐로 넘어가요. 하위의 결론만 이 캡슐로 돌아와요.</p></div>` : ''}<p class="form-note">${icon('shield')} 메시지는 참여자에게만 보여요.</p>${people}<div class="settings-links">${['open', 'review'].includes(m.status) && facilitator ? btn('policy', '참여 · 확인 대상 관리', 'outline') + btn('disposition', '하위 캡슐 보류 · 취소', 'outline') : ''}${btn('invite', icon('link') + ' 초대 링크')}${repo.remote ? '' : btn('settings', icon('users') + ' 시연 참여자 전환')}</div>`;
+}
+function roomInfoDialog() {
+  openModal('캡슐 정보', renderCapsulePanel(meeting()), btn('close', '닫기', 'primary'));
   modal.classList.add('drawer');
 }
 const workflow = createWorkflowActions({
@@ -663,13 +697,11 @@ document.addEventListener('click', async (e) => {
       render();
       return;
     }
-    if (action === 'android-tab') {
-      page = target.dataset.page;
-      mobileScreen = 'list';
-      const url = new URL(location.href);
-      url.searchParams.delete('capsule');
-      history.replaceState({ screen: 'list' }, '', url);
+    if (action === 'toggle-series') {
+      const id = target.dataset.id;
+      if (!collapsedSeries.delete(id)) collapsedSeries.add(id);
       render();
+      document.querySelector(`.series-title[data-id="${CSS.escape(id)}"]`)?.focus();
       return;
     }
     if (action === 'room-back') {
@@ -698,7 +730,12 @@ document.addEventListener('click', async (e) => {
       return;
     }
     if (action === 'room-info') {
-      roomInfoDialog();
+      // Wide screens: the header button shows/hides the side panel, the stage chip only ever opens it.
+      if (sidePanel()) {
+        panelOpen = target.dataset.toggle ? !panelOpen : true;
+        render();
+        if (panelOpen) document.querySelector('.capsule-panel .capsule-overview')?.scrollIntoView({ block: 'nearest' });
+      } else roomInfoDialog();
       return;
     }
     if (action === 'close') {
@@ -1173,9 +1210,10 @@ async function checkScheduled() {
   }
 }
 setInterval(checkScheduled, 30000);
-mobileQuery.addEventListener('change', () => {
-  if (!composing) render();
-});
+for (const query of [mobileQuery, panelQuery])
+  query.addEventListener('change', () => {
+    if (!composing) render();
+  });
 window.addEventListener('popstate', () => {
   if (actionBusy) return;
   const id = new URLSearchParams(location.search).get('capsule');

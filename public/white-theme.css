@@ -57,7 +57,7 @@ body {
   filter: grayscale(1);
 }
 /* Rails, list panels and the conversation backdrop stay white. */
-:root body #app :is(.talk-rail, .talk-list, .android-bottom-nav, .android-list, .room-list-rows) {
+:root body #app :is(.talk-rail, .talk-list, .android-list, .room-list-rows) {
   background-color: var(--paper) !important;
 }
 :root body #app :is(.messages, .talk-main, .chat-room) {
@@ -70,12 +70,12 @@ body {
 :root body :is(.room-list-row.selected, .room-menu-views > button.active) {
   box-shadow: inset 3px 0 var(--accent-700) !important;
 }
-:root body :is(.list-filters > button.active, .talk-rail button.active, .android-bottom-nav > button.active) {
+:root body :is(.list-filters > button.active, .talk-rail button.active) {
   outline: 1px solid var(--accent-500);
   outline-offset: -1px;
   font-weight: 700;
 }
-:root body #app :is(.list-filters > button.active, .talk-rail button.active, .android-bottom-nav > button.active) {
+:root body #app :is(.list-filters > button.active, .talk-rail button.active) {
   background-color: var(--accent-100) !important;
 }
 :root body .capsule-view-switch button[aria-current='page'] {
@@ -96,7 +96,6 @@ body {
   :is(
     .muted,
     .room-heading p,
-    .room-list-preview,
     .message-meta time,
     .item-meta,
     .nothing,
@@ -133,7 +132,7 @@ dialog::backdrop {
 :root body #app :is(.primary, .send-button, .capsule-next-action button) {
   border-color: var(--accent-700) !important;
 }
-:root body #app :is(.room-list-preview, .message-meta time, .item-meta, .nothing) {
+:root body #app :is(.message-meta time, .item-meta, .nothing) {
   color: var(--muted) !important;
 }
 /* Audit A-06/A-07: form fields need a 3:1 boundary and readable placeholders. */

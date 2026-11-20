@@ -78,66 +78,6 @@ button:hover {
   height: 25px;
   stroke-width: 2;
 }
-.rail-main,
-.rail-bottom {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 25px;
-}
-.rail-main > button,
-.rail-bottom > button {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 8px;
-  width: 44px;
-  height: 44px;
-  color: #959595;
-}
-.rail-main > button:hover,
-.rail-bottom > button:hover {
-  background: #e3e3e3;
-}
-.rail-main > button > .icon {
-  width: 25px;
-  height: 25px;
-  stroke-width: 1.6;
-}
-.rail-main > button.active {
-  color: #202020;
-}
-.rail-main > button.active > .icon {
-  fill: #262626;
-  stroke: #262626;
-}
-.rail-main > button.active[data-page='meeting'] .icon path + path {
-  stroke: #ededed;
-}
-.rail-main > button.active:after {
-  content: '';
-  position: absolute;
-  left: -14px;
-  width: 3px;
-  height: 19px;
-  background: #2d2d2d;
-  border-radius: 2px;
-}
-.rail-bottom {
-  margin-top: auto;
-  gap: 13px;
-}
-.rail-bottom .icon {
-  width: 23px;
-  height: 23px;
-}
-.rail-profile > .avatar {
-  border-radius: 11px;
-  width: 32px;
-  height: 32px;
-  font-size: 12px;
-}
 .rail-tooltip {
   display: none;
   position: absolute;
@@ -152,9 +92,6 @@ button:hover {
   pointer-events: none;
   box-shadow: 0 2px 7px #0002;
 }
-.rail-main > button:hover .rail-tooltip {
-  display: block;
-}
 .talk-list {
   display: flex;
   flex-direction: column;
@@ -166,34 +103,6 @@ button:hover {
 .list-top {
   padding: 34px 22px 15px;
   flex-shrink: 0;
-}
-.list-title {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 25px;
-}
-.list-title > h1 {
-  font-size: 25px;
-  letter-spacing: -1px;
-  color: #111;
-  font-weight: 750;
-  display: flex;
-  align-items: center;
-  gap: 9px;
-}
-.itda-label {
-  font-size: 8px;
-  font-weight: 700;
-  letter-spacing: 1.5px;
-  background: #fff8be;
-  color: #9d8c29;
-  padding: 5px 6px;
-  border-radius: 5px;
-}
-.list-title > div {
-  display: flex;
-  gap: 12px;
 }
 .list-action {
   padding: 0;
@@ -208,9 +117,6 @@ button:hover {
   width: 22px;
   height: 22px;
   stroke-width: 1.7;
-}
-.list-settings {
-  display: none;
 }
 .list-filters {
   display: flex;
@@ -323,14 +229,6 @@ button:hover {
   font-size: 16px;
   border-radius: 16px;
 }
-.room-list-copy {
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-  min-width: 0;
-  flex: 1;
-  align-self: center;
-}
 .room-list-title {
   font-size: 13px;
   color: #242529;
@@ -341,42 +239,6 @@ button:hover {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-.room-list-title > small {
-  font-size: 11px;
-  font-weight: 400;
-  color: #a2a2a2;
-  letter-spacing: 0;
-}
-.room-list-title > .icon {
-  width: 12px;
-  height: 12px;
-  color: #a5b18a;
-  margin-left: auto;
-}
-.room-list-preview {
-  font-size: 12px;
-  line-height: 1.5;
-  color: #939393;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  overflow-wrap: anywhere;
-}
-.room-list-meta {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 10px;
-  align-self: flex-start;
-  padding-top: 2px;
-  flex-shrink: 0;
-}
-.room-list-meta time {
-  font-size: 9px;
-  color: #a7a7a7;
-  white-space: nowrap;
 }
 .unread-badge {
   background: #ff5a2a;
@@ -436,38 +298,6 @@ button:hover {
 .room-search .icon-button .icon {
   width: 13px;
   height: 13px;
-}
-.list-bottom {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  padding: 16px 20px;
-  background: #fafafa;
-  border-top: 1px solid #efefef;
-  color: #b3b3b3;
-  font-size: 8px;
-  flex-shrink: 0;
-}
-.mini-brand {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  color: #a3a3a3;
-  font-size: 11px;
-  font-weight: 600;
-  white-space: nowrap;
-}
-.mini-brand > .icon {
-  width: 14px;
-  height: 14px;
-}
-.list-bottom p {
-  font-size: 8px;
-}
-.list-bottom > span:last-child {
-  margin-left: auto;
-  white-space: nowrap;
-  font-size: 7px;
 }
 .list-empty {
   font-size: 12px;
@@ -1269,12 +1099,6 @@ button:hover {
   overflow: hidden;
   box-shadow: 0 0 0 1px #e9e9e9;
 }
-.android-content {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-}
 .android-list {
   min-height: 0;
   flex: 1;
@@ -1284,15 +1108,6 @@ button:hover {
 .android-ui .list-top {
   padding: 24px 23px 14px;
 }
-.android-ui .list-title {
-  margin-bottom: 23px;
-}
-.android-ui .list-title h1 {
-  font-size: 27px;
-}
-.android-ui .list-title > div {
-  gap: 19px;
-}
 .android-ui .list-action {
   width: 25px;
   height: 30px;
@@ -1300,9 +1115,6 @@ button:hover {
 .android-ui .list-action .icon {
   width: 24px;
   height: 24px;
-}
-.android-ui .list-settings {
-  display: none;
 }
 .android-ui .list-filters {
   gap: 8px;
@@ -1336,69 +1148,12 @@ button:hover {
 .android-ui .room-list-title {
   font-size: 14px;
 }
-.android-ui .room-list-title > small {
-  font-size: 12px;
-}
-.android-ui .room-list-preview {
-  font-size: 13px;
-}
-.android-ui .room-list-meta time {
-  font-size: 10px;
-}
 .android-ui .unread-badge {
   font-size: 11px;
   padding: 2px 6px;
 }
 .android-ui .room-list-tag {
   font-size: 9px;
-}
-.android-ui .list-bottom {
-  padding: 14px 23px;
-  background: #fffdf3;
-  border-color: #f9f6e9;
-}
-.android-bottom-nav {
-  display: flex;
-  align-items: center;
-  justify-content: space-around;
-  min-height: 70px;
-  padding: 9px 7px calc(9px + env(safe-area-inset-bottom));
-  border-top: 1px solid #e9e9e9;
-  background: #fafafa;
-  flex-shrink: 0;
-}
-.android-bottom-nav > button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-  gap: 5px;
-  flex: 1;
-  min-width: 48px;
-  min-height: 48px;
-  color: #a4a4a4;
-  border-radius: 7px;
-}
-.android-bottom-nav > button > .icon {
-  width: 24px;
-  height: 24px;
-  stroke-width: 1.6;
-}
-.android-bottom-nav > button > span {
-  font-size: 9px;
-}
-.android-bottom-nav > button.active {
-  color: #292929;
-}
-.android-bottom-nav > button.active > .icon {
-  stroke-width: 2;
-}
-.android-bottom-nav > button.active[data-page='meeting'] > .icon {
-  fill: #303030;
-  stroke: #303030;
-}
-.android-bottom-nav > button.active[data-page='meeting'] > .icon path + path {
-  stroke: #fafafa;
 }
 .android-page-header {
   display: flex;
@@ -1899,18 +1654,12 @@ button:hover {
   .room-list-title {
     font-size: 15px;
   }
-  .room-list-preview {
-    font-size: 13px;
-  }
   .group-avatar {
     width: 55px;
     height: 55px;
   }
   .group-avatar i {
     font-size: 8px;
-  }
-  .room-list-meta time {
-    font-size: 10px;
   }
   .room-header {
     padding: 23px 34px;
@@ -1956,17 +1705,8 @@ button:hover {
   .talk-rail {
     padding-top: 27px;
   }
-  .talk-rail .rail-main > button.active:after {
-    left: -8px;
-  }
   .list-top {
     padding: 30px 17px 12px;
-  }
-  .list-title h1 {
-    font-size: 23px;
-  }
-  .list-title > div {
-    gap: 10px;
   }
   .list-filters {
     gap: 5px;
@@ -1984,12 +1724,6 @@ button:hover {
     font-size: 12px;
     gap: 3px;
   }
-  .room-list-preview {
-    font-size: 11px;
-  }
-  .room-list-meta time {
-    font-size: 8px;
-  }
   .group-avatar {
     width: 43px;
     height: 43px;
@@ -1997,12 +1731,6 @@ button:hover {
   }
   .group-avatar i {
     font-size: 6px;
-  }
-  .list-bottom {
-    padding: 14px;
-  }
-  .list-bottom p {
-    display: none;
   }
   .room-header {
     padding: 18px 17px;
@@ -2104,9 +1832,6 @@ button:hover {
   }
   .android-ui .room-list-title {
     font-size: 13px;
-  }
-  .android-ui .room-list-preview {
-    font-size: 12px;
   }
   .android-ui .group-avatar {
     width: 47px;

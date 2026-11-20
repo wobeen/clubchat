@@ -13,10 +13,7 @@
 :root body {
   background: var(--paper) !important;
 }
-:root
-  body
-  #app
-  :is(.talk-rail, .talk-list, .android-bottom-nav, .android-list, .room-list-rows, .messages, .talk-main, .chat-room) {
+:root body #app :is(.talk-rail, .talk-list, .android-list, .room-list-rows, .messages, .talk-main, .chat-room) {
   background-color: var(--paper) !important;
   background-image: none !important;
 }
@@ -282,18 +279,19 @@
   overflow-y: auto;
   overflow-wrap: anywhere;
 }
-:root body #modal.drawer .capsule-overview {
+/* Capsule panel content: the same markup in the drawer and in the desktop side panel. */
+:root body :is(#modal.drawer, #app .capsule-panel) .capsule-overview {
   margin: 4px 0 16px;
 }
-:root body #modal.drawer .capsule-progress {
+:root body :is(#modal.drawer, #app .capsule-panel) .capsule-progress {
   flex-wrap: wrap;
   row-gap: 6px;
   margin: 14px 0 6px;
 }
-:root body #modal.drawer .drawer-actions {
+:root body :is(#modal.drawer, #app .capsule-panel) .panel-actions {
   margin: 0 0 14px;
 }
-:root body #modal.drawer .drawer-actions .primary {
+:root body :is(#modal.drawer, #app .capsule-panel) .panel-actions .primary {
   width: 100%;
   min-height: 44px;
 }

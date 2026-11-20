@@ -57,31 +57,13 @@ body {
   color: #e0ede5;
   border: 0;
 }
-.talk-rail .rail-logo,
-.talk-rail .rail-main > button.active {
+.talk-rail .rail-logo {
   color: #d9f5dc;
   background: #31574c;
 }
-.talk-rail .rail-main > button,
-.talk-rail .rail-bottom > button {
-  color: #c1d4c9;
-}
 .talk-list,
-.android-content,
 .android-list {
   background: #faf9f3;
-}
-.list-title h1 {
-  color: #223b39;
-  letter-spacing: -1px;
-}
-.itda-label {
-  color: #17665e;
-}
-.capsule-list-intro {
-  font-size: 12px;
-  color: #526d64;
-  margin: -10px 0 18px;
 }
 .list-filters > button.active {
   background: #dcece1;
@@ -113,15 +95,6 @@ body {
 }
 .room-list-title {
   color: #203c35;
-}
-.room-list-meta time,
-.android-ui .room-list-meta time {
-  font-size: 11px;
-  color: #687568;
-}
-.list-bottom {
-  background: #f0f0e5 !important;
-  border-color: #e0e4d6 !important;
 }
 .chat-room.chat-view,
 .android-ui .chat-room.chat-view {
@@ -386,9 +359,6 @@ body {
   padding: 10px 16px;
   font-size: 12px;
 }
-.android-ui .capsule-list-intro {
-  margin: -10px 0 14px;
-}
 .android-ui .capsule-pin > .status-badge {
   font-size: 11px;
 }
@@ -421,9 +391,6 @@ body {
 .android-ui .send-button,
 .android-ui .event-actions .outline {
   min-height: 44px;
-}
-.android-ui .android-bottom-nav > button > span {
-  font-size: 11px;
 }
 .status-badge.deferred,
 .room-list-tag.deferred {

@@ -32,7 +32,7 @@ for (const name of [
   'remote-repository.js',
 ])
   routes['/' + name] = [name, 'text/javascript'];
-for (const name of ['capsule.css', 'workflow.css', 'white-theme.css', 'paper.css'])
+for (const name of ['capsule.css', 'workflow.css', 'white-theme.css', 'paper.css', 'shell.css'])
   routes['/' + name] = [name, 'text/css'];
 const host = process.argv.includes('--lan') ? '0.0.0.0' : '127.0.0.1';
 // Development stand-in for the production reverse proxy: forwards /v1 to the API so the page and the
