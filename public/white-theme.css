@@ -1,20 +1,21 @@
-/* White surfaces; green only on objects (primary actions, own messages, selection, badges, focus). */
+/* White surfaces; the logo's blue only on objects (primary actions, own messages, selection, badges, focus).
+   Accent values come from the ITDA logo: light #a6d1fe, bright #127bfe, royal #0045de. */
 :root {
   color-scheme: light;
   --paper: #ffffff;
-  --accent-50: #f2faf1;
-  --accent-100: #e2f5df;
-  --accent-200: #c8ecc2;
-  --accent-300: #a3dc9b;
-  --accent-500: #4fbf47;
-  --accent-700: #2b7a27;
-  --ink: #1f2421;
-  --muted: #5f6661;
-  --line: #e4e7e4;
+  --accent-50: #f3f8ff;
+  --accent-100: #e4f0ff;
+  --accent-200: #cfe4ff;
+  --accent-300: #a6d1fe;
+  --accent-500: #127bfe;
+  --accent-700: #0045de;
+  --ink: #1e2330;
+  --muted: #5e6573;
+  --line: #e3e6ec;
   /* Form-field boundary: neutral grey with >=3:1 contrast on white. */
-  --field-edge: #7d867f;
+  --field-edge: #7b8292;
   --blue: var(--accent-700);
-  --blue-hover: #1f5f1c;
+  --blue-hover: #0036b0;
   --pale-blue: var(--accent-100);
   --light-blue: var(--paper);
   --bg: var(--paper);
@@ -108,7 +109,7 @@ body {
   border: 1px solid var(--ink) !important;
 }
 dialog::backdrop {
-  background: rgb(20 50 25 / 18%);
+  background: rgb(2 30 90 / 18%);
 }
 :root body #app .capsule-view-switch button {
   border-bottom-color: transparent !important;

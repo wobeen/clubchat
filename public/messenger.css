@@ -73,11 +73,6 @@ button:hover {
   background: var(--yellow);
   color: #292625;
 }
-.rail-logo .icon {
-  width: 25px;
-  height: 25px;
-  stroke-width: 2;
-}
 .rail-tooltip {
   display: none;
   position: absolute;

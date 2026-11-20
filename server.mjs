@@ -8,7 +8,7 @@ const routes = {
   '/domain.js': ['domain.js', 'text/javascript'],
   '/repository.js': ['repository.js', 'text/javascript'],
   '/styles.css': ['styles.css', 'text/css'],
-  '/favicon.svg': ['favicon.svg', 'image/svg+xml'],
+  '/favicon.png': ['favicon.png', 'image/png'],
 };
 Object.assign(routes, {
   '/android': ['index.html', 'text/html'],
@@ -34,6 +34,8 @@ for (const name of [
   routes['/' + name] = [name, 'text/javascript'];
 for (const name of ['capsule.css', 'workflow.css', 'white-theme.css', 'paper.css', 'shell.css'])
   routes['/' + name] = [name, 'text/css'];
+for (const name of ['itda-mark.png', 'itda-logo.png', 'itda-icon-192.png', 'itda-icon-512.png'])
+  routes['/brand/' + name] = ['brand/' + name, 'image/png'];
 const host = process.argv.includes('--lan') ? '0.0.0.0' : '127.0.0.1';
 // Development stand-in for the production reverse proxy: forwards /v1 to the API so the page and the
 // API share one origin (cookies, Origin check). Example: ITDA_API_URL=http://127.0.0.1:8080

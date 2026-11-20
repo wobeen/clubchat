@@ -147,7 +147,7 @@ export function renderRoomList(ctx) {
 function renderOrgRail(ctx) {
   const { state, esc, btn, icon } = ctx;
   const org = state.organization;
-  return `<nav class="talk-rail org-rail" aria-label="모임"><a class="rail-logo" href="/" aria-label="잇다 홈">${icon('link')}</a><span class="rail-separator" aria-hidden="true"></span>${
+  return `<nav class="talk-rail org-rail" aria-label="모임"><a class="rail-logo" href="/" aria-label="잇다 홈"><img src="/brand/itda-mark.png" alt="" width="40" height="40"></a><span class="rail-separator" aria-hidden="true"></span>${
     org
       ? btn(
           'workspace',
