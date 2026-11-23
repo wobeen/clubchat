@@ -74,6 +74,9 @@ export function createGeminiExtractor({
                 responseSchema: toGeminiSchema(OUTPUT_SCHEMA),
                 maxOutputTokens: MAX_OUTPUT_TOKENS,
                 temperature: 0,
+                // Gemini 3 models think by default; thought tokens count against maxOutputTokens and add tens of
+                // seconds per call. Extraction needs little reasoning, so keep it short.
+                thinkingConfig: { thinkingLevel: 'low' },
               },
             }),
             signal: controller.signal,

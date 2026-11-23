@@ -101,20 +101,26 @@ node eval/extraction/selftest.mjs                 # 평가 도구 자체 검증
 계약의 `Extractor`(`extract(ExtractInput) → { candidates, usage, model }`)를 사례에 실행해 같은 채점으로 split·태그별 점수를 낸다. 지표: 정밀도·재현율·F1, 날짜 정확도, 모호 사례 무날조율, 사례당 평균 비용.
 
 ```sh
-# 실제 모델(서버 모듈 server/src/extract/anthropic.ts 의 createAnthropicExtractor 를 동적 import)
-node --import tsx eval/extraction/run-ai.mjs --split dev --env-file .env
+# 실제 모델(서버 모듈 server/src/extract/anthropic.ts·gemini.ts 를 동적 import). tsx 는 server/ 에 설치돼 있다.
+node --import ./server/node_modules/tsx/dist/loader.mjs eval/extraction/run-ai.mjs --split dev --env-file .env
+# Gemini 무료 등급(가상 평가 데이터만): 모델당 하루 20회라 --limit 와 --cache 로 며칠에 나눠 돌린다
+node --import ./server/node_modules/tsx/dist/loader.mjs eval/extraction/run-ai.mjs --provider gemini \
+  --model gemini-3-flash-preview --split dev --concurrency 1 --retries 1 --limit 20 --cache eval/extraction/runs/<이름>
 # 미리 만든 후보 JSON 으로 서버 모듈 없이 실행
 node eval/extraction/run-ai.mjs --mock candidates.json --split all
 # 이전 실행 폴더를 캐시로 재채점(이미 있는 사례는 API 호출 없음)
-node --import tsx eval/extraction/run-ai.mjs --split dev --cache eval/extraction/runs/<시각>
+node --import ./server/node_modules/tsx/dist/loader.mjs eval/extraction/run-ai.mjs --split dev --cache eval/extraction/runs/<시각>
 ```
 
 | 옵션 | 설명 |
 | --- | --- |
 | `--split dev\|test\|all` | 평가 사례(기본 `dev`). `test`는 통과선 확인에만 쓴다 |
 | `--mock <file.json>` | `{ "<사례 id>": { "candidates": {...}, "usage": {...} } }`. 후보 객체만 써도 된다. 없는 사례는 빈 출력 |
-| `--env-file <path>` | `ANTHROPIC_API_KEY`(와 `AI_MODEL`, `AI_PRICE_*`)만 읽는다. 키는 출력·캐시·JSON 에 남기지 않고 오류 문구에서도 가린다 |
-| `--cache <dir>` | 이전 `runs/<시각>/` 폴더. 있는 사례는 API 를 다시 부르지 않는다 |
+| `--env-file <path>` | `ANTHROPIC_API_KEY`·`GEMINI_API_KEY`(와 `AI_MODEL`, `AI_PRICE_*`)만 읽는다. 키는 출력·캐시·JSON 에 남기지 않고 오류 문구에서도 가린다 |
+| `--cache <dir>` | 실행 폴더. 있는 사례는 API 를 다시 부르지 않고, 새 결과도 이 폴더에 저장해 다음 실행이 이어서 부른다 |
+| `--provider anthropic\|gemini` | 제공자(기본 `anthropic`). `gemini`는 개발·평가 전용이고 기본 단가 0(무료 등급) |
+| `--limit <n>` | 새로 부를 사례 수 상한. 부르지 않은 사례와 429(하루 한도)로 멈춘 뒤의 사례는 **보류**로 두고 점수에서 뺀다 |
+| `--retries <n>`, `--timeout-ms <n>` | 429·5xx·시간 초과·네트워크 오류 재시도 횟수(3, 대기 5초부터 두 배), 호출 1건 제한 시간(60000) |
 | `--max-usd <n>` | 호출 전에 **예상 최대 비용**(입력은 글자 수+고정 오버헤드, 출력은 상한 전부, 단가 기본 $1/$5 per MTok)을 출력하고, 넘으면 호출 없이 중단한다(기본 1) |
 | `--json <path>` | 요약(전체·dev·test, 태그·종류별)을 JSON 으로 저장. 메시지 본문은 넣지 않는다 |
 | `--max-output-tokens`, `--model`, `--concurrency`, `--verbose` | 비용 예측용 출력 상한(2048), 모델 id, 동시 호출 수(3), 사례별 출력 |
