@@ -210,7 +210,7 @@ export async function main(argv) {
     );
     const est = estimateMaxCost(todo, { inPrice, outPrice, maxOutputTokens: opts.maxOutputTokens });
     console.log(
-      `호출 ${todo.length}건 (캐시 ${cases.length - todo.length}건) · 예상 최대 비용 $${est.toFixed(4)} (단가 입력 $${inPrice}/출력 $${outPrice} per MTok, 출력 상한 ${opts.maxOutputTokens}) · 한도 $${opts.maxUsd}`,
+      `호출 ${todo.length}건 (캐시 ${cases.length - uncached.length}건, 이번에 안 부름 ${uncached.length - todo.length}건) · 예상 최대 비용 $${est.toFixed(4)} (단가 입력 $${inPrice}/출력 $${outPrice} per MTok, 출력 상한 ${opts.maxOutputTokens}) · 한도 $${opts.maxUsd}`,
     );
     if (est > opts.maxUsd) {
       throw new Error(
