@@ -671,6 +671,7 @@ document.addEventListener('click', async (e) => {
     if (
       [
         'draft',
+        'draft-rules',
         'confirm',
         'delete-item',
         'start-scheduled',
@@ -798,19 +799,27 @@ document.addEventListener('click', async (e) => {
       render();
       return;
     }
-    if (action === 'draft') {
-      // Server mode asks the AI first; when it is unavailable the user is told and the rules are used.
+    if (action === 'draft' || action === 'draft-rules') {
+      if (modal.open) modal.close();
+      // Server mode asks the AI first. When it fails nothing is reflected yet: the user retries or chooses the
+      // rules, because messages organized by the rules can no longer be sent to the AI.
       let suggestion = null;
       let note = '기존 편집을 보존하고 새 대화를 반영했어요.';
-      if (repo.remote)
+      if (repo.remote && action === 'draft')
         try {
           toast('AI가 새 대화를 정리하고 있어요…');
           suggestion = await repo.suggestDraft(m.id);
           note = 'AI가 정리한 초안이에요. 근거와 담당·날짜를 꼭 확인해주세요.';
         } catch (error) {
-          if (['ai_unavailable', 'ai_budget_exceeded', 'rate_limited'].includes(error.code))
-            note = `${error.message} 규칙 기반(결정: · 할 일: 형식)으로 정리했어요.`;
-          else if (error.code !== 'domain_rule') throw error;
+          if (['ai_unavailable', 'ai_budget_exceeded', 'rate_limited'].includes(error.code)) {
+            openModal(
+              'AI가 정리하지 못했어요',
+              `<p>${esc(error.message)} 대화는 그대로 남아 있어요.</p><p>잠시 뒤 다시 시도하거나, 규칙 기반(결정: · 할 일: 형식)으로 정리할 수 있어요. 규칙으로 정리한 대화는 다시 AI로 정리하지 않아요.</p>`,
+              `${btn('draft-rules', '규칙으로 정리', 'outline')}${btn('draft', 'AI로 다시 시도', 'primary')}`,
+            );
+            return;
+          }
+          if (error.code !== 'domain_rule') throw error;
         }
       await run('extract-draft', m, suggestion ? { suggestionId: suggestion.id } : {}, () => {
         extractDraft(state, m, { expectedRevision: m.revision });
