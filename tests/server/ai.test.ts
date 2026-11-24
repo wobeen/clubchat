@@ -640,6 +640,8 @@ test('AI provider config: defaults, gemini key/model/free prices, and production
   );
   assert.equal(loadConfig({ ...baseEnv, AI_PROVIDER: 'gemini' }).ai!.apiKey, undefined, 'anthropic key is not reused');
   assert.equal(loadConfig({ ...baseEnv, AI_PROVIDER: 'gemini', AI_MODEL: 'm' }).ai!.model, 'm');
+  assert.equal(loadConfig({ ...baseEnv }).ai!.timeoutMs, 20_000);
+  assert.equal(loadConfig({ ...baseEnv, AI_TIMEOUT_MS: '90000' }).ai!.timeoutMs, 90_000);
   assert.throws(() => loadConfig({ ...baseEnv, AI_PROVIDER: 'gemini', NODE_ENV: 'production' }), /production/);
   assert.throws(() => loadConfig({ ...baseEnv, AI_PROVIDER: 'openai' }), /AI_PROVIDER/);
   assert.equal(loadConfig({ ...baseEnv, NODE_ENV: 'production', ANTHROPIC_API_KEY: 'a' }).ai!.provider, 'anthropic');

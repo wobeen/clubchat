@@ -12,6 +12,8 @@ export interface AiConfig {
   userHourlyLimit: number;
   priceInputPerMTok: number;
   priceOutputPerMTok: number;
+  /** One model call; Gemini's free tier can take close to a minute under load. */
+  timeoutMs: number;
 }
 export const defaultAiConfig: AiConfig = {
   provider: 'anthropic',
@@ -20,6 +22,7 @@ export const defaultAiConfig: AiConfig = {
   userHourlyLimit: 20,
   priceInputPerMTok: 1,
   priceOutputPerMTok: 5,
+  timeoutMs: 20_000,
 };
 
 export interface Config {
@@ -71,6 +74,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     userHourlyLimit: number('AI_USER_HOURLY_LIMIT', defaultAiConfig.userHourlyLimit, 0),
     priceInputPerMTok: number('AI_PRICE_INPUT_PER_MTOK', freeTier ? 0 : defaultAiConfig.priceInputPerMTok, 0),
     priceOutputPerMTok: number('AI_PRICE_OUTPUT_PER_MTOK', freeTier ? 0 : defaultAiConfig.priceOutputPerMTok, 0),
+    timeoutMs: number('AI_TIMEOUT_MS', defaultAiConfig.timeoutMs, 1000),
   };
   return {
     nodeEnv,

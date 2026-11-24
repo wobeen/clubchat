@@ -1,7 +1,9 @@
 // Local server mode: a persistent embedded PostgreSQL 16 (server/.dev-pg) plus the API with development login.
-// AI follows the usual env (AI_PROVIDER, GEMINI_API_KEY / ANTHROPIC_API_KEY, AI_MODEL). Gemini is for
-// synthetic data only (eval/scenarios via scripts/seed-scenarios.mjs), never real conversations.
-// Usage (from server/): npm run dev   then in the repo root: ITDA_API_URL=http://127.0.0.1:8080 npm start
+// AI follows the usual env (AI_PROVIDER, GEMINI_API_KEY / ANTHROPIC_API_KEY, AI_MODEL, AI_TIMEOUT_MS). Gemini is
+// for synthetic data only (eval/scenarios via scripts/seed-scenarios.mjs), never real conversations; its free
+// tier can take ~50 s under load, so use AI_TIMEOUT_MS=90000 with it.
+// Usage (from server/): AI_PROVIDER=gemini AI_TIMEOUT_MS=90000 npm run dev
+//   then in the repo root: ITDA_API_URL=http://127.0.0.1:8080 npm start, node scripts/seed-scenarios.mjs, open /?api
 import { spawn } from 'node:child_process';
 import { once } from 'node:events';
 import { existsSync } from 'node:fs';

@@ -91,6 +91,7 @@ sequenceDiagram
 | `AI_MODEL` | provider별 `claude-haiku-5-5` / `gemini-3.5-flash` | 모델 id |
 | `AI_MONTHLY_BUDGET_USD` | `10` | 월 상한(KST 월) |
 | `AI_USER_HOURLY_LIMIT` | `20` | 사용자당 시간당 요청 수 |
+| `AI_TIMEOUT_MS` | `20000` | 모델 호출 1건 제한 시간. Gemini 무료 등급은 몰릴 때 50초 넘게 걸려 개발에서는 늘려 쓴다 |
 | `AI_PRICE_INPUT_PER_MTOK` / `AI_PRICE_OUTPUT_PER_MTOK` | `1` / `5` | 비용 계산 단가(USD). 실제 요금보다 높게 잡아 상한을 지킨다 |
 
 ## 서버 모듈 (`server/src/extract/`)
