@@ -10,7 +10,8 @@
     "build": "tsc -p tsconfig.json",
     "start": "node dist/index.js",
     "test": "node --test --import tsx ../tests/server/*.test.ts",
-    "test:pg": "tsx scripts/test-pg.ts"
+    "test:pg": "tsx scripts/test-pg.ts",
+    "dev": "tsx scripts/dev.ts"
   },
   "dependencies": {
     "@fastify/websocket": "^11.3.7",

@@ -1,5 +1,6 @@
 node_modules/
 server/dist/
+server/.dev-pg/
 test-results/
 playwright-report/
 .env

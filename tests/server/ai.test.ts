@@ -636,7 +636,7 @@ test('AI provider config: defaults, gemini key/model/free prices, and production
   ai = loadConfig({ ...baseEnv, AI_PROVIDER: 'gemini', ANTHROPIC_API_KEY: 'a', GEMINI_API_KEY: 'g' }).ai!;
   assert.deepEqual(
     [ai.provider, ai.apiKey, ai.model, ai.priceInputPerMTok, ai.priceOutputPerMTok],
-    ['gemini', 'g', 'gemini-3.8-flash', 0, 0],
+    ['gemini', 'g', 'gemini-3.5-flash', 0, 0],
   );
   assert.equal(loadConfig({ ...baseEnv, AI_PROVIDER: 'gemini' }).ai!.apiKey, undefined, 'anthropic key is not reused');
   assert.equal(loadConfig({ ...baseEnv, AI_PROVIDER: 'gemini', AI_MODEL: 'm' }).ai!.model, 'm');

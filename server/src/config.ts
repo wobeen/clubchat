@@ -1,7 +1,7 @@
 export type AiProvider = 'anthropic' | 'gemini';
 export const defaultModels: Record<AiProvider, string> = {
   anthropic: 'claude-haiku-5-5',
-  gemini: 'gemini-3.8-flash',
+  gemini: 'gemini-3.5-flash',
 };
 
 export interface AiConfig {

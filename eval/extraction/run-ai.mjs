@@ -40,7 +40,7 @@ const MODULES = {
   },
 };
 // Server defaults (server/src/config.ts). Gemini free tier is billed at 0.
-const DEFAULT_MODEL = { anthropic: 'claude-haiku-5-5', gemini: 'gemini-3.8-flash' };
+const DEFAULT_MODEL = { anthropic: 'claude-haiku-5-5', gemini: 'gemini-3.5-flash' };
 const DEFAULT_PRICE = { anthropic: [1, 5], gemini: [0, 0] };
 
 function parseArgs(argv) {

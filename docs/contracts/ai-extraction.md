@@ -2,7 +2,7 @@
 
 상태: 승인됨 · 2026-11-20.
 
-v1.1: 비용 때문에 **개발과 평가는 Google Gemini 무료 등급(`gemini-3.8-flash`)으로 하고, 운영 AI는 기본으로 꺼 둔다**. 운영에서 켤 때 쓸 모델은 Anthropic Claude `claude-haiku-5-5`(월 상한 $10)이며, 켜기 전에 Haiku로 시험 세트를 다시 측정해 통과선을 확인한다. 근거는 [Claude 모델 개요](https://platform.claude.com/docs/en/models/overview)와 [Gemini 요금](https://ai.google.dev/gemini-api/docs/pricing)이다.
+v1.1: 비용 때문에 **개발과 평가는 Google Gemini 무료 등급(`gemini-3.5-flash`)으로 하고, 운영 AI는 기본으로 꺼 둔다**. 운영에서 켤 때 쓸 모델은 Anthropic Claude `claude-haiku-5-5`(월 상한 $10)이며, 켜기 전에 Haiku로 시험 세트를 다시 측정해 통과선을 확인한다. 근거는 [Claude 모델 개요](https://platform.claude.com/docs/en/models/overview)와 [Gemini 요금](https://ai.google.dev/gemini-api/docs/pricing)이다. (2026-11-23: `gemini-3.8-flash`는 과부하 503이 잦아 기본을 `gemini-3.5-flash`로 바꿨다. 무료 등급은 모델당 하루 20회.)
 
 Gemini 무료 등급은 Google 요금표에 "콘텐츠가 제품 개선에 사용됨"이라고 되어 있다. 그래서 **실제 사용자 대화는 Gemini로 보내지 않는다.**
 - 서버는 `NODE_ENV=production`에서 `AI_PROVIDER=gemini`이면 시작을 거부한다.
@@ -88,7 +88,7 @@ sequenceDiagram
 | `AI_PROVIDER` | `anthropic` | `anthropic` 또는 `gemini`. `gemini`는 운영(`NODE_ENV=production`)에서 시작 거부 |
 | `ANTHROPIC_API_KEY` | (없음) | provider가 anthropic인데 없으면 제안 API는 503 `ai_unavailable`. 운영 기본은 미설정(AI 꺼짐) |
 | `GEMINI_API_KEY` | (없음) | 개발·평가 전용 |
-| `AI_MODEL` | provider별 `claude-haiku-5-5` / `gemini-3.8-flash` | 모델 id |
+| `AI_MODEL` | provider별 `claude-haiku-5-5` / `gemini-3.5-flash` | 모델 id |
 | `AI_MONTHLY_BUDGET_USD` | `10` | 월 상한(KST 월) |
 | `AI_USER_HOURLY_LIMIT` | `20` | 사용자당 시간당 요청 수 |
 | `AI_PRICE_INPUT_PER_MTOK` / `AI_PRICE_OUTPUT_PER_MTOK` | `1` / `5` | 비용 계산 단가(USD). 실제 요금보다 높게 잡아 상한을 지킨다 |
